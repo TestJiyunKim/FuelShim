@@ -48,7 +48,7 @@
                         const temperatureData = items.find(item => item.category === "T1H");
                         if (temperatureData) {
                             console.log("기온 데이터:", temperatureData.fcstValue);
-                            return temperatureData.fcstValue; // 숫자로 반환
+                            return parseFloat(temperatureData.fcstValue); // 숫자로 반환
                         }
                     }
                 }
@@ -74,8 +74,8 @@
 
             // 온도 차이 계산
             if (temp1 !== null && temp2 !== null) {
-                const diff = Math.abs(parseFloat(temp1) - parseFloat(temp2));
-                document.getElementById('tempDiff').innerText = '온도 차이: ' + Math.abs(diff).toFixed(1) + '℃';
+                const diff = Math.abs(temp1 - temp2);
+                document.getElementById('tempDiff').innerText = '온도 차이: ' + diff.toFixed(1) + '℃';
             } else {
                 document.getElementById('tempDiff').innerText = '온도 차이를 계산할 수 없습니다.';
             }

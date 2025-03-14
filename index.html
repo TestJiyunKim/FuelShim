@@ -30,9 +30,9 @@
             margin-right: 10px;
         }
         textarea {
-            width: 200px;
+            width: 140px;
             height: 150px;
-            resize: vertical;
+            resize: none; /* 크기 조정 비활성화 */
             line-height: 1.5; /* 줄간격 설정 */
         }
         button {
@@ -60,21 +60,19 @@
         }
         .number-control {
             display: flex;
-            width:40px;
             align-items: center;
             gap: 10px;
         }
         .number-control input {
-            display: flex;
+            width: 60px;
             text-align: center;
         }
         #input-container {
             display: flex;
-            width: 140px;
             gap: 10px;
         }
         #results {
-            flex: 1;
+            width: 140px;
             background-color: #fff;
             border: 1px solid #ddd;
             border-radius: 5px;
@@ -90,6 +88,9 @@
         }
     </style>
     <script>
+        const API_KEY = "mP3kcbk2gDsx1u4nW%2FDiwfLzOwweMrax4NNppdFdRMHwiKAU1uoEhgDpB0mRk0SRB2Mh5F%2Bt8Pb%2BXHRQuPwmoA%3D%3D"; // 인증키 (Encoding)
+        const API_URL = "http://apis.data.go.kr/1360000/MidFcstInfoService/getMidTa";
+
         function getCurrentDate(offset = 0) {
             let date = new Date();
             date.setDate(date.getDate() + offset);
@@ -97,7 +98,31 @@
         }
 
         async function getTemperature(date, hour) {
-            return Math.floor(Math.random() * 15 + 10); // 임시 데이터
+            const regId = "11H20201"; // 울산 지역 코드 (중기예보 지역 코드 참고)
+            const baseDate = date.replace(/-/g, ""); // YYYYMMDD 형식
+            const baseTime = "0600"; // 기준 시간 (06시 발표 자료)
+
+            const url = `${API_URL}?serviceKey=${API_KEY}&regId=${regId}&tmFc=${baseDate}${baseTime}&dataType=JSON`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.response?.header?.resultCode === "00") {
+                    const items = data.response.body.items.item;
+                    const targetDate = date.replace(/-/g, ""); // YYYYMMDD 형식
+
+                    // 특정 날짜의 온도 데이터 찾기
+                    const temperatureData = items.find(item => item.taDate === targetDate);
+                    if (temperatureData) {
+                        return temperatureData.taMax; // 최고 기온 반환
+                    }
+                }
+                return "N/A"; // 데이터가 없는 경우
+            } catch (error) {
+                console.error("API 호출 중 오류 발생:", error);
+                return "N/A"; // 오류 발생 시
+            }
         }
 
         async function fetchTemperatures() {
@@ -219,7 +244,7 @@
     </div>
     <br>
     <div id="input-container">
-        <textarea id="inputNumbers" rows="3" placeholder="숫자를 입력하세요 (엔터로 구분)"></textarea>
+        <textarea id="inputNumbers" rows="6" placeholder="숫자를 입력하세요 (엔터로 구분)"></textarea>
         <div id="results"></div>
     </div>
 </body>

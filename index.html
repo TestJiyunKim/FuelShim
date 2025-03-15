@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FUEL SHIM 수정</title>
+    <title>목표수 계산</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -14,26 +14,46 @@
         h2 {
             color: #444;
         }
-        label {
-            display: block;
-            margin: 10px 0;
+        .number-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
         }
-        input[type="date"], select, textarea {
+        .number-control input {
+            width: 80px;
+            text-align: center;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 16px;
         }
-        input[type="date"], select {
-            width: auto;
-            min-width: 30px; /* 최소 너비 설정 */
-            margin-right: 10px;
+        #input-container {
+            display: flex;
+            gap: 20px;
         }
         textarea {
-            width: 140px;
+            width: 200px;
             height: 150px;
-            resize: none; /* 크기 조정 비활성화 */
-            line-height: 1.5; /* 줄간격 설정 */
+            resize: vertical;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        #results {
+            flex: 1;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            overflow-y: auto;
+            height: 150px;
+        }
+        #results div {
+            margin: 5px 0;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
         }
         button {
             padding: 10px 20px;
@@ -47,71 +67,8 @@
         button:hover {
             background-color: #0056b3;
         }
-        .result {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #e9ecef;
-            border-radius: 5px;
-        }
-        .temp-display {
-            font-size: 18px;
-            font-weight: bold;
-            color: #007bff;
-        }
-        .number-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .number-control input {
-            width: 60px;
-            text-align: center;
-        }
-        #input-container {
-            display: flex;
-            gap: 10px;
-        }
-        #results {
-            width: 140px;
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 10px;
-            overflow-y: auto;
-            height: 150px;
-            line-height: 1.5; /* 줄간격 설정 */
-        }
-        #results div {
-            margin: 5px 0;
-            padding: 5px;
-            border-bottom: 1px solid #eee;
-        }
     </style>
     <script>
-        function getCurrentDate(offset = 0) {
-            let date = new Date();
-            date.setDate(date.getDate() + offset);
-            return date.toISOString().split('T')[0]; // YYYY-MM-DD 형식
-        }
-
-        async function getTemperature(date, hour) {
-            return Math.floor(Math.random() * 15 + 10); // 임시 데이터
-        }
-
-        async function fetchTemperatures() {
-            let date1 = document.getElementById('date1').value;
-            let hour1 = document.getElementById('hour1').value;
-            let date2 = document.getElementById('date2').value;
-            let hour2 = document.getElementById('hour2').value;
-
-            let temp1 = await getTemperature(date1, hour1);
-            let temp2 = await getTemperature(date2, hour2);
-            
-            document.getElementById('temp1').innerText = temp1 + '℃';
-            document.getElementById('temp2').innerText = temp2 + '℃';
-            document.getElementById('tempDiff').innerText = '온도 차이: ' + Math.abs(temp1 - temp2) + '℃';
-        }
-
         function adjustTargetNumber(value) {
             let targetInput = document.getElementById('targetNumber');
             let newValue = parseInt(targetInput.value) + value;
@@ -154,8 +111,6 @@
         }
 
         window.onload = function () {
-            document.getElementById('date1').value = getCurrentDate();
-            document.getElementById('date2').value = getCurrentDate(1);
             document.getElementById('targetNumber').value = 144;
 
             // textarea 초기값 설정
@@ -169,55 +124,15 @@
     </script>
 </head>
 <body>
-    <h2>울산 전하동 기온</h2>
-    <label>자체 시운전일: <input type="date" id="date1" value="">
-        <select id="hour1">
-            <option value="08">08:00</option>
-            <option value="09">09:00</option>
-            <option value="10">10:00</option>
-            <option value="11">11:00</option>
-            <option value="12" selected>12:00</option>
-            <option value="13">13:00</option>
-            <option value="14">14:00</option>
-            <option value="15">15:00</option>
-            <option value="16">16:00</option>
-            <option value="17">17:00</option>
-            <option value="18">18:00</option>
-            <option value="19">19:00</option>
-        </select>
-    </label>
-    <span class="temp-display" id="temp1"></span>
-    <br>
-    <label>공식 시운전일: <input type="date" id="date2" value="">
-        <select id="hour2">
-            <option value="08">08:00</option>
-            <option value="09">09:00</option>
-            <option value="10">10:00</option>
-            <option value="11">11:00</option>
-            <option value="12" selected>12:00</option>
-            <option value="13">13:00</option>
-            <option value="14">14:00</option>
-            <option value="15">15:00</option>
-            <option value="16">16:00</option>
-            <option value="17">17:00</option>
-            <option value="18">18:00</option>
-            <option value="19">19:00</option>
-        </select>
-    </label>
-    <span class="temp-display" id="temp2"></span>
-    <br>
-    <button onclick="fetchTemperatures()">기온 조회</button>
-    <p class="result" id="tempDiff"></p>
-    
     <h2>목표 수 계산</h2>
     <div class="number-control">
         <button onclick="adjustTargetNumber(-1)">-</button>
-        <input type="number" id="targetNumber" value="144">
+        <input type="number" id="targetNumber" value="144" inputmode="numeric">
         <button onclick="adjustTargetNumber(1)">+</button>
     </div>
     <br>
     <div id="input-container">
-        <textarea id="inputNumbers" rows="6" placeholder="숫자를 입력하세요 (엔터로 구분)"></textarea>
+        <textarea id="inputNumbers" rows="6" placeholder="숫자를 입력하세요 (엔터로 구분)" inputmode="numeric"></textarea>
         <div id="results"></div>
     </div>
 </body>

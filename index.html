@@ -18,12 +18,17 @@
 
         function getBaseTime(hour) {
             const baseTimes = ["0200", "0500", "0800", "1100", "1400", "1700", "2000", "2300"];
+            let baseTime = "0200"; // 기본값
+
             for (let i = baseTimes.length - 1; i >= 0; i--) {
                 if (hour >= parseInt(baseTimes[i].substring(0, 2))) {
-                    return baseTimes[i];
+                    baseTime = baseTimes[i];
+                    break;
                 }
             }
-            return "0200"; // 기본값
+
+            console.log("선택된 base_time:", baseTime);
+            return baseTime;
         }
 
         async function getTemperature(date, hour) {
@@ -49,14 +54,19 @@
                         if (temperatureData) {
                             console.log("기온 데이터:", temperatureData.fcstValue);
                             return parseFloat(temperatureData.fcstValue); // 숫자로 반환
+                        } else {
+                            console.warn("T1H(기온) 데이터가 없습니다.");
                         }
+                    } else {
+                        console.warn("API 응답에서 기온 데이터를 찾을 수 없습니다.");
                     }
+                } else {
+                    console.error("API 응답 오류:", data.response?.header?.resultMsg);
                 }
-                return null; // 데이터가 없는 경우
             } catch (error) {
                 console.error("API 호출 중 오류 발생:", error);
-                return null; // 오류 발생 시
             }
+            return null; // 오류 발생 시
         }
 
         async function fetchTemperatures() {
@@ -68,11 +78,9 @@
             let temp1 = await getTemperature(date1, hour1);
             let temp2 = await getTemperature(date2, hour2);
             
-            // 온도 표시
             document.getElementById('temp1').innerText = temp1 !== null ? temp1 + "℃" : "데이터 없음";
             document.getElementById('temp2').innerText = temp2 !== null ? temp2 + "℃" : "데이터 없음";
 
-            // 온도 차이 계산
             if (temp1 !== null && temp2 !== null) {
                 const diff = Math.abs(temp1 - temp2);
                 document.getElementById('tempDiff').innerText = '온도 차이: ' + diff.toFixed(1) + '℃';

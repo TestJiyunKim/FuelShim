@@ -21,7 +21,7 @@
             margin-bottom: 20px;
         }
         .number-control input {
-            width: 80px;
+            width: 100px;
             text-align: center;
             padding: 10px;
             border: 1px solid #ccc;
@@ -106,9 +106,9 @@
             let lastLine = lines[lines.length - 1];
 
             if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
                 if (lastLine.trim() !== "") {
                     textarea.value += `\n${lines.length + 1}. `;
-                    event.preventDefault();
                 }
                 calculateResults();
             }
@@ -138,12 +138,12 @@
     <h2>목표 수 계산</h2>
     <div class="number-control">
         <button onclick="adjustTargetNumber(-1)">-</button>
-        <input type="number" id="targetNumber" value="144" inputmode="numeric">
+        <input type="text" id="targetNumber" value="144" pattern="[0-9]*">
         <button onclick="adjustTargetNumber(1)">+</button>
     </div>
     <br>
     <div id="input-container">
-        <textarea id="inputNumbers" rows="6" placeholder="숫자를 입력하세요 (엔터로 구분)" inputmode="numeric"></textarea>
+        <textarea id="inputNumbers" rows="6" placeholder="숫자를 입력하세요 (엔터로 구분)"></textarea>
         <div id="results"></div>
     </div>
     <p><strong>Tip:</strong> <code>Shift + Enter</code> 를 누르면 줄바꿈이 가능합니다.</p>

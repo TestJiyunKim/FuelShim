@@ -110,6 +110,14 @@
             }
         }
 
+        function restrictToNumbers(event) {
+            // 숫자와 엔터 키만 허용
+            const allowedKeys = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "Enter", "Backspace", "Delete", "ArrowLeft", "ArrowRight"];
+            if (!allowedKeys.includes(event.key)) {
+                event.preventDefault(); // 허용되지 않은 키 입력 방지
+            }
+        }
+
         window.onload = function () {
             document.getElementById('targetNumber').value = 144;
 
@@ -117,6 +125,7 @@
             let textarea = document.getElementById('inputNumbers');
             textarea.value = '1. ';
             textarea.addEventListener('keydown', autoNumbering);
+            textarea.addEventListener('keydown', restrictToNumbers); // 숫자만 입력 가능하도록 제한
 
             // 목표수 변경 시 실시간 계산
             document.getElementById('targetNumber').addEventListener('input', calculateResults);

@@ -88,9 +88,6 @@
         }
     </style>
     <script>
-        const API_KEY = "mP3kcbk2gDsx1u4nW%2FDiwfLzOwweMrax4NNppdFdRMHwiKAU1uoEhgDpB0mRk0SRB2Mh5F%2Bt8Pb%2BXHRQuPwmoA%3D%3D"; // 인증키 (Encoding)
-        const API_URL = "http://apis.data.go.kr/1360000/MidFcstInfoService/getMidTa";
-
         function getCurrentDate(offset = 0) {
             let date = new Date();
             date.setDate(date.getDate() + offset);
@@ -98,31 +95,7 @@
         }
 
         async function getTemperature(date, hour) {
-            const regId = "11H20201"; // 울산 지역 코드 (중기예보 지역 코드 참고)
-            const baseDate = date.replace(/-/g, ""); // YYYYMMDD 형식
-            const baseTime = "0600"; // 기준 시간 (06시 발표 자료)
-
-            const url = `${API_URL}?serviceKey=${API_KEY}&regId=${regId}&tmFc=${baseDate}${baseTime}&dataType=JSON`;
-
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-
-                if (data.response?.header?.resultCode === "00") {
-                    const items = data.response.body.items.item;
-                    const targetDate = date.replace(/-/g, ""); // YYYYMMDD 형식
-
-                    // 특정 날짜의 온도 데이터 찾기
-                    const temperatureData = items.find(item => item.taDate === targetDate);
-                    if (temperatureData) {
-                        return temperatureData.taMax; // 최고 기온 반환
-                    }
-                }
-                return "N/A"; // 데이터가 없는 경우
-            } catch (error) {
-                console.error("API 호출 중 오류 발생:", error);
-                return "N/A"; // 오류 발생 시
-            }
+            return Math.floor(Math.random() * 15 + 10); // 임시 데이터
         }
 
         async function fetchTemperatures() {

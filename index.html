@@ -14,6 +14,10 @@
         h2 {
             color: #444;
         }
+        .container {
+            display: flex;
+            gap: 10px;
+        }
         .number-control {
             display: flex;
             align-items: center;
@@ -28,28 +32,26 @@
             border-radius: 5px;
             font-size: 16px;
         }
+        #numbering-container {
+            width: 65px;
+            text-align: right;
+            padding: 10px;
+            border-right: 1px solid #ccc;
+            font-size: 16px;
+        }
         #input-container {
             display: flex;
             gap: 10px;
             align-items: flex-start;
         }
-        #line-numbers {
-            width: 30px;
-            text-align: right;
-            font-size: 16px;
-            padding-top: 10px;
-            line-height: 1.5;
-            white-space: pre;
-        }
         textarea {
-            width: 150px;
+            width: 65%;
             height: 150px;
             resize: vertical;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 16px;
-            line-height: 1.5;
         }
         #results {
             flex: 1;
@@ -59,7 +61,7 @@
             padding: 10px;
             overflow-y: auto;
             height: 150px;
-            line-height: 1.5;
+            width: 65%;
         }
         #results div {
             margin: 5px 0;
@@ -89,33 +91,28 @@
 
         function calculateResults() {
             let target = parseInt(document.getElementById('targetNumber').value);
-            let numbers = document.getElementById('inputNumbers').value.split('\n').map(num => parseInt(num.trim()));
+            let numbers = document.getElementById('inputNumbers').value.split('\n').map(num => {
+                return parseInt(num.trim());
+            });
             let resultArea = document.getElementById('results');
-            let lineNumberArea = document.getElementById('line-numbers');
+            let numberingArea = document.getElementById('numbering-container');
             resultArea.innerHTML = '';
-            lineNumberArea.innerHTML = '';
+            numberingArea.innerHTML = '';
 
             numbers.forEach((num, index) => {
-                lineNumberArea.innerHTML += (index + 1) + "\n";
+                numberingArea.innerHTML += `${index + 1}.<br>`;
                 if (!isNaN(num) && num >= 100 && num <= 999) {
                     let result = ((target - num) * 0.125).toFixed(1);
-                    resultArea.innerHTML += `<div>${result}</div>`;
+                    resultArea.innerHTML += `<div>${num} → ${result}</div>`;
                 } else if (num) {
-                    resultArea.innerHTML += `<div style="color: red;">잘못된 입력</div>`;
+                    resultArea.innerHTML += `<div style="color: red;">잘못된 입력: ${num}</div>`;
                 }
             });
         }
 
-        function autoNumbering(event) {
-            let textarea = document.getElementById('inputNumbers');
-            if (event.key === 'Enter') {
-                calculateResults(); // 엔터를 누를 때만 결과 업데이트
-            }
-        }
-
-        function restrictToNumbers(event) {
-            const allowedKeys = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "Enter", "Backspace", "Delete", "ArrowLeft", "ArrowRight"];
-            if (!allowedKeys.includes(event.key)) {
+        function restrictToNumbersAndEnter(event) {
+            // 숫자, 엔터 키만 허용
+            if (!/\d|Enter|Backspace|Delete|ArrowLeft|ArrowRight/.test(event.key)) {
                 event.preventDefault();
             }
         }
@@ -123,8 +120,8 @@
         window.onload = function () {
             document.getElementById('targetNumber').value = 144;
             let textarea = document.getElementById('inputNumbers');
-            textarea.addEventListener('keydown', autoNumbering);
-            textarea.addEventListener('keydown', restrictToNumbers);
+            textarea.addEventListener('input', calculateResults);
+            textarea.addEventListener('keydown', restrictToNumbersAndEnter);
             document.getElementById('targetNumber').addEventListener('input', calculateResults);
         }
     </script>
@@ -138,7 +135,7 @@
     </div>
     <br>
     <div id="input-container">
-        <div id="line-numbers"></div>
+        <div id="numbering-container"></div>
         <textarea id="inputNumbers" rows="6" placeholder="숫자를 입력하세요 (엔터로 구분)" inputmode="numeric"></textarea>
         <div id="results"></div>
     </div>

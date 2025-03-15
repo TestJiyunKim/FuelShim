@@ -5,15 +5,91 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FUEL SHIM 수정</title>
     <style>
-        /* CSS 부분은 이전과 동일 */
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        h2 {
+            color: #444;
+        }
+        label {
+            display: block;
+            margin: 10px 0;
+        }
+        input[type="date"], select, textarea {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        input[type="date"], select {
+            width: auto;
+            min-width: 30px; /* 최소 너비 설정 */
+            margin-right: 10px;
+        }
+        textarea {
+            width: 140px;
+            height: 150px;
+            resize: none; /* 크기 조정 비활성화 */
+            line-height: 1.5; /* 줄간격 설정 */
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+        }
+        .temp-display {
+            font-size: 18px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .number-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .number-control input {
+            width: 60px;
+            text-align: center;
+        }
+        #input-container {
+            display: flex;
+            gap: 10px;
+        }
+        #results {
+            width: 140px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            overflow-y: auto;
+            height: 150px;
+            line-height: 1.5; /* 줄간격 설정 */
+        }
+        #results div {
+            margin: 5px 0;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
     </style>
     <script>
         const API_KEY = "mP3kcbk2gDsx1u4nW%2FDiwfLzOwweMrax4NNppdFdRMHwiKAU1uoEhgDpB0mRk0SRB2Mh5F%2Bt8Pb%2BXHRQuPwmoA%3D%3D"; // 인증키 (Encoding)
-        const API_URL = "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst"; // 단기예보 조회 API
-
-        // 울산 전하1동의 예보지점 좌표 (nx, ny)
-        const nx = "104"; // 예보지점 X 좌표 (전하1동)
-        const ny = "83";  // 예보지점 Y 좌표 (전하1동)
+        const API_URL = "http://apis.data.go.kr/1360000/MidFcstInfoService/getMidTa";
 
         function getCurrentDate(offset = 0) {
             let date = new Date();
@@ -21,38 +97,25 @@
             return date.toISOString().split('T')[0]; // YYYY-MM-DD 형식
         }
 
-        function getBaseTime(hour) {
-            // 단기예보 API는 0200, 0500, 0800, 1100, 1400, 1700, 2000, 2300에 발표됩니다.
-            const baseTimes = ["0200", "0500", "0800", "1100", "1400", "1700", "2000", "2300"];
-            for (let i = baseTimes.length - 1; i >= 0; i--) {
-                if (hour >= parseInt(baseTimes[i].substring(0, 2))) {
-                    return baseTimes[i];
-                }
-            }
-            return "0200"; // 기본값
-        }
-
         async function getTemperature(date, hour) {
+            const regId = "11H20201"; // 울산 지역 코드 (중기예보 지역 코드 참고)
             const baseDate = date.replace(/-/g, ""); // YYYYMMDD 형식
-            const baseTime = getBaseTime(hour); // 기준 시간
+            const baseTime = "0600"; // 기준 시간 (06시 발표 자료)
 
-            const url = `${API_URL}?serviceKey=${API_KEY}&numOfRows=10&pageNo=1&base_date=${baseDate}&base_time=${baseTime}&nx=${nx}&ny=${ny}&dataType=JSON`;
+            const url = `${API_URL}?serviceKey=${API_KEY}&regId=${regId}&tmFc=${baseDate}${baseTime}&dataType=JSON`;
 
             try {
                 const response = await fetch(url);
                 const data = await response.json();
 
-                // API 응답 데이터를 콘솔에 출력하여 구조 확인
-                console.log("API 응답 데이터:", data);
-
                 if (data.response?.header?.resultCode === "00") {
-                    const items = data.response.body?.items?.item;
-                    if (items) {
-                        // 온도 데이터 찾기 (T1H: 기온)
-                        const temperatureData = items.find(item => item.category === "T1H");
-                        if (temperatureData) {
-                            return temperatureData.fcstValue; // 예보값 반환
-                        }
+                    const items = data.response.body.items.item;
+                    const targetDate = date.replace(/-/g, ""); // YYYYMMDD 형식
+
+                    // 특정 날짜의 온도 데이터 찾기
+                    const temperatureData = items.find(item => item.taDate === targetDate);
+                    if (temperatureData) {
+                        return temperatureData.taMax; // 최고 기온 반환
                     }
                 }
                 return "N/A"; // 데이터가 없는 경우
@@ -133,7 +196,7 @@
     </script>
 </head>
 <body>
-    <h2>울산 전하1동 기온</h2>
+    <h2>울산 전하동 기온</h2>
     <label>자체 시운전일: <input type="date" id="date1" value="">
         <select id="hour1">
             <option value="08">08:00</option>

@@ -3,7 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>울산 전하동 기온 조회</title>
+    <title>울산 전하동 기온 조회 및 목표값 계산</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        h2 {
+            color: #444;
+        }
+        label {
+            display: block;
+            margin: 10px 0;
+        }
+        input[type="date"], select, textarea {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        textarea {
+            width: 200px;
+            height: 150px;
+            resize: vertical;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+        }
+        .temp-display {
+            font-size: 18px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .number-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .number-control input {
+            width: 80px;
+            text-align: center;
+        }
+        #input-container {
+            display: flex;
+            gap: 20px;
+        }
+        #results {
+            flex: 1;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            overflow-y: auto;
+            height: 150px;
+        }
+        #results div {
+            margin: 5px 0;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
     <script>
         const API_KEY = "mP3kcbk2gDsx1u4nW%2FDiwfLzOwweMrax4NNppdFdRMHwiKAU1uoEhgDpB0mRk0SRB2Mh5F%2Bt8Pb%2BXHRQuPwmoA%3D%3D"; 
         const API_URL = "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst";
@@ -18,17 +94,12 @@
 
         function getBaseTime(hour) {
             const baseTimes = ["0200", "0500", "0800", "1100", "1400", "1700", "2000", "2300"];
-            let baseTime = "0200"; // 기본값
-
             for (let i = baseTimes.length - 1; i >= 0; i--) {
                 if (hour >= parseInt(baseTimes[i].substring(0, 2))) {
-                    baseTime = baseTimes[i];
-                    break;
+                    return baseTimes[i];
                 }
             }
-
-            console.log("선택된 base_time:", baseTime);
-            return baseTime;
+            return "0200"; // 기본값
         }
 
         async function getTemperature(date, hour) {
@@ -47,26 +118,18 @@
 
                 if (data.response?.header?.resultCode === "00") {
                     const items = data.response.body?.items?.item;
-                    console.log("API 응답 항목:", items);
-
                     if (items) {
                         const temperatureData = items.find(item => item.category === "T1H");
                         if (temperatureData) {
-                            console.log("기온 데이터:", temperatureData.fcstValue);
                             return parseFloat(temperatureData.fcstValue); // 숫자로 반환
-                        } else {
-                            console.warn("T1H(기온) 데이터가 없습니다.");
                         }
-                    } else {
-                        console.warn("API 응답에서 기온 데이터를 찾을 수 없습니다.");
                     }
-                } else {
-                    console.error("API 응답 오류:", data.response?.header?.resultMsg);
                 }
+                return null; // 데이터가 없는 경우
             } catch (error) {
                 console.error("API 호출 중 오류 발생:", error);
+                return null; // 오류 발생 시
             }
-            return null; // 오류 발생 시
         }
 
         async function fetchTemperatures() {
@@ -78,9 +141,11 @@
             let temp1 = await getTemperature(date1, hour1);
             let temp2 = await getTemperature(date2, hour2);
             
+            // 온도 표시
             document.getElementById('temp1').innerText = temp1 !== null ? temp1 + "℃" : "데이터 없음";
             document.getElementById('temp2').innerText = temp2 !== null ? temp2 + "℃" : "데이터 없음";
 
+            // 온도 차이 계산
             if (temp1 !== null && temp2 !== null) {
                 const diff = Math.abs(temp1 - temp2);
                 document.getElementById('tempDiff').innerText = '온도 차이: ' + diff.toFixed(1) + '℃';
@@ -89,16 +154,65 @@
             }
         }
 
+        function adjustTargetNumber(value) {
+            let targetInput = document.getElementById('targetNumber');
+            let newValue = parseInt(targetInput.value) + value;
+            targetInput.value = newValue;
+            calculateResults(); // 목표수가 변경되면 결과 다시 계산
+        }
+
+        function calculateResults() {
+            let target = parseInt(document.getElementById('targetNumber').value);
+            let numbers = document.getElementById('inputNumbers').value.split('\n').map(num => {
+                // 번호 제거 후 숫자만 추출
+                let numStr = num.replace(/^\d+\.\s*/, '').trim();
+                return parseInt(numStr);
+            });
+            let resultArea = document.getElementById('results');
+            resultArea.innerHTML = '';
+
+            numbers.forEach((num, index) => {
+                if (!isNaN(num) && num >= 100 && num <= 999) {
+                    let result = ((target - num) * 0.125).toFixed(1);
+                    resultArea.innerHTML += `<div>${index + 1}. ${num} → ${result}</div>`;
+                } else if (num) {
+                    resultArea.innerHTML += `<div style="color: red;">${index + 1}. 잘못된 입력: ${num}</div>`;
+                }
+            });
+        }
+
+        function autoNumbering(event) {
+            let textarea = document.getElementById('inputNumbers');
+            let lines = textarea.value.split('\n');
+            let lastLine = lines[lines.length - 1];
+
+            if (event.key === 'Enter') {
+                if (lastLine.trim() !== "") {
+                    textarea.value += `\n${lines.length + 1}. `;
+                    event.preventDefault(); // 기본 엔터 동작 방지
+                }
+                calculateResults(); // 엔터를 누를 때만 결과 업데이트
+            }
+        }
+
         window.onload = function () {
             document.getElementById('date1').value = getCurrentDate();
             document.getElementById('date2').value = getCurrentDate(1);
+            document.getElementById('targetNumber').value = 144;
+
+            // textarea 초기값 설정
+            let textarea = document.getElementById('inputNumbers');
+            textarea.value = '1. ';
+            textarea.addEventListener('keydown', autoNumbering);
+
+            // 목표수 변경 시 실시간 계산
+            document.getElementById('targetNumber').addEventListener('input', calculateResults);
         }
     </script>
 </head>
 <body>
     <h2>울산 전하동 기온 조회</h2>
-
-    <label>자체 시운전일: <input type="date" id="date1">
+    <label>자체 시운전일: <input type="date" id="date1" value="">
         <select id="hour1">
             <option value="08">08:00</option>
             <option value="09">09:00</option>
@@ -116,8 +230,7 @@
     </label>
     <span class="temp-display" id="temp1"></span>
     <br>
-
-    <label>공식 시운전일: <input type="date" id="date2">
+    <label>공식 시운전일: <input type="date" id="date2" value="">
         <select id="hour2">
             <option value="08">08:00</option>
             <option value="09">09:00</option>
@@ -135,8 +248,19 @@
     </label>
     <span class="temp-display" id="temp2"></span>
     <br>
-
     <button onclick="fetchTemperatures()">기온 조회</button>
     <p class="result" id="tempDiff"></p>
+    
+    <h2>목표 수 계산</h2>
+    <div class="number-control">
+        <button onclick="adjustTargetNumber(-1)">-</button>
+        <input type="number" id="targetNumber" value="144">
+        <button onclick="adjustTargetNumber(1)">+</button>
+    </div>
+    <br>
+    <div id="input-container">
+        <textarea id="inputNumbers" rows="6" placeholder="숫자를 입력하세요 (엔터로 구분)"></textarea>
+        <div id="results"></div>
+    </div>
 </body>
 </html>

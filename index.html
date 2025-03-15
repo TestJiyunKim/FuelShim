@@ -33,7 +33,7 @@
             gap: 10px;
         }
         #numbering {
-            width: 35%;
+            width: 20%; /* 번호 매기기 창 폭 조정 */
             text-align: right;
             padding: 10px;
             border: 1px solid #ccc;
@@ -44,7 +44,7 @@
             font-size: 16px;
         }
         #inputNumbers {
-            width: 65%;
+            width: 40%; /* 입력창 폭 조정 */
             height: 150px;
             resize: none;
             padding: 10px;
@@ -53,7 +53,7 @@
             font-size: 16px;
         }
         #results {
-            flex: 1;
+            width: 40%; /* 결과 창 폭 조정 */
             background-color: #fff;
             border: 1px solid #ddd;
             border-radius: 5px;
@@ -124,13 +124,13 @@
     <h2>목표 수 계산</h2>
     <div class="number-control">
         <button onclick="adjustTargetNumber(-1)">-</button>
-        <input type="number" id="targetNumber" value="144" inputmode="numeric">
+        <input type="number" id="targetNumber" value="144">
         <button onclick="adjustTargetNumber(1)">+</button>
     </div>
     <br>
     <div id="input-container">
         <div id="numbering"></div>
-        <textarea id="inputNumbers" rows="6" placeholder="숫자를 입력하세요 (엔터로 구분)" inputmode="numeric"></textarea>
+        <textarea id="inputNumbers" rows="6" placeholder="숫자를 입력하세요 (엔터로 구분)"></textarea>
         <div id="results"></div>
     </div>
 </body>

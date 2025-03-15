@@ -31,27 +31,25 @@
         #input-container {
             display: flex;
             gap: 10px;
+            align-items: flex-start;
         }
         #line-numbers {
             width: 30px;
             text-align: right;
-            padding: 10px;
             font-size: 16px;
-            background-color: #e0e0e0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            overflow: hidden;
-            line-height: 1.6;
+            padding-top: 10px;
+            line-height: 1.5;
+            white-space: pre;
         }
         textarea {
             width: 150px;
-            height: 200px;
-            resize: none;
+            height: 150px;
+            resize: vertical;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 16px;
-            line-height: 1.6;
+            line-height: 1.5;
         }
         #results {
             flex: 1;
@@ -60,8 +58,8 @@
             border-radius: 5px;
             padding: 10px;
             overflow-y: auto;
-            height: 200px;
-            line-height: 1.6;
+            height: 150px;
+            line-height: 1.5;
         }
         #results div {
             margin: 5px 0;
@@ -84,46 +82,50 @@
     <script>
         function adjustTargetNumber(value) {
             let targetInput = document.getElementById('targetNumber');
-            targetInput.value = parseInt(targetInput.value) + value;
-            calculateResults();
+            let newValue = parseInt(targetInput.value) + value;
+            targetInput.value = newValue;
+            calculateResults(); // 목표수가 변경되면 결과 다시 계산
         }
 
         function calculateResults() {
             let target = parseInt(document.getElementById('targetNumber').value);
-            let inputArea = document.getElementById('inputNumbers');
-            let numbers = inputArea.value.split('\n').map(num => parseInt(num.trim()));
+            let numbers = document.getElementById('inputNumbers').value.split('\n').map(num => parseInt(num.trim()));
             let resultArea = document.getElementById('results');
-            let lineNumbers = document.getElementById('line-numbers');
-            
+            let lineNumberArea = document.getElementById('line-numbers');
             resultArea.innerHTML = '';
-            lineNumbers.innerHTML = '';
+            lineNumberArea.innerHTML = '';
 
             numbers.forEach((num, index) => {
-                lineNumbers.innerHTML += `${index + 1}\n`;
+                lineNumberArea.innerHTML += (index + 1) + "\n";
                 if (!isNaN(num) && num >= 100 && num <= 999) {
                     let result = ((target - num) * 0.125).toFixed(1);
-                    resultArea.innerHTML += `<div>${num} → ${result}</div>`;
+                    resultArea.innerHTML += `<div>${result}</div>`;
                 } else if (num) {
-                    resultArea.innerHTML += `<div style="color: red;">잘못된 입력: ${num}</div>`;
+                    resultArea.innerHTML += `<div style="color: red;">잘못된 입력</div>`;
                 }
             });
         }
 
-        function syncLineNumbers() {
-            let lines = document.getElementById('inputNumbers').value.split('\n').length;
-            let lineNumbers = document.getElementById('line-numbers');
-            lineNumbers.innerHTML = '';
-            for (let i = 1; i <= lines; i++) {
-                lineNumbers.innerHTML += i + '\n';
+        function autoNumbering(event) {
+            let textarea = document.getElementById('inputNumbers');
+            if (event.key === 'Enter') {
+                calculateResults(); // 엔터를 누를 때만 결과 업데이트
+            }
+        }
+
+        function restrictToNumbers(event) {
+            const allowedKeys = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "Enter", "Backspace", "Delete", "ArrowLeft", "ArrowRight"];
+            if (!allowedKeys.includes(event.key)) {
+                event.preventDefault();
             }
         }
 
         window.onload = function () {
             document.getElementById('targetNumber').value = 144;
-            document.getElementById('inputNumbers').addEventListener('input', function () {
-                syncLineNumbers();
-                calculateResults();
-            });
+            let textarea = document.getElementById('inputNumbers');
+            textarea.addEventListener('keydown', autoNumbering);
+            textarea.addEventListener('keydown', restrictToNumbers);
+            document.getElementById('targetNumber').addEventListener('input', calculateResults);
         }
     </script>
 </head>
@@ -136,8 +138,8 @@
     </div>
     <br>
     <div id="input-container">
-        <textarea id="line-numbers" readonly></textarea>
-        <textarea id="inputNumbers" rows="6" placeholder="숫자를 입력하세요" inputmode="numeric"></textarea>
+        <div id="line-numbers"></div>
+        <textarea id="inputNumbers" rows="6" placeholder="숫자를 입력하세요 (엔터로 구분)" inputmode="numeric"></textarea>
         <div id="results"></div>
     </div>
 </body>

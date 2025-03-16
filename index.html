@@ -40,19 +40,19 @@
             border-radius: 5px;
             background-color: #f0f0f0; /* 연한 흑색 배경 */
             overflow-y: auto;
-            height: 150px;
+            height: 270px; /* 9줄 높이 */
             font-size: 16px;
-            line-height: 1.5;
+            line-height: 30px; /* 줄 높이 조정 */
         }
         #inputNumbers {
             width: 80px; /* 5자 고정 폭 */
-            height: 150px;
+            height: 270px; /* 9줄 높이 */
             resize: none;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 16px;
-            line-height: 1.5;
+            line-height: 30px; /* 줄 높이 조정 */
             background-color: #fff; /* 흰색 배경 유지 */
         }
         #results {
@@ -62,16 +62,14 @@
             border-radius: 5px;
             padding: 10px;
             overflow-y: auto;
-            height: 150px;
+            height: 270px; /* 9줄 높이 */
             font-size: 16px;
-            line-height: 1.5;
+            line-height: 30px; /* 줄 높이 조정 */
         }
         #results div,
-        #inputNumbers,
         #numbering div {
-            margin: 5px 0;
-            padding: 5px;
-            border-bottom: 1px solid #ddd; /* 구분선 추가 */
+            margin: 0;
+            padding: 0;
         }
         button {
             padding: 10px 20px;
@@ -137,7 +135,7 @@
     <br>
     <div id="input-container">
         <div id="numbering"></div>
-        <textarea id="inputNumbers" rows="6" placeholder="숫자를 입력하세요 (엔터로 구분)"></textarea>
+        <textarea id="inputNumbers" rows="9" placeholder="숫자를 입력하세요 (엔터로 구분)"></textarea>
         <div id="results"></div>
     </div>
 </body>

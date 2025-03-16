@@ -66,6 +66,11 @@
             font-size: 16px;
             line-height: 30px;
         }
+        #results div,
+        #numbering div {
+            margin: 0;
+            padding: 0;
+        }
         button {
             padding: 10px 20px;
             background-color: #007bff;
@@ -80,60 +85,97 @@
         }
     </style>
     <script>
+        let initialPrefix = '14';
+
         function adjustTargetNumber(value) {
             const targetInput = document.getElementById('targetNumber');
-            targetInput.value = parseInt(targetInput.value) + value;
+            const newValue = parseInt(targetInput.value) + value;
+            targetInput.value = newValue;
+            initialPrefix = targetInput.value.toString().slice(0, 2);
             initializeInput();
         }
 
         function initializeInput() {
-            document.getElementById('inputNumbers').value = '';
+            const inputNumbers = document.getElementById('inputNumbers');
+            inputNumbers.value = initialPrefix;
+            calculateResults();
+        }
+
+        function calculateResults() {
+            const target = parseInt(document.getElementById('targetNumber').value);
+            const numbers = document.getElementById('inputNumbers').value.split('\n');
+            
+            const results = numbers.map(num => {
+                if (num.length === 3) {
+                    const n = parseInt(num);
+                    return ((target - n) * 0.125).toFixed(1);
+                }
+                return num.length > 0 ? '<span style="color:red">⚠</span>' : '';
+            });
+
+            document.getElementById('results').innerHTML = results.map(r => `<div>${r}</div>`).join('');
+            document.getElementById('numbering').innerHTML = numbers.map((_, i) => `<div>${i + 1}.</div>`).join('');
         }
 
         function handleInput(event) {
             const input = event.target;
-            let value = input.value.replace(/[^\d\n]/g, '');
-            const lines = value.split('\n');
-            const targetPrefix = document.getElementById('targetNumber').value.substring(0, 2);
-            let formattedLines = [];
-            
-            lines.forEach((line, index) => {
-                let cleanLine = line.replace(/\D/g, '');
-                if (index === 0 && cleanLine.length < 3) {
-                    cleanLine = targetPrefix + cleanLine;
+            const isBackspace = event.inputType === 'deleteContentBackward';
+            let values = input.value.replace(/[^\d\n]/g, '').split('\n').map(line => line.slice(0, 3));
+
+            // 새 줄 자동 추가/삭제 로직
+            if (!isBackspace && values[values.length - 1].length === 3) {
+                const newPrefix = values[values.length - 1].slice(0, 2);
+                values.push(newPrefix); // 새 줄에 접두사 추가
+            } else if (isBackspace && values.length > 1 && values[values.length - 1].length === 0) {
+                values.pop();
+            }
+
+            // 접두사 동기화 (빈 줄에만 적용)
+            for (let i = 1; i < values.length; i++) {
+                const prevLine = values[i - 1];
+                const currentPrefix = prevLine.slice(0, 2);
+                if (values[i].length === 0) {
+                    values[i] = currentPrefix;
                 }
-                if (cleanLine.length >= 3) {
-                    formattedLines.push(cleanLine.substring(0, 3));
-                    if (cleanLine.length > 3) {
-                        formattedLines.push(cleanLine.substring(0, 2));
-                    }
-                } else {
-                    formattedLines.push(cleanLine);
-                }
-            });
-            
-            input.value = formattedLines.join('\n');
+            }
+
+            // 변경사항 적용
+            const newValue = values.join('\n');
+            if (newValue !== input.value) {
+                input.value = newValue;
+            }
+
+            calculateResults();
+
+            // 커서 위치 조정
+            const cursorPos = input.selectionStart;
+            const currentLineIndex = (input.value.substr(0, cursorPos).split('\n').length - 1);
+            setTimeout(() => {
+                const lineStart = input.value.split('\n').slice(0, currentLineIndex).join('\n').length + 1;
+                input.setSelectionRange(lineStart + values[currentLineIndex].length, lineStart + values[currentLineIndex].length);
+            }, 0);
         }
 
-        window.onload = function() {
+        window.onload = function () {
             document.getElementById('targetNumber').value = 144;
+            initialPrefix = document.getElementById('targetNumber').value.toString().slice(0, 2);
             const inputNumbers = document.getElementById('inputNumbers');
             initializeInput();
             inputNumbers.addEventListener('input', handleInput);
+            inputNumbers.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
         }
     </script>
 </head>
 <body>
-    <h2>목표 수 계산</h2>
+    <h2>목표수 계산</h2>
     <div class="number-control">
         <button onclick="adjustTargetNumber(-1)">-</button>
         <input type="number" id="targetNumber" value="144">
         <button onclick="adjustTargetNumber(1)">+</button>
     </div>
-    <br>
     <div id="input-container">
         <div id="numbering"></div>
-        <textarea id="inputNumbers" rows="9" placeholder="숫자를 입력하세요 (엔터로 구분)" inputmode="numeric"></textarea>
+        <textarea id="inputNumbers" rows="9"></textarea>
         <div id="results"></div>
     </div>
 </body>

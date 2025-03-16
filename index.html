@@ -101,6 +101,7 @@
             const newValue = parseInt(targetInput.value) + value;
             targetInput.value = newValue;
             initialPrefix = targetInput.value.toString().slice(0, 2);
+            updateInput();
             calculateResults();
         }
 
@@ -116,91 +117,58 @@
             
             const results = numbers.map(num => {
                 if (num.length !== 3) {
-                    return num.length > 0 ? '<span style="color:red">⚠</span>' : ''; // 오류 표시
+                    return num.length > 0 ? '<span style="color:red">⚠</span>' : '';
                 }
                 const n = parseInt(num);
-                if (n === target) return ''; // 목표값과 같으면 빈 줄
+                if (n === target) return ''; // 목표수와 같으면 빈 문자열 반환
                 const diff = target - n;
-                const result = Math.trunc(diff * 0.125 * 10) / 10; // 소수점 둘째 자리 버림
-                if (result === 0) return ''; // 0.0인 경우 빈 줄
-                const formatted = result.toFixed(1).replace(/\.0$/, ''); // .0 제거
+                const result = Math.trunc(diff * 0.125 * 10) / 10;
+                if (result === 0) return ''; // 0.0이면 빈 문자열 반환
+                const formatted = result.toFixed(1).replace(/\.0$/, '');
                 return result < 0 
                     ? `<span class="negative">${formatted}</span>` 
                     : formatted;
             });
 
-            document.getElementById('results').innerHTML = results
-                .map(r => `<div>${r}</div>`)
-                .join('');
-            document.getElementById('numbering').innerHTML = numbers
-                .map((_, i) => `<div>${i + 1}.</div>`)
-                .join('');
+            document.getElementById('results').innerHTML = results.map(r => `<div>${r}</div>`).join('');
+            document.getElementById('numbering').innerHTML = numbers.map((_, i) => `<div>${i + 1}.</div>`).join('');
         }
 
         function handleInput(event) {
             const input = event.target;
             const isBackspace = event.inputType === 'deleteContentBackward';
-            
-            // 현재 커서 위치 저장
-            const cursorPos = input.selectionStart;
-            const prevValue = input.value;
-            const prevLines = prevValue.split('\n');
-            
-            // 현재 커서가 있는 줄 계산
-            let currentLine = 0;
-            let posInLine = cursorPos;
-            for (let i = 0; i < prevLines.length; i++) {
-                const lineEnd = prevLines[i].length + 1; // +1은 개행문자
-                if (posInLine < lineEnd) {
-                    currentLine = i;
-                    posInLine = Math.min(posInLine, prevLines[i].length);
-                    break;
-                }
-                posInLine -= lineEnd;
-            }
-
-            // 입력값 처리
             let values = input.value.replace(/[^\d\n]/g, '').split('\n')
                 .map(line => line.slice(0, 3))
                 .filter((_, i) => i < MAX_LINES);
 
-            // 접두사 동기화 (초기 접두사 강제 적용 제거)
-            for (let i = 1; i < values.length; i++) {
-                if (values[i].length === 0) {
-                    values[i] = values[i - 1].slice(0, 2);
+            for (let i = 0; i < values.length; i++) {
+                if (i === 0 && values[i].length < 2) {
+                    values[i] = initialPrefix.slice(0, values[i].length); // 첫 번째 줄의 접두사 부분만 자동 입력
+                } else if (i > 0 && values[i].length < 2) {
+                    values[i] = values[i - 1].slice(0, values[i].length); // 이전 줄의 앞 두 자리 복사
                 }
             }
 
-            // 새 줄 자동 추가
             if (!isBackspace && values.length < MAX_LINES && values[values.length - 1].length === 3) {
                 values.push(values[values.length - 1].slice(0, 2));
             }
 
-            const newValue = values.join('\n');
-            
-            // 값이 변경된 경우에만 업데이트
-            if (newValue !== prevValue) {
-                input.value = newValue;
-                calculateResults();
-                
-                // 새 커서 위치 계산
-                const newLines = newValue.split('\n');
-                let newCursorPos = 0;
-                for (let i = 0; i < currentLine; i++) {
-                    if (i < newLines.length) {
-                        newCursorPos += newLines[i].length + 1;
-                    }
+            input.value = values.join('\n');
+            calculateResults();
+        }
+
+        function updateInput() {
+            const inputNumbers = document.getElementById('inputNumbers');
+            let values = inputNumbers.value.split('\n').map(line => line.replace(/\D/g, '')).filter(line => line.length > 0);
+            if (values.length === 0) values.push(initialPrefix);
+            for (let i = 0; i < values.length; i++) {
+                if (i === 0 && values[i].length < 2) {
+                    values[i] = initialPrefix.slice(0, values[i].length);
+                } else if (i > 0 && values[i].length < 2) {
+                    values[i] = values[i - 1].slice(0, values[i].length);
                 }
-                newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
-                newCursorPos = Math.min(newCursorPos, newValue.length);
-                
-                // 커서 위치 설정
-                setTimeout(() => {
-                    input.setSelectionRange(newCursorPos, newCursorPos);
-                }, 0);
-            } else {
-                calculateResults();
             }
+            inputNumbers.value = values.join('\n');
         }
 
         window.onload = function () {
@@ -222,7 +190,7 @@
     </div>
     <div id="input-container">
         <div id="numbering"></div>
-        <textarea id="inputNumbers" rows="9" inputmode="numeric"></textarea>
+        <textarea id="inputNumbers" rows="9"></textarea>
         <div id="results"></div>
     </div>
 </body>

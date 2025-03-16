@@ -114,13 +114,22 @@
 
         function autoNumbering(event) {
             const input = event.target;
-            const value = input.value.replace(/\D/g, ''); // 숫자만 허용
-            input.value = value; // 숫자 외 문자 제거
+            let value = input.value.replace(/\D/g, ''); // 숫자만 허용
 
             // 숫자 3개 입력 시 자동으로 엔터 추가
             if (value.length === 3) {
-                input.value += '\n'; // 엔터 추가
+                value += '\n'; // 엔터 추가
+                input.value = value; // 값 업데이트
+
+                // 커서 위치를 다음 줄로 이동
+                const lines = input.value.split('\n');
+                const currentLine = lines.length - 1;
+                const cursorPosition = lines.slice(0, currentLine).join('\n').length + 1;
+                input.setSelectionRange(cursorPosition, cursorPosition);
+
                 calculateResults(); // 결과 업데이트
+            } else {
+                input.value = value; // 숫자 외 문자 제거
             }
         }
 

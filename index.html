@@ -144,34 +144,34 @@
             const input = event.target;
             const isBackspace = event.inputType.startsWith('delete');
             
-            // 현재 커서 위치 저장
+            // 현재 커서 위치 및 입력값 저장
             const cursorPos = input.selectionStart;
             const prevValue = input.value;
             const prevLines = prevValue.split('\n');
             
-            // 현재 커서가 있는 줄 계산
+            // 현재 커서가 있는 줄과 위치 계산
             let currentLine = 0;
             let posInLine = cursorPos;
-            for (let i = 0; i < prevLines.length; i++) {
-                const lineLength = prevLines[i].length + 1; // 개행문자 포함
-                if (posInLine < lineLength) {
-                    currentLine = i;
-                    posInLine = Math.min(posInLine, prevLines[i].length);
+            let accumulatedLength = 0;
+            for (; currentLine < prevLines.length; currentLine++) {
+                const lineLength = prevLines[currentLine].length + 1; // 개행문자 포함 길이
+                if (posInLine <= accumulatedLength + lineLength) {
+                    posInLine -= accumulatedLength;
                     break;
                 }
-                posInLine -= lineLength;
+                accumulatedLength += lineLength;
             }
+            posInLine = Math.min(posInLine, prevLines[currentLine]?.length || 0);
 
             // 입력값 처리
             let values = input.value.replace(/[^\d\n]/g, '').split('\n')
                 .map(line => line.slice(0, 3))
-                .filter((_, i) => i < MAX_LINES);
+                .slice(0, MAX_LINES);
 
-            // 접두사 동기화 (중요 수정 부분)
+            // 접두사 동기화 (두 번째 줄부터만 적용)
             for (let i = 1; i < values.length; i++) {
                 if (values[i].length < 2) {
-                    const prevPrefix = values[i - 1].slice(0, 2);
-                    values[i] = prevPrefix + values[i].slice(2);
+                    values[i] = values[i - 1].slice(0, 2) + values[i].slice(2);
                 }
             }
 
@@ -189,14 +189,15 @@
                 const newLines = newValue.split('\n');
                 let newCursorPos = 0;
                 for (let i = 0; i < currentLine; i++) {
-                    newCursorPos += (newLines[i]?.length || 0) + 1;
+                    newCursorPos += (newLines[i]?.length || 0) + 1; // 개행문자 포함
                 }
                 newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
-                
+                newCursorPos = Math.min(newCursorPos, newValue.length);
+
                 // 커서 위치 설정
-                setTimeout(() => {
+                requestAnimationFrame(() => {
                     input.setSelectionRange(newCursorPos, newCursorPos);
-                }, 0);
+                });
             } else {
                 calculateResults();
             }

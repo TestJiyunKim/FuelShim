@@ -27,8 +27,8 @@
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 16px;
-            -webkit-appearance: none;
-            -moz-appearance: textfield;
+            -webkit-appearance: none; /* iOS 기본 스타일 제거 */
+            -moz-appearance: textfield; /* Firefox 화살표 제거 */
         }
         #input-container {
             display: flex;
@@ -56,8 +56,8 @@
             font-size: 16px;
             line-height: 30px;
             background-color: #fff;
-            inputmode: numeric;
-            -webkit-inputmode: numeric;
+            inputmode: numeric; /* 숫자 키보드 표시 */
+            -webkit-inputmode: numeric; /* iOS Safari 대응 */
         }
         #results {
             flex: 1;
@@ -70,8 +70,17 @@
             font-size: 16px;
             line-height: 30px;
         }
+        #results div {
+            text-align: left;
+            padding-left: 10px;
+            min-height: 30px;
+            white-space: nowrap;
+        }
         .negative {
             color: red;
+        }
+        #numbering div {
+            min-height: 30px;
         }
         button {
             padding: 10px 20px;
@@ -107,17 +116,17 @@
         function calculateResults() {
             const target = parseInt(document.getElementById('targetNumber').value);
             const numbers = document.getElementById('inputNumbers').value.split('\n');
-
+            
             const results = numbers.map(num => {
                 if (num.length !== 3) {
-                    return num.length > 0 ? '<span style="color:red">⚠</span>' : '';
+                    return num.length > 0 ? '<span style="color:red">⚠</span>' : ''; // 오류 표시
                 }
                 const n = parseInt(num);
-                if (n === target) return '';
+                if (n === target) return ''; // 목표값과 같으면 빈 줄
                 const diff = target - n;
-                const result = Math.trunc(diff * 0.125 * 10) / 10;
-                if (result === 0) return '';
-                const formatted = result.toFixed(1).replace(/\.0$/, '');
+                const result = Math.trunc(diff * 0.125 * 10) / 10; // 소수점 둘째 자리 버림
+                if (result === 0) return ''; // 0.0인 경우 빈 줄
+                const formatted = result.toFixed(1).replace(/\.0$/, ''); // .0 제거
                 return result < 0 
                     ? `<span class="negative">${formatted}</span>` 
                     : formatted;
@@ -133,31 +142,67 @@
 
         function handleInput(event) {
             const input = event.target;
+            const isBackspace = event.inputType.startsWith('delete');
+            
+            // 현재 커서 위치 및 입력값 저장
+            const cursorPos = input.selectionStart;
             const prevValue = input.value;
-            const lines = prevValue.replace(/[^\d\n]/g, '').split('\n').slice(0, MAX_LINES);
-
-            // 접두어 복원 및 유지
-            if (lines.length > 0) {
-                // 첫 번째 줄: 14X 형태에서 "4"만 변경 가능하도록 유지
-                lines[0] = `1${lines[0].slice(1, 3)}`.slice(0, 3);
+            const prevLines = prevValue.split('\n');
+            
+            // 현재 커서가 있는 줄 계산
+            let currentLine = 0;
+            let posInLine = cursorPos;
+            let accumulatedLength = 0;
+            for (; currentLine < prevLines.length; currentLine++) {
+                const lineLength = prevLines[currentLine].length + 1; // 개행문자 포함
+                if (posInLine <= accumulatedLength + lineLength) {
+                    posInLine -= accumulatedLength;
+                    break;
+                }
+                accumulatedLength += lineLength;
             }
-            for (let i = 1; i < lines.length; i++) {
-                if (lines[i].length < 2) {
-                    lines[i] = lines[i - 1].slice(0, 2) + (lines[i].slice(2) || '');
+            posInLine = Math.min(posInLine, prevLines[currentLine]?.length || 0);
+
+            // 입력값 처리
+            let values = input.value.replace(/[^\d\n]/g, '').split('\n')
+                .map(line => line.slice(0, 3))
+                .slice(0, MAX_LINES);
+
+            // 새 줄 추가 여부 확인
+            let newLineAdded = false;
+            if (!isBackspace && values.length < MAX_LINES && values[values.length - 1].length === 3) {
+                values.push(values[values.length - 1].slice(0, 2));
+                newLineAdded = true; // 새 줄 추가 플래그
+            }
+
+            // 접두사 동기화 (첫 번째 줄 자유 수정 가능)
+            for (let i = 1; i < values.length; i++) {
+                if (values[i].length < 2) {
+                    values[i] = values[i - 1].slice(0, 2) + values[i].slice(2);
                 }
             }
 
-            let newValue = lines.join('\n');
+            const newValue = values.join('\n');
             if (newValue !== prevValue) {
                 input.value = newValue;
                 calculateResults();
 
-                // 커서 위치 조정 (접두어 다음으로 이동)
-                let newCursorPos = newValue.length;
-                if (event.inputType === 'insertText' || event.inputType === 'insertCompositionText') {
-                    newCursorPos = newValue.lastIndexOf('\n') + 3; // 접두어 다음으로 이동
+                // 커서 위치 계산
+                let newCursorPos;
+                if (newLineAdded) {
+                    // 새 줄이 추가된 경우: 새 줄의 3번째 위치로 이동 (접두사 다음 위치)
+                    newCursorPos = newValue.length;
+                } else {
+                    // 기존 로직 유지
+                    const newLines = newValue.split('\n');
+                    newCursorPos = 0;
+                    for (let i = 0; i < currentLine; i++) {
+                        newCursorPos += (newLines[i]?.length || 0) + 1;
+                    }
+                    newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
                 }
 
+                // 커서 위치 설정
                 requestAnimationFrame(() => {
                     input.setSelectionRange(newCursorPos, newCursorPos);
                 });

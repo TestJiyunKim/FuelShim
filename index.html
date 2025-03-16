@@ -54,6 +54,7 @@
             font-size: 16px;
             line-height: 30px;
             background-color: #fff;
+            inputmode: numeric; /* ▼▼▼ 숫자 키보드 표시 ▼▼▼ */
         }
         #results {
             flex: 1;
@@ -67,11 +68,11 @@
             line-height: 30px;
         }
         #results div {
-            text-align: left; /* 왼쪽 정렬 */
-            padding-left: 10px; /* 들여쓰기 */
+            text-align: left;
+            padding-left: 10px;
         }
         .negative {
-            color: red; /* 음수 빨간색 표시 */
+            color: red;
         }
         #results div,
         #numbering div {
@@ -93,19 +94,19 @@
     </style>
     <script>
         let initialPrefix = '14';
-        const MAX_LINES = 9; // 최대 입력 줄 수
+        const MAX_LINES = 9;
 
         function adjustTargetNumber(value) {
             const targetInput = document.getElementById('targetNumber');
             const newValue = parseInt(targetInput.value) + value;
             targetInput.value = newValue;
             initialPrefix = targetInput.value.toString().slice(0, 2);
-            calculateResults(); // 결과만 갱신 (입력창 초기화 없음)
+            calculateResults();
         }
 
         function initializeInput() {
             const inputNumbers = document.getElementById('inputNumbers');
-            inputNumbers.value = initialPrefix; // 초기 접두사 설정
+            inputNumbers.value = initialPrefix;
             calculateResults();
         }
 
@@ -117,14 +118,11 @@
                 if (num.length === 3) {
                     const n = parseInt(num);
                     const result = ((target - n) * 0.125);
-                    
-                    // ▼▼▼ 수정된 부분 ▼▼▼
-                    if (result === 0) return ''; // 0.0 숨김
+                    if (result === 0) return '';
                     const formatted = result.toFixed(1);
                     return result < 0 
                         ? `<span class="negative">${formatted}</span>` 
                         : formatted;
-                    // ▲▲▲ 수정된 부분 ▲▲▲
                 }
                 return num.length > 0 ? '<span style="color:red">⚠</span>' : '';
             });
@@ -136,17 +134,20 @@
         function handleInput(event) {
             const input = event.target;
             const isBackspace = event.inputType === 'deleteContentBackward';
-            let values = input.value.replace(/[^\d\n]/g, '').split('\n').map(line => line.slice(0, 3));
+            
+            // 숫자와 줄바꿈만 허용하는 강력한 필터링 ▼▼▼
+            let values = input.value
+                .replace(/[^\d\n]/g, '') // 숫자와 줄바꿈 외 문자 제거
+                .split('\n')
+                .map(line => line.slice(0, 3));
 
-            // ▼▼▼ 9줄 제한 및 접두사 동기화 ▼▼▼
             if (values.length < MAX_LINES && !isBackspace && values[values.length - 1].length === 3) {
                 const newPrefix = values[values.length - 1].slice(0, 2);
-                values.push(newPrefix); // 새 줄에 접두사 추가
+                values.push(newPrefix);
             } else if (isBackspace && values.length > 1 && values[values.length - 1].length === 0) {
-                values.pop(); // 빈 줄 삭제
+                values.pop();
             }
 
-            // 접두사 동기화 (9줄까지만 적용)
             for (let i = 1; i < Math.min(values.length, MAX_LINES); i++) {
                 const prevLine = values[i - 1];
                 const currentPrefix = prevLine.slice(0, 2);
@@ -155,11 +156,9 @@
                 }
             }
 
-            // 9줄 초과 시 자동 삭제
             values = values.slice(0, MAX_LINES);
-            // ▲▲▲ 9줄 제한 및 접두사 동기화 ▲▲▲
-
             const newValue = values.join('\n');
+            
             if (newValue !== input.value) {
                 input.value = newValue;
             }
@@ -167,7 +166,7 @@
             calculateResults();
 
             const cursorPos = input.selectionStart;
-            const currentLineIndex = (input.value.substr(0, cursorPos).split('\n').length - 1);
+            const currentLineIndex = (input.value.substr(0, cursorPos).split('\n').length - 1;
             setTimeout(() => {
                 const lineStart = input.value.split('\n').slice(0, currentLineIndex).join('\n').length + 1;
                 input.setSelectionRange(lineStart + values[currentLineIndex].length, lineStart + values[currentLineIndex].length);
@@ -175,12 +174,15 @@
         }
 
         window.onload = function () {
-            document.getElementById('targetNumber').value = 144; // 초기 목표수 설정
-            initialPrefix = document.getElementById('targetNumber').value.toString().slice(0, 2); // 초기 접두사 설정
+            document.getElementById('targetNumber').value = 144;
+            initialPrefix = document.getElementById('targetNumber').value.toString().slice(0, 2);
             const inputNumbers = document.getElementById('inputNumbers');
             initializeInput();
             inputNumbers.addEventListener('input', handleInput);
-            inputNumbers.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault()); // Enter 키 방지
+            inputNumbers.addEventListener('keydown', e => {
+                if (e.key === 'Enter') e.preventDefault(); // Enter 키 방지
+                if (!/\d|Backspace|Delete|Arrow/.test(e.key)) e.preventDefault(); // 숫자 외 입력 방지 ▼▼▼
+            });
         }
     </script>
 </head>
@@ -193,7 +195,8 @@
     </div>
     <div id="input-container">
         <div id="numbering"></div>
-        <textarea id="inputNumbers" rows="9"></textarea>
+        <!-- inputmode="numeric" 추가 ▼▼▼ -->
+        <textarea id="inputNumbers" rows="9" inputmode="numeric"></textarea>
         <div id="results"></div>
     </div>
 </body>

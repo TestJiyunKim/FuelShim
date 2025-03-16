@@ -54,7 +54,7 @@
             font-size: 16px;
             line-height: 30px;
             background-color: #fff;
-            inputmode: numeric; /* ▼▼▼ 숫자 키보드 표시 ▼▼▼ */
+            inputmode: numeric;
         }
         #results {
             flex: 1;
@@ -117,12 +117,12 @@
             const results = numbers.map(num => {
                 if (num.length === 3) {
                     const n = parseInt(num);
-                    const result = ((target - n) * 0.125);
-                    if (result === 0) return '';
-                    const formatted = result.toFixed(1);
+                    const result = Math.floor(((target - n) * 0.125) * 10) / 10; // 소수점 둘째 자리에서 버림
+                    
+                    if (result === 0) return '<br>';
                     return result < 0 
-                        ? `<span class="negative">${formatted}</span>` 
-                        : formatted;
+                        ? `<span class="negative">${result}</span>` 
+                        : result;
                 }
                 return num.length > 0 ? '<span style="color:red">⚠</span>' : '';
             });
@@ -134,12 +134,7 @@
         function handleInput(event) {
             const input = event.target;
             const isBackspace = event.inputType === 'deleteContentBackward';
-            
-            // 숫자와 줄바꿈만 허용하는 강력한 필터링 ▼▼▼
-            let values = input.value
-                .replace(/[^\d\n]/g, '') // 숫자와 줄바꿈 외 문자 제거
-                .split('\n')
-                .map(line => line.slice(0, 3));
+            let values = input.value.replace(/[^\d\n]/g, '').split('\n').map(line => line.slice(0, 3));
 
             if (values.length < MAX_LINES && !isBackspace && values[values.length - 1].length === 3) {
                 const newPrefix = values[values.length - 1].slice(0, 2);
@@ -157,20 +152,13 @@
             }
 
             values = values.slice(0, MAX_LINES);
+
             const newValue = values.join('\n');
-            
             if (newValue !== input.value) {
                 input.value = newValue;
             }
 
             calculateResults();
-
-            const cursorPos = input.selectionStart;
-            const currentLineIndex = (input.value.substr(0, cursorPos).split('\n').length - 1;
-            setTimeout(() => {
-                const lineStart = input.value.split('\n').slice(0, currentLineIndex).join('\n').length + 1;
-                input.setSelectionRange(lineStart + values[currentLineIndex].length, lineStart + values[currentLineIndex].length);
-            }, 0);
         }
 
         window.onload = function () {
@@ -179,10 +167,7 @@
             const inputNumbers = document.getElementById('inputNumbers');
             initializeInput();
             inputNumbers.addEventListener('input', handleInput);
-            inputNumbers.addEventListener('keydown', e => {
-                if (e.key === 'Enter') e.preventDefault(); // Enter 키 방지
-                if (!/\d|Backspace|Delete|Arrow/.test(e.key)) e.preventDefault(); // 숫자 외 입력 방지 ▼▼▼
-            });
+            inputNumbers.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
         }
     </script>
 </head>
@@ -195,7 +180,6 @@
     </div>
     <div id="input-container">
         <div id="numbering"></div>
-        <!-- inputmode="numeric" 추가 ▼▼▼ -->
         <textarea id="inputNumbers" rows="9" inputmode="numeric"></textarea>
         <div id="results"></div>
     </div>

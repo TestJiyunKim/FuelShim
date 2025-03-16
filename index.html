@@ -66,11 +66,6 @@
             font-size: 16px;
             line-height: 30px;
         }
-        #results div,
-        #numbering div {
-            margin: 0;
-            padding: 0;
-        }
         button {
             padding: 10px 20px;
             background-color: #007bff;
@@ -89,98 +84,42 @@
             const targetInput = document.getElementById('targetNumber');
             targetInput.value = parseInt(targetInput.value) + value;
             initializeInput();
-            calculateResults();
         }
 
         function initializeInput() {
-            const target = document.getElementById('targetNumber').value;
-            const prefix = target.substring(0, 2);
-            document.getElementById('inputNumbers').value = prefix;
-            calculateResults();
-        }
-
-        function calculateResults() {
-            const target = parseInt(document.getElementById('targetNumber').value);
-            const numbers = document.getElementById('inputNumbers').value.split('\n')
-                .map(num => parseInt(num.trim()) || 0);
-            
-            const resultArea = document.getElementById('results');
-            const numberingArea = document.getElementById('numbering');
-
-            resultArea.innerHTML = '';
-            numberingArea.innerHTML = '';
-
-            numbers.forEach((num, index) => {
-                const lineNumber = index + 1;
-                let result = '';
-
-                if (num >= 100 && num <= 999) {
-                    result = ((target - num) * 0.125).toFixed(1);
-                } else if (num > 0) {
-                    result = '<span style="color:red">잘못된 입력</span>';
-                }
-
-                numberingArea.innerHTML += `<div>${lineNumber}.</div>`;
-                resultArea.innerHTML += `<div>${result}</div>`;
-            });
+            document.getElementById('inputNumbers').value = '';
         }
 
         function handleInput(event) {
             const input = event.target;
-            const isBackspace = event.inputType === 'deleteContentBackward';
-
             let value = input.value.replace(/[^\d\n]/g, '');
-            let lines = value.split('\n');
-            let newLines = [];
-            let prefix = document.getElementById('targetNumber').value.substring(0, 2);
-
-            for (let i = 0; i < lines.length; i++) {
-                let cleanLine = lines[i].replace(/\D/g, '');
-                
-                // 첫 번째 줄은 목표 수 앞 두 자리 유지
-                if (i === 0 && cleanLine.length === 0) {
-                    cleanLine = prefix;
+            const lines = value.split('\n');
+            const targetPrefix = document.getElementById('targetNumber').value.substring(0, 2);
+            let formattedLines = [];
+            
+            lines.forEach((line, index) => {
+                let cleanLine = line.replace(/\D/g, '');
+                if (index === 0 && cleanLine.length < 3) {
+                    cleanLine = targetPrefix + cleanLine;
                 }
-
-                // 백스페이스 동작 처리
-                if (isBackspace && cleanLine.length < 3) {
-                    if (i > 0) {
-                        let prevLine = newLines[i - 1];
-                        cleanLine = prevLine.substring(0, 2);
-                    } else {
-                        cleanLine = prefix;
+                if (cleanLine.length >= 3) {
+                    formattedLines.push(cleanLine.substring(0, 3));
+                    if (cleanLine.length > 3) {
+                        formattedLines.push(cleanLine.substring(0, 2));
                     }
-                }
-
-                // 3자리 완성 시 엔터 자동 추가
-                if (cleanLine.length === 3 && i === lines.length - 1) {
-                    newLines.push(cleanLine);
-                    newLines.push(cleanLine.substring(0, 2));
                 } else {
-                    newLines.push(cleanLine);
+                    formattedLines.push(cleanLine);
                 }
-            }
-
-            input.value = newLines.join('\n');
-
-            setTimeout(() => {
-                input.selectionStart = input.selectionEnd = input.value.length;
-            }, 0);
-
-            calculateResults();
+            });
+            
+            input.value = formattedLines.join('\n');
         }
 
         window.onload = function() {
             document.getElementById('targetNumber').value = 144;
             const inputNumbers = document.getElementById('inputNumbers');
-
             initializeInput();
             inputNumbers.addEventListener('input', handleInput);
-            inputNumbers.addEventListener('keydown', function (event) {
-                if (event.key === 'Enter') {
-                    event.preventDefault();
-                }
-            });
         }
     </script>
 </head>

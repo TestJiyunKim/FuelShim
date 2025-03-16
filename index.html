@@ -105,7 +105,7 @@
                     let result = ((target - num) * 0.125).toFixed(1);
                     resultArea.innerHTML += `<div>${result}</div>`;
                     numberingArea.innerHTML += `<div>${index + 1}.</div>`;
-                } else if (!isNaN(num)) {
+                } else if (num) {
                     resultArea.innerHTML += `<div style="color: red;">잘못된 입력</div>`;
                     numberingArea.innerHTML += `<div>${index + 1}.</div>`;
                 }
@@ -115,18 +115,22 @@
         function autoNumbering(event) {
             const input = event.target;
             let value = input.value.replace(/[^\d\n]/g, ''); // 숫자와 줄바꿈만 허용
-
-            // 줄바꿈 기준으로 숫자 리스트 처리
             let numbers = value.split('\n').map(num => num.trim());
 
             // 유효한 숫자만 남기기 (100~999 범위)
             numbers = numbers.filter(num => num !== '' && !isNaN(num) && num >= 100 && num <= 999);
 
-            // 숫자가 3자리 입력되면 자동 줄바꿈
+            let newValue = numbers.join('\n'); // 입력 필드 값 업데이트
+            input.value = newValue;
+
+            // 숫자가 3자리 입력되면 자동 줄바꿈 및 커서 이동
             if (numbers.length > 0 && numbers[numbers.length - 1].length === 3) {
-                input.value = numbers.join('\n') + '\n'; // 줄바꿈 추가
-            } else {
-                input.value = numbers.join('\n'); // 유효한 숫자만 유지
+                input.value += '\n'; // 줄바꿈 추가
+
+                // 커서를 자동으로 다음 줄 시작 위치로 이동
+                setTimeout(() => {
+                    input.setSelectionRange(input.value.length, input.value.length);
+                }, 0);
             }
 
             calculateResults();
@@ -154,7 +158,7 @@
     <br>
     <div id="input-container">
         <div id="numbering"></div>
-        <textarea id="inputNumbers" rows="9" placeholder="숫자를 입력하세요 (100~999)" inputmode="numeric" pattern="[0-9]*"></textarea>
+        <textarea id="inputNumbers" rows="9" placeholder="숫자를 입력하세요 (엔터로 구분)" inputmode="numeric"></textarea>
         <div id="results"></div>
     </div>
 </body>

@@ -117,7 +117,7 @@
             const results = numbers.map(num => {
                 if (num.length === 3) {
                     const n = parseInt(num);
-                    const result = Math.floor(((target - n) * 0.125) * 10) / 10; // 소수점 둘째 자리에서 버림
+                    const result = Math.floor((target - n) * 12.5) / 10; // 소수점 둘째 자리에서 버림
                     
                     if (result === 0) return '<br>';
                     return result < 0 

@@ -129,7 +129,7 @@
                 return num.length > 0 ? '<span style="color:red">⚠</span>' : '';
             });
 
-            document.getElementById('results').innerHTML = results.map(r => r ? `<div>${r}</div>` : '<div></div>').join('');
+            document.getElementById('results').innerHTML = results.map(r => `<div>${r}</div>`).join('');
             document.getElementById('numbering').innerHTML = numbers.map((_, i) => `<div>${i + 1}.</div>`).join('');
         }
 

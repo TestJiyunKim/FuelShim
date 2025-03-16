@@ -115,23 +115,29 @@
         function autoNumbering(event) {
             const input = event.target;
             let value = input.value.replace(/[^\d\n]/g, ''); // 숫자와 줄바꿈만 허용
-            let numbers = value.split('\n').map(num => num.trim());
 
-            // 유효한 숫자만 남기기 (100~999 범위)
-            numbers = numbers.filter(num => num !== '' && !isNaN(num) && num >= 100 && num <= 999);
+            // 숫자가 3자리 이상 입력되면 자동으로 줄바꿈
+            let lines = value.split('\n');
+            let newLines = [];
 
-            let newValue = numbers.join('\n'); // 입력 필드 값 업데이트
-            input.value = newValue;
+            lines.forEach(line => {
+                let cleanLine = line.replace(/\D/g, ''); // 숫자만 남기기
+                if (cleanLine.length >= 3) {
+                    newLines.push(cleanLine.substring(0, 3)); // 3자리만 저장
+                    if (cleanLine.length > 3) {
+                        newLines.push(cleanLine.substring(3)); // 나머지는 새로운 줄로 이동
+                    }
+                } else {
+                    newLines.push(cleanLine);
+                }
+            });
 
-            // 숫자가 3자리 입력되면 자동 줄바꿈 및 커서 이동
-            if (numbers.length > 0 && numbers[numbers.length - 1].length === 3) {
-                input.value += '\n'; // 줄바꿈 추가
+            input.value = newLines.join('\n'); // 다시 입력창에 적용
 
-                // 커서를 자동으로 다음 줄 시작 위치로 이동
-                setTimeout(() => {
-                    input.setSelectionRange(input.value.length, input.value.length);
-                }, 0);
-            }
+            // 커서 위치 조정 (자동 줄바꿈 후 마지막 위치로 이동)
+            setTimeout(() => {
+                input.setSelectionRange(input.value.length, input.value.length);
+            }, 0);
 
             calculateResults();
         }

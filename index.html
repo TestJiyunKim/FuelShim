@@ -117,14 +117,11 @@
             const results = numbers.map(num => {
                 if (num.length === 3) {
                     const n = parseInt(num);
+                    if (n === target) return ''; // 목표수와 같으면 빈 문자열 반환 (줄 건너뜀)
                     let result = (target - n) * 0.125;
-
-                    // ▼▼▼ 수정: Math.floor → Math.trunc로 변경 ▼▼▼
                     result = Math.trunc(result * 10) / 10; // 소수점 둘째 자리 버림
-                    if (result === 0) return ''; // 0.0인 경우 빈 문자열 반환 (줄바꿈 처리)
+                    if (result === 0) return ''; // 0.0인 경우 빈 문자열 반환
                     const formatted = result.toFixed(1).replace(/\.0$/, ''); // .0 제거
-                    // ▲▲▲ 수정 완료 ▲▲▲
-
                     return result < 0 
                         ? `<span class="negative">${formatted}</span>` 
                         : formatted;
@@ -132,7 +129,7 @@
                 return num.length > 0 ? '<span style="color:red">⚠</span>' : '';
             });
 
-            document.getElementById('results').innerHTML = results.map(r => `<div>${r}</div>`).join('');
+            document.getElementById('results').innerHTML = results.map(r => r ? `<div>${r}</div>` : '<div></div>').join('');
             document.getElementById('numbering').innerHTML = numbers.map((_, i) => `<div>${i + 1}.</div>`).join('');
         }
 
@@ -141,7 +138,7 @@
             const isBackspace = event.inputType === 'deleteContentBackward';
             let values = input.value.replace(/[^\d\n]/g, '').split('\n').map(line => line.slice(0, 3));
 
-            // ▼▼▼ 9줄 제한 및 접두사 동기화 ▼▼▼
+            // 9줄 제한 및 접두사 동기화
             if (values.length < MAX_LINES && !isBackspace && values[values.length - 1].length === 3) {
                 const newPrefix = values[values.length - 1].slice(0, 2);
                 values.push(newPrefix); // 새 줄에 접두사 추가
@@ -160,7 +157,6 @@
 
             // 9줄 초과 시 자동 삭제
             values = values.slice(0, MAX_LINES);
-            // ▲▲▲ 9줄 제한 및 접두사 동기화 ▲▲▲
 
             const newValue = values.join('\n');
             if (newValue !== input.value) {

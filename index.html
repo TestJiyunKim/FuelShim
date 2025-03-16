@@ -70,14 +70,14 @@
         #results div {
             text-align: left; /* 왼쪽 정렬 */
             padding-left: 10px; /* 들여쓰기 */
+            min-height: 30px; /* 줄 간격 강제 지정 */
+            white-space: nowrap; /* 텍스트 줄바꿈 방지 */
         }
         .negative {
             color: red; /* 음수 빨간색 표시 */
         }
-        #results div,
         #numbering div {
-            margin: 0;
-            padding: 0;
+            min-height: 30px; /* 줄 간격 동일하게 유지 */
         }
         button {
             padding: 10px 20px;
@@ -115,61 +115,62 @@
             const numbers = document.getElementById('inputNumbers').value.split('\n');
             
             const results = numbers.map(num => {
-                if (num.length === 3) {
-                    const n = parseInt(num);
-                    if (n === target) return ''; // 목표수와 같으면 빈 문자열 반환 (줄 건너뜀)
-                    let result = (target - n) * 0.125;
-                    result = Math.trunc(result * 10) / 10; // 소수점 둘째 자리 버림
-                    if (result === 0) return ''; // 0.0인 경우 빈 문자열 반환
-                    const formatted = result.toFixed(1).replace(/\.0$/, ''); // .0 제거
-                    return result < 0 
-                        ? `<span class="negative">${formatted}</span>` 
-                        : formatted;
+                if (num.length !== 3) {
+                    return num.length > 0 ? '<span style="color:red">⚠</span>' : '';
                 }
-                return num.length > 0 ? '<span style="color:red">⚠</span>' : '';
+                const n = parseInt(num);
+                if (n === target) return ''; // 목표수와 같으면 빈 문자열 반환 (줄 건너뜀)
+                const diff = target - n;
+                const result = Math.trunc(diff * 0.125 * 10) / 10; // 소수점 둘째 자리 버림
+                if (result === 0) return ''; // 0.0인 경우 빈 문자열 반환
+                const formatted = result.toFixed(1).replace(/\.0$/, ''); // .0 제거
+                return result < 0 
+                    ? `<span class="negative">${formatted}</span>` 
+                    : formatted;
             });
 
-            document.getElementById('results').innerHTML = results.map(r => `<div>${r}</div>`).join('');
-            document.getElementById('numbering').innerHTML = numbers.map((_, i) => `<div>${i + 1}.</div>`).join('');
+            // ▼▼▼ 결과 강제 동기화 ▼▼▼
+            document.getElementById('results').innerHTML = results
+                .map(r => `<div>${r}</div>`)
+                .join('');
+            document.getElementById('numbering').innerHTML = numbers
+                .map((_, i) => `<div>${i + 1}.</div>`)
+                .join('');
         }
 
         function handleInput(event) {
             const input = event.target;
             const isBackspace = event.inputType === 'deleteContentBackward';
-            let values = input.value.replace(/[^\d\n]/g, '').split('\n').map(line => line.slice(0, 3));
+            let values = input.value.replace(/[^\d\n]/g, '').split('\n')
+                .map(line => line.slice(0, 3))
+                .filter((_, i) => i < MAX_LINES); // 9줄 초과 방지
 
-            // 9줄 제한 및 접두사 동기화
-            if (values.length < MAX_LINES && !isBackspace && values[values.length - 1].length === 3) {
-                const newPrefix = values[values.length - 1].slice(0, 2);
-                values.push(newPrefix); // 새 줄에 접두사 추가
-            } else if (isBackspace && values.length > 1 && values[values.length - 1].length === 0) {
-                values.pop(); // 빈 줄 삭제
-            }
-
-            // 접두사 동기화 (9줄까지만 적용)
-            for (let i = 1; i < Math.min(values.length, MAX_LINES); i++) {
-                const prevLine = values[i - 1];
-                const currentPrefix = prevLine.slice(0, 2);
-                if (values[i].length === 0) {
-                    values[i] = currentPrefix;
+            // ▼▼▼ 접두사 강제 동기화 ▼▼▼
+            for (let i = 0; i < values.length; i++) {
+                if (i === 0 && values[i].length === 0) {
+                    values[i] = initialPrefix;
+                } else if (i > 0 && values[i].length === 0) {
+                    values[i] = values[i - 1].slice(0, 2);
                 }
             }
 
-            // 9줄 초과 시 자동 삭제
-            values = values.slice(0, MAX_LINES);
-
-            const newValue = values.join('\n');
-            if (newValue !== input.value) {
-                input.value = newValue;
+            // ▼▼▼ 새 줄 자동 추가 ▼▼▼
+            if (!isBackspace && values.length < MAX_LINES && values[values.length - 1].length === 3) {
+                values.push(values[values.length - 1].slice(0, 2));
             }
 
+            input.value = values.join('\n');
             calculateResults();
 
-            const cursorPos = input.selectionStart;
-            const currentLineIndex = (input.value.substr(0, cursorPos).split('\n').length - 1);
+            // ▼▼▼ 커서 위치 보정 ▼▼▼
             setTimeout(() => {
-                const lineStart = input.value.split('\n').slice(0, currentLineIndex).join('\n').length + 1;
-                input.setSelectionRange(lineStart + values[currentLineIndex].length, lineStart + values[currentLineIndex].length);
+                const cursorPos = input.selectionStart;
+                const currentLine = input.value.substr(0, cursorPos).split('\n').length - 1;
+                const lineContent = input.value.split('\n')[currentLine] || '';
+                input.setSelectionRange(
+                    input.value.split('\n').slice(0, currentLine).join('\n').length + 1 + lineContent.length,
+                    input.value.split('\n').slice(0, currentLine).join('\n').length + 1 + lineContent.length
+                );
             }, 0);
         }
 

@@ -33,38 +33,38 @@
             gap: 10px;
         }
         #numbering {
-            width: 30px; /* 넘버링 폭 더 줄임 */
+            width: 30px;
             text-align: right;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
-            background-color: #f0f0f0; /* 연한 흑색 배경 */
+            background-color: #f0f0f0;
             overflow-y: auto;
-            height: 270px; /* 9줄 높이 */
+            height: 270px;
             font-size: 16px;
-            line-height: 30px; /* 줄 높이 조정 */
+            line-height: 30px;
         }
         #inputNumbers {
-            width: 80px; /* 5자 고정 폭 */
-            height: 270px; /* 9줄 높이 */
+            width: 80px;
+            height: 270px;
             resize: none;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 16px;
-            line-height: 30px; /* 줄 높이 조정 */
-            background-color: #fff; /* 흰색 배경 유지 */
+            line-height: 30px;
+            background-color: #fff;
         }
         #results {
-            flex: 1; /* 화면에 맞춰 유동적으로 폭 조정 */
-            background-color: #f0f0f0; /* 연한 흑색 배경 */
+            flex: 1;
+            background-color: #f0f0f0;
             border: 1px solid #ddd;
             border-radius: 5px;
             padding: 10px;
             overflow-y: auto;
-            height: 270px; /* 9줄 높이 */
+            height: 270px;
             font-size: 16px;
-            line-height: 30px; /* 줄 높이 조정 */
+            line-height: 30px;
         }
         #results div,
         #numbering div {
@@ -89,7 +89,7 @@
             let targetInput = document.getElementById('targetNumber');
             let newValue = parseInt(targetInput.value) + value;
             targetInput.value = newValue;
-            calculateResults(); // 목표수가 변경되면 결과 다시 계산
+            calculateResults();
         }
 
         function calculateResults() {
@@ -105,7 +105,7 @@
                     let result = ((target - num) * 0.125).toFixed(1);
                     resultArea.innerHTML += `<div>${result}</div>`;
                     numberingArea.innerHTML += `<div>${index + 1}.</div>`;
-                } else if (num) {
+                } else if (!isNaN(num)) {
                     resultArea.innerHTML += `<div style="color: red;">잘못된 입력</div>`;
                     numberingArea.innerHTML += `<div>${index + 1}.</div>`;
                 }
@@ -114,23 +114,22 @@
 
         function autoNumbering(event) {
             const input = event.target;
-            let value = input.value.replace(/\D/g, ''); // 숫자만 허용
+            let value = input.value.replace(/[^\d\n]/g, ''); // 숫자와 줄바꿈만 허용
 
-            // 숫자 3개 입력 시 자동으로 엔터 추가
-            if (value.length === 3) {
-                value += '\n'; // 엔터 추가
-                input.value = value; // 값 업데이트
+            // 줄바꿈 기준으로 숫자 리스트 처리
+            let numbers = value.split('\n').map(num => num.trim());
 
-                // 커서 위치를 다음 줄로 이동
-                const lines = input.value.split('\n');
-                const currentLine = lines.length - 1;
-                const cursorPosition = lines.slice(0, currentLine).join('\n').length + 1;
-                input.setSelectionRange(cursorPosition, cursorPosition);
+            // 유효한 숫자만 남기기 (100~999 범위)
+            numbers = numbers.filter(num => num !== '' && !isNaN(num) && num >= 100 && num <= 999);
 
-                calculateResults(); // 결과 업데이트
+            // 숫자가 3자리 입력되면 자동 줄바꿈
+            if (numbers.length > 0 && numbers[numbers.length - 1].length === 3) {
+                input.value = numbers.join('\n') + '\n'; // 줄바꿈 추가
             } else {
-                input.value = value; // 숫자 외 문자 제거
+                input.value = numbers.join('\n'); // 유효한 숫자만 유지
             }
+
+            calculateResults();
         }
 
         window.onload = function () {
@@ -139,7 +138,7 @@
             inputNumbers.addEventListener('input', autoNumbering);
             inputNumbers.addEventListener('keydown', function (event) {
                 if (event.key === 'Enter') {
-                    calculateResults(); // 엔터를 누를 때 결과 업데이트
+                    calculateResults();
                 }
             });
         }
@@ -155,7 +154,7 @@
     <br>
     <div id="input-container">
         <div id="numbering"></div>
-        <textarea id="inputNumbers" rows="9" placeholder="숫자를 입력하세요 (엔터로 구분)" inputmode="numeric"></textarea>
+        <textarea id="inputNumbers" rows="9" placeholder="숫자를 입력하세요 (100~999)" inputmode="numeric" pattern="[0-9]*"></textarea>
         <div id="results"></div>
     </div>
 </body>

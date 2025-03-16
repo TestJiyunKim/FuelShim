@@ -140,26 +140,67 @@
         function handleInput(event) {
             const input = event.target;
             const isBackspace = event.inputType === 'deleteContentBackward';
+            
+            // 현재 커서 위치 저장
+            const cursorPos = input.selectionStart;
+            const prevValue = input.value;
+            const prevLines = prevValue.split('\n');
+            
+            // 현재 커서가 있는 줄 계산
+            let currentLine = 0;
+            let posInLine = cursorPos;
+            for (let i = 0; i < prevLines.length; i++) {
+                const lineEnd = prevLines[i].length + 1; // +1은 개행문자
+                if (posInLine < lineEnd) {
+                    currentLine = i;
+                    posInLine = Math.min(posInLine, prevLines[i].length);
+                    break;
+                }
+                posInLine -= lineEnd;
+            }
+
+            // 입력값 처리
             let values = input.value.replace(/[^\d\n]/g, '').split('\n')
                 .map(line => line.slice(0, 3))
                 .filter((_, i) => i < MAX_LINES);
 
-            // 접두사 동기화
-            for (let i = 0; i < values.length; i++) {
-                if (i === 0 && values[i].length === 0) {
-                    values[i] = initialPrefix;
-                } else if (i > 0 && values[i].length === 0) {
+            // 접두사 동기화 (초기 접두사 강제 적용 제거)
+            for (let i = 1; i < values.length; i++) {
+                if (values[i].length === 0) {
                     values[i] = values[i - 1].slice(0, 2);
                 }
             }
 
-            // 새 줄 자동 추가 (3자리 입력 시만)
+            // 새 줄 자동 추가
             if (!isBackspace && values.length < MAX_LINES && values[values.length - 1].length === 3) {
                 values.push(values[values.length - 1].slice(0, 2));
             }
 
-            input.value = values.join('\n');
-            calculateResults();
+            const newValue = values.join('\n');
+            
+            // 값이 변경된 경우에만 업데이트
+            if (newValue !== prevValue) {
+                input.value = newValue;
+                calculateResults();
+                
+                // 새 커서 위치 계산
+                const newLines = newValue.split('\n');
+                let newCursorPos = 0;
+                for (let i = 0; i < currentLine; i++) {
+                    if (i < newLines.length) {
+                        newCursorPos += newLines[i].length + 1;
+                    }
+                }
+                newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
+                newCursorPos = Math.min(newCursorPos, newValue.length);
+                
+                // 커서 위치 설정
+                setTimeout(() => {
+                    input.setSelectionRange(newCursorPos, newCursorPos);
+                }, 0);
+            } else {
+                calculateResults();
+            }
         }
 
         window.onload = function () {

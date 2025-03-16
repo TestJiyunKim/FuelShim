@@ -125,7 +125,7 @@
                 const diff = target - n;
                 const result = Math.trunc(diff * 0.125 * 10) / 10; // 소수점 둘째 자리 버림
 
-                // 수정된 부분: 절대값 0.1 이하인 경우 빈 줄 처리
+                // 절대값 0.1 이하인 경우 빈 줄 처리
                 if (Math.abs(result) <= 0.1) return '';
 
                 const formatted = result.toFixed(1).replace(/\.0$/, ''); // .0 제거
@@ -170,18 +170,11 @@
                 .map(line => line.slice(0, 3))
                 .slice(0, MAX_LINES);
 
-            // 접두사 동기화 (빈 줄인 경우에만 적용)
-            for (let i = 1; i < values.length; i++) {
-                if (values[i] === '') {  // 빈 줄인 경우에만 접두사 복사
-                    values[i] = values[i - 1].slice(0, 2);
-                }
-            }
-
             // 새 줄 자동 추가 (3자리 입력 시)
             let newLineAdded = false;
             if (!isBackspace && values.length < MAX_LINES && values[values.length - 1].length === 3) {
-                values.push(values[values.length - 1].slice(0, 2));
-                newLineAdded = true; // 새 줄 추가 플래그
+                values.push(values[values.length - 1].slice(0, 2)); // 새 줄에 접두사 추가
+                newLineAdded = true;
             }
 
             const newValue = values.join('\n');
@@ -192,10 +185,8 @@
                 // 커서 위치 계산
                 let newCursorPos;
                 if (newLineAdded) {
-                    // 새 줄이 추가된 경우: 새 줄의 3번째 위치로 이동 (접두사 다음 위치)
                     newCursorPos = newValue.length;
                 } else {
-                    // 기존 로직 유지
                     const newLines = newValue.split('\n');
                     newCursorPos = 0;
                     for (let i = 0; i < currentLine; i++) {
@@ -204,7 +195,6 @@
                     newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
                 }
 
-                // 커서 위치 설정
                 requestAnimationFrame(() => {
                     input.setSelectionRange(newCursorPos, newCursorPos);
                 });

@@ -116,13 +116,14 @@
             
             const results = numbers.map(num => {
                 if (num.length !== 3) {
-                    return num.length > 0 ? '' : ''; 
+                    return num.length > 0 ? '<span style="color:red">⚠</span>' : '';
                 }
                 const n = parseInt(num);
+                if (n === target) return ''; // 목표수와 같으면 빈 문자열 반환 (줄 건너뜀)
                 const diff = target - n;
-                const result = Math.trunc(diff * 0.125 * 10) / 10;
-                if (result === 0) return ''; 
-                const formatted = result.toFixed(1).replace(/\.0$/, '');
+                const result = Math.trunc(diff * 0.125 * 10) / 10; // 소수점 둘째 자리 버림
+                if (result === 0) return ''; // 0.0인 경우 빈 문자열 반환
+                const formatted = result.toFixed(1).replace(/\.0$/, ''); // .0 제거
                 return result < 0 
                     ? `<span class="negative">${formatted}</span>` 
                     : formatted;
@@ -143,6 +144,7 @@
                 .map(line => line.slice(0, 3))
                 .filter((_, i) => i < MAX_LINES);
 
+            // 접두사 동기화
             for (let i = 0; i < values.length; i++) {
                 if (i === 0 && values[i].length === 0) {
                     values[i] = initialPrefix;
@@ -151,22 +153,13 @@
                 }
             }
 
+            // 새 줄 자동 추가
             if (!isBackspace && values.length < MAX_LINES && values[values.length - 1].length === 3) {
                 values.push(values[values.length - 1].slice(0, 2));
             }
 
             input.value = values.join('\n');
             calculateResults();
-
-            setTimeout(() => {
-                const cursorPos = input.selectionStart;
-                const currentLine = input.value.substr(0, cursorPos).split('\n').length - 1;
-                const lineContent = input.value.split('\n')[currentLine] || '';
-                input.setSelectionRange(
-                    input.value.split('\n').slice(0, currentLine).join('\n').length + 1 + lineContent.length,
-                    input.value.split('\n').slice(0, currentLine).join('\n').length + 1 + lineContent.length
-                );
-            }, 0);
         }
 
         window.onload = function () {

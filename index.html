@@ -149,12 +149,12 @@
             const prevValue = input.value;
             const prevLines = prevValue.split('\n');
             
-            // 현재 커서가 있는 줄과 위치 계산
+            // 현재 커서가 있는 줄 계산
             let currentLine = 0;
             let posInLine = cursorPos;
             let accumulatedLength = 0;
             for (; currentLine < prevLines.length; currentLine++) {
-                const lineLength = prevLines[currentLine].length + 1; // 개행문자 포함 길이
+                const lineLength = prevLines[currentLine].length + 1; // 개행문자 포함
                 if (posInLine <= accumulatedLength + lineLength) {
                     posInLine -= accumulatedLength;
                     break;
@@ -168,16 +168,18 @@
                 .map(line => line.slice(0, 3))
                 .slice(0, MAX_LINES);
 
-            // 접두사 동기화 (두 번째 줄부터만 적용)
+            // 새 줄 추가 여부 확인
+            let newLineAdded = false;
+            if (!isBackspace && values.length < MAX_LINES && values[values.length - 1].length === 3) {
+                values.push(values[values.length - 1].slice(0, 2));
+                newLineAdded = true; // 새 줄 추가 플래그
+            }
+
+            // 접두사 동기화
             for (let i = 1; i < values.length; i++) {
                 if (values[i].length < 2) {
                     values[i] = values[i - 1].slice(0, 2) + values[i].slice(2);
                 }
-            }
-
-            // 새 줄 자동 추가 (3자리 입력 시)
-            if (!isBackspace && values.length < MAX_LINES && values[values.length - 1].length === 3) {
-                values.push(values[values.length - 1].slice(0, 2));
             }
 
             const newValue = values.join('\n');
@@ -185,14 +187,20 @@
                 input.value = newValue;
                 calculateResults();
 
-                // 새 커서 위치 계산
-                const newLines = newValue.split('\n');
-                let newCursorPos = 0;
-                for (let i = 0; i < currentLine; i++) {
-                    newCursorPos += (newLines[i]?.length || 0) + 1; // 개행문자 포함
+                // 커서 위치 계산
+                let newCursorPos;
+                if (newLineAdded) {
+                    // 새 줄이 추가된 경우: 새 줄의 3번째 위치로 이동 (접두사 다음 위치)
+                    newCursorPos = newValue.length;
+                } else {
+                    // 기존 로직 유지
+                    const newLines = newValue.split('\n');
+                    newCursorPos = 0;
+                    for (let i = 0; i < currentLine; i++) {
+                        newCursorPos += (newLines[i]?.length || 0) + 1;
+                    }
+                    newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
                 }
-                newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
-                newCursorPos = Math.min(newCursorPos, newValue.length);
 
                 // 커서 위치 설정
                 requestAnimationFrame(() => {

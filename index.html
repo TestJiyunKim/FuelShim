@@ -122,10 +122,12 @@
                     return num.length > 0 ? '<span style="color:red">⚠</span>' : ''; // 오류 표시
                 }
                 const n = parseInt(num);
-                if (n === target) return ''; // 목표값과 같으면 빈 줄
                 const diff = target - n;
                 const result = Math.trunc(diff * 0.125 * 10) / 10; // 소수점 둘째 자리 버림
-                if (result === 0) return ''; // 0.0인 경우 빈 줄
+
+                // 수정된 부분: 절대값 0.1 이하인 경우 빈 줄 처리
+                if (Math.abs(result) <= 0.1) return '';
+
                 const formatted = result.toFixed(1).replace(/\.0$/, ''); // .0 제거
                 return result < 0 
                     ? `<span class="negative">${formatted}</span>` 

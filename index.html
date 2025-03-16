@@ -33,42 +33,45 @@
             gap: 10px;
         }
         #numbering {
-            width: 20%;
+            width: 30px; /* 넘버링 폭 더 줄임 */
             text-align: right;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
-            background-color: #fff;
+            background-color: #f0f0f0; /* 연한 흑색 배경 */
             overflow-y: auto;
             height: 150px;
             font-size: 16px;
-            line-height: 1.5; /* 줄 높이 조정 */
+            line-height: 1.5;
         }
         #inputNumbers {
-            width: 40%;
+            width: 80px; /* 5자 고정 폭 */
             height: 150px;
             resize: none;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 16px;
-            line-height: 1.5; /* 줄 높이 조정 */
+            line-height: 1.5;
+            background-color: #fff; /* 흰색 배경 유지 */
         }
         #results {
-            width: 40%;
-            background-color: #fff;
+            flex: 1; /* 화면에 맞춰 유동적으로 폭 조정 */
+            background-color: #f0f0f0; /* 연한 흑색 배경 */
             border: 1px solid #ddd;
             border-radius: 5px;
             padding: 10px;
             overflow-y: auto;
             height: 150px;
             font-size: 16px;
-            line-height: 1.5; /* 줄 높이 조정 */
+            line-height: 1.5;
         }
-        #results div {
+        #results div,
+        #inputNumbers,
+        #numbering div {
             margin: 5px 0;
             padding: 5px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #ddd; /* 구분선 추가 */
         }
         button {
             padding: 10px 20px;

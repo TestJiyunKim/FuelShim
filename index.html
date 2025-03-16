@@ -27,6 +27,8 @@
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 16px;
+            -webkit-appearance: none; /* iOS 기본 스타일 제거 */
+            -moz-appearance: textfield; /* Firefox 화살표 제거 */
         }
         #input-container {
             display: flex;
@@ -54,7 +56,8 @@
             font-size: 16px;
             line-height: 30px;
             background-color: #fff;
-            inputmode: numeric;
+            inputmode: numeric; /* 숫자 키보드 표시 */
+            -webkit-inputmode: numeric; /* iOS Safari 대응 */
         }
         #results {
             flex: 1;

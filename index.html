@@ -168,10 +168,10 @@
                 .map(line => line.slice(0, 3))
                 .slice(0, MAX_LINES);
 
-            // 접두사 동기화 (첫 번째 줄 자유 수정 가능)
+            // 접두사 동기화 (빈 줄인 경우에만 적용)
             for (let i = 1; i < values.length; i++) {
-                if (values[i].length < 2) {
-                    values[i] = values[i - 1].slice(0, 2) + values[i].slice(2);
+                if (values[i] === '') {  // 빈 줄인 경우에만 접두사 복사
+                    values[i] = values[i - 1].slice(0, 2);
                 }
             }
 

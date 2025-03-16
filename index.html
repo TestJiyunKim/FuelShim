@@ -54,7 +54,7 @@
             font-size: 16px;
             line-height: 30px;
             background-color: #fff;
-            inputmode: numeric; /* 모바일에서 숫자 키보드 표시 */
+            inputmode: numeric;
         }
         #results {
             flex: 1;
@@ -68,16 +68,16 @@
             line-height: 30px;
         }
         #results div {
-            text-align: left; /* 왼쪽 정렬 */
-            padding-left: 10px; /* 들여쓰기 */
-            min-height: 30px; /* 줄 간격 강제 지정 */
-            white-space: nowrap; /* 텍스트 줄바꿈 방지 */
+            text-align: left;
+            padding-left: 10px;
+            min-height: 30px;
+            white-space: nowrap;
         }
         .negative {
-            color: red; /* 음수 빨간색 표시 */
+            color: red;
         }
         #numbering div {
-            min-height: 30px; /* 줄 간격 동일하게 유지 */
+            min-height: 30px;
         }
         button {
             padding: 10px 20px;
@@ -94,19 +94,19 @@
     </style>
     <script>
         let initialPrefix = '14';
-        const MAX_LINES = 9; // 최대 입력 줄 수
+        const MAX_LINES = 9;
 
         function adjustTargetNumber(value) {
             const targetInput = document.getElementById('targetNumber');
             const newValue = parseInt(targetInput.value) + value;
             targetInput.value = newValue;
             initialPrefix = targetInput.value.toString().slice(0, 2);
-            calculateResults(); // 결과만 갱신 (입력창 초기화 없음)
+            calculateResults();
         }
 
         function initializeInput() {
             const inputNumbers = document.getElementById('inputNumbers');
-            inputNumbers.value = initialPrefix; // 초기 접두사 설정
+            inputNumbers.value = initialPrefix;
             calculateResults();
         }
 
@@ -116,20 +116,18 @@
             
             const results = numbers.map(num => {
                 if (num.length !== 3) {
-                    return num.length > 0 ? '<span style="color:red">⚠</span>' : '';
+                    return num.length > 0 ? '' : ''; 
                 }
                 const n = parseInt(num);
-                if (n === target) return ''; // 목표수와 같으면 빈 문자열 반환 (줄 건너뜀)
                 const diff = target - n;
-                const result = Math.trunc(diff * 0.125 * 10) / 10; // 소수점 둘째 자리 버림
-                if (result === 0) return ''; // 0.0인 경우 빈 문자열 반환
-                const formatted = result.toFixed(1).replace(/\.0$/, ''); // .0 제거
+                const result = Math.trunc(diff * 0.125 * 10) / 10;
+                if (result === 0) return ''; 
+                const formatted = result.toFixed(1).replace(/\.0$/, '');
                 return result < 0 
                     ? `<span class="negative">${formatted}</span>` 
                     : formatted;
             });
 
-            // ▼▼▼ 결과 강제 동기화 ▼▼▼
             document.getElementById('results').innerHTML = results
                 .map(r => `<div>${r}</div>`)
                 .join('');
@@ -143,9 +141,8 @@
             const isBackspace = event.inputType === 'deleteContentBackward';
             let values = input.value.replace(/[^\d\n]/g, '').split('\n')
                 .map(line => line.slice(0, 3))
-                .filter((_, i) => i < MAX_LINES); // 9줄 초과 방지
+                .filter((_, i) => i < MAX_LINES);
 
-            // ▼▼▼ 접두사 강제 동기화 ▼▼▼
             for (let i = 0; i < values.length; i++) {
                 if (i === 0 && values[i].length === 0) {
                     values[i] = initialPrefix;
@@ -154,7 +151,6 @@
                 }
             }
 
-            // ▼▼▼ 새 줄 자동 추가 ▼▼▼
             if (!isBackspace && values.length < MAX_LINES && values[values.length - 1].length === 3) {
                 values.push(values[values.length - 1].slice(0, 2));
             }
@@ -162,7 +158,6 @@
             input.value = values.join('\n');
             calculateResults();
 
-            // ▼▼▼ 커서 위치 보정 ▼▼▼
             setTimeout(() => {
                 const cursorPos = input.selectionStart;
                 const currentLine = input.value.substr(0, cursorPos).split('\n').length - 1;
@@ -175,12 +170,12 @@
         }
 
         window.onload = function () {
-            document.getElementById('targetNumber').value = 144; // 초기 목표수 설정
-            initialPrefix = document.getElementById('targetNumber').value.toString().slice(0, 2); // 초기 접두사 설정
+            document.getElementById('targetNumber').value = 144;
+            initialPrefix = document.getElementById('targetNumber').value.toString().slice(0, 2);
             const inputNumbers = document.getElementById('inputNumbers');
             initializeInput();
             inputNumbers.addEventListener('input', handleInput);
-            inputNumbers.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault()); // Enter 키 방지
+            inputNumbers.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
         }
     </script>
 </head>

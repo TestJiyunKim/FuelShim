@@ -75,6 +75,11 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+        /* 빈 줄 처리 스타일 */
+        .results div:empty {
+            height: 30px;
+            visibility: hidden;
+        }
 
         @media (orientation: portrait) and (max-width: 1023px) {
             .groups-container {
@@ -147,9 +152,11 @@
                     : formatted;
             });
 
+            // 빈 줄 유지를 위한 처리
             group.querySelector('.results').innerHTML = results
-                .map(r => `<div>${r}</div>`)
+                .map(r => r === '' ? '<div></div>' : `<div>${r}</div>`)
                 .join('');
+                
             group.querySelector('.numbering').innerHTML = numbers
                 .map((_, i) => `<div>${i + 1}.</div>`)
                 .join('');

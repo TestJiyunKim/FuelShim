@@ -70,10 +70,17 @@
         .negative {
             color: red;
         }
+        .results div {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        /* 빈 줄 처리 스타일 */
         .results div:empty {
             height: 30px;
             visibility: hidden;
         }
+        /* 평균 표시 스타일 */
         #averageDisplay {
             margin-left: 15px;
             color: #007bff;
@@ -125,7 +132,7 @@
             document.querySelectorAll('.input-numbers').forEach(input => {
                 calculateResults(input);
             });
-            updateAverage();
+            updateAverage(); // 평균값 업데이트
         }
 
         function initializeInput(inputElement) {
@@ -144,8 +151,9 @@
                 }
                 const n = parseInt(num);
                 const diff = target - n;
-                const result = Math.trunc(diff * 0.125 * 10) / 10;
+                const result = Math.trunc(diff * 0.125 * 10) / 10; // 소수점 둘째 자리 버림
 
+                /* 0.1~-0.1 사이 빈 줄 처리 */
                 if (Math.abs(result) <= 0.1) return '';
                 
                 const formatted = result.toFixed(1).replace(/\.0$/, '');
@@ -154,9 +162,11 @@
                     : formatted;
             });
 
+            // 빈 줄 유지를 위한 처리
             group.querySelector('.results').innerHTML = results
                 .map(r => r === '' ? '<div></div>' : `<div>${r}</div>`)
                 .join('');
+                
             group.querySelector('.numbering').innerHTML = numbers
                 .map((_, i) => `<div>${i + 1}.</div>`)
                 .join('');
@@ -165,14 +175,15 @@
         function updateAverage() {
             const inputs = Array.from(document.querySelectorAll('.input-numbers'))
                 .slice(0, 4) // 첫 4개 입력창만 선택
-                .map(input => input.value.split('\n')
-                .flat()
-                .filter(num => num.length === 3)
-                .map(num => parseInt(num));
+                .flatMap(input => 
+                    input.value.split('\n')
+                    .filter(num => num.length === 3)
+                    .map(num => parseInt(num))
+                )
+                .filter(num => !isNaN(num));
 
-            const validNumbers = inputs.filter(num => !isNaN(num));
-            const average = validNumbers.length > 0 
-                ? (validNumbers.reduce((a,b) => a + b, 0) / validNumbers.length).toFixed(1)
+            const average = inputs.length > 0 
+                ? (inputs.reduce((a, b) => a + b, 0) / inputs.length).toFixed(1)
                 : '0.0';
 
             document.getElementById('averageDisplay').textContent = `평균: ${average}`;
@@ -182,7 +193,6 @@
             const input = event.target;
             const isBackspace = event.inputType.startsWith('delete');
             
-            // 기존 입력 처리 로직
             const cursorPos = input.selectionStart;
             const prevValue = input.value;
             const prevLines = prevValue.split('\n');

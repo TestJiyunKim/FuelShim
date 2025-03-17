@@ -1,187 +1,263 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>목표수 계산</title>
-    <style>
-        /* 기본 스타일 유지 */
-        body { font-family: Arial; padding: 20px; background: #f4f4f9; color: #333; }
-        h2 { color: #444; margin-bottom: 30px; }
-        .number-control { 
-            display: flex; align-items: center; gap: 10px; margin-bottom: 20px; 
-        }
-        .number-control input {
-            width: 80px; text-align: center; padding: 10px;
-            border: 1px solid #ccc; border-radius: 5px; font-size: 16px;
-            -webkit-appearance: none; -moz-appearance: textfield;
-        }
-        button {
-            padding: 10px 20px; background: #007bff; color: white;
-            border: none; border-radius: 5px; cursor: pointer; font-size: 16px;
-        }
-        button:hover { background: #0056b3; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>목표수 계산</title>
+  <style>
+    /* 기본 스타일 */
+    body { 
+      font-family: Arial; 
+      padding: 10px; /* 위 아래 여백 줄임 */
+      background: #f4f4f9; 
+      color: #333; 
+    }
+    h2 { 
+      color: #444; 
+      margin: 5px 0 10px 0; /* 위 아래 여백 축소 */
+      text-align: center;
+    }
+    .number-control { 
+      display: flex; 
+      align-items: center; 
+      gap: 10px; 
+      margin-bottom: 20px; 
+      justify-content: center;
+    }
+    .number-control input {
+      width: 80px; 
+      text-align: center; 
+      padding: 10px;
+      border: 1px solid #ccc; 
+      border-radius: 5px; 
+      font-size: 16px;
+      -webkit-appearance: none; 
+      -moz-appearance: textfield;
+    }
+    button {
+      padding: 10px 20px; 
+      background: #007bff; 
+      color: white;
+      border: none; 
+      border-radius: 5px; 
+      cursor: pointer; 
+      font-size: 16px;
+    }
+    button:hover { 
+      background: #0056b3; 
+    }
+    
+    /* 입력 그룹 및 컨테이너 스타일 */
+    .input-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .input-container {
+      display: flex;
+      gap: 10px;
+      flex: 1 1 100%;
+      min-width: 280px;
+    }
+    .numbering, .input-numbers, .results {
+      height: 270px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+      line-height: 30px;
+    }
+    .numbering {
+      width: 30px;
+      text-align: right;
+      background: #f0f0f0;
+      overflow-y: auto;
+    }
+    .input-numbers {
+      width: 100px;
+      resize: none;
+      background: white;
+      inputmode: numeric;
+      -webkit-inputmode: numeric;
+    }
+    .results {
+      flex: 1;
+      background: #f0f0f0;
+      overflow-y: auto;
+    }
+    .results div {
+      text-align: left;
+      padding-left: 10px;
+      min-height: 30px;
+      white-space: nowrap;
+    }
+    .negative { color: red; }
+    
+    /* 세로 모드: 그룹들이 세로로 쌓임 */
+    @media (max-width: 768px) and (orientation: portrait) {
+      .input-group { flex-direction: column; }
+      .input-container { flex: none; width: 100%; min-width: auto; }
+    }
+    
+    /* 가로 모드: 
+         - 첫번째 그룹의 번호 매기기창은 보이고, 나머지 그룹의 번호 매기기창은 숨김 
+         - 각 컨테이너 폭을 줄여 한눈에 보이도록 배치 */
+    @media (min-width: 769px) and (orientation: landscape) {
+      .input-container {
+        flex: 1 1 calc(25% - 10px);
+        min-width: 200px;
+      }
+      /* 첫 번째 그룹 제외 나머지 그룹의 numbering 숨김 */
+      .input-group .input-container:not(:first-child) .numbering {
+        display: none;
+      }
+      /* 입력창과 결과창 폭 줄임 */
+      .input-group .input-container:not(:first-child) .input-numbers {
+        width: 60px;
+      }
+    }
+  </style>
+  <script>
+    let initialPrefix = '14';
+    const MAX_LINES = 9;
 
-        /* 입력 컨테이너 그룹 스타일 */
-        .input-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .input-container {
-            display: flex;
-            gap: 10px;
-            flex: 1 1 calc(25% - 30px);
-            min-width: 280px;
-        }
-        .numbering, .input-numbers, .results {
-            height: 270px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 16px;
-            line-height: 30px;
-        }
-        .numbering {
-            width: 30px;
-            text-align: right;
-            background: #f0f0f0;
-            overflow-y: auto;
-        }
-        .input-numbers {
-            width: 100px;
-            resize: none;
-            background: white;
-            inputmode: numeric;
-        }
-        .results {
-            flex: 1;
-            background: #f0f0f0;
-            overflow-y: auto;
-        }
+    function adjustTargetNumber(value) {
+      const targetInput = document.getElementById('targetNumber');
+      targetInput.value = parseInt(targetInput.value) + value;
+      initialPrefix = targetInput.value.toString().slice(0, 2);
+      document.querySelectorAll('.input-numbers').forEach(input => {
+        if(input.value === '') input.value = initialPrefix;
+      });
+      calculateAllResults();
+    }
 
-        /* 모바일 세로 모드 */
-        @media (max-width: 768px) and (orientation: portrait) {
-            .input-group { flex-direction: column; }
-            .input-container {
-                flex: none;
-                width: 100%;
-                min-width: auto;
-            }
-            .input-container:not(:first-child) {
-                order: 1;
-                margin-top: auto;
-            }
-        }
+    function calculateResults(inputElement) {
+      const container = inputElement.closest('.input-container');
+      const target = parseInt(document.getElementById('targetNumber').value);
+      const numbers = inputElement.value.split('\n');
+      
+      const results = numbers.map(num => {
+        if (num.length !== 3) return num.length ? '⚠' : '';
+        const diff = target - parseInt(num);
+        const result = Math.trunc(diff * 0.125 * 10) / 10;
+        return Math.abs(result) <= 0.1 ? '' : result.toFixed(1).replace(/\.0$/, '');
+      });
+      
+      container.querySelector('.results').innerHTML = results
+        .map(r => `<div>${r}</div>`).join('');
+      
+      container.querySelector('.numbering').innerHTML = numbers
+        .map((_, i) => `<div>${i + 1}.</div>`).join('');
+    }
 
-        /* 모바일 가로 모드 */
-        @media (min-width: 769px) and (orientation: landscape) {
-            .input-container:not(:first-child) {
-                min-width: 200px;
-                flex: 1 1 20%;
-            }
-            .input-container:not(:first-child) .input-numbers {
-                width: 60px;
-            }
-            .input-container:not(:first-child) .numbering {
-                width: 25px;
-            }
+    function handleInput(event) {
+      const input = event.target;
+      const isBackspace = event.inputType && event.inputType.startsWith('delete');
+      
+      // 현재 커서 위치 저장
+      const cursorPos = input.selectionStart;
+      const prevValue = input.value;
+      const prevLines = prevValue.split('\n');
+      
+      // 현재 커서가 있는 줄 계산
+      let currentLine = 0;
+      let posInLine = cursorPos;
+      for (let i = 0; i < prevLines.length; i++) {
+        const lineLength = prevLines[i].length + 1;
+        if (posInLine < lineLength) {
+          currentLine = i;
+          posInLine = Math.min(posInLine, prevLines[i].length);
+          break;
         }
-    </style>
-    <script>
-        let initialPrefix = '14';
-        const MAX_LINES = 9;
-
-        // 공통 함수들
-        function adjustTargetNumber(value) {
-            const targetInput = document.getElementById('targetNumber');
-            targetInput.value = parseInt(targetInput.value) + value;
-            initialPrefix = targetInput.value.toString().slice(0, 2);
-            document.querySelectorAll('.input-numbers').forEach(input => {
-                if(input.value === '') input.value = initialPrefix;
-            });
-            calculateAllResults();
+        posInLine -= lineLength;
+      }
+      
+      // 입력값 처리: 숫자와 개행만 남기고 각 줄 3자리 제한
+      let values = input.value.replace(/[^\d\n]/g, '').split('\n')
+                      .map(line => line.slice(0, 3))
+                      .slice(0, MAX_LINES);
+      
+      // 3자리 모두 입력된 경우, 새 줄 추가 (새 줄은 이전 줄의 접두어 복사)
+      let newLineAdded = false;
+      if (!isBackspace && values.length < MAX_LINES && values[values.length - 1].length === 3) {
+        values.push(values[values.length - 1].slice(0, 2));
+        newLineAdded = true;
+      }
+      
+      const newValue = values.join('\n');
+      if (newValue !== prevValue) {
+        input.value = newValue;
+        calculateResults(input);
+        
+        // 커서 위치 재계산: 새 줄 추가 시 해당 줄의 접두어 바로 뒤(인덱스 2)로 이동
+        let newCursorPos = 0;
+        const newLines = newValue.split('\n');
+        for (let i = 0; i < currentLine; i++) {
+          newCursorPos += (newLines[i]?.length || 0) + 1;
         }
-
-        function calculateResults(inputElement) {
-            const container = inputElement.closest('.input-container');
-            const target = parseInt(document.getElementById('targetNumber').value);
-            const numbers = inputElement.value.split('\n');
-            
-            const results = numbers.map(num => {
-                if (num.length !== 3) return num.length ? '⚠' : '';
-                const diff = target - parseInt(num);
-                const result = Math.trunc(diff * 0.125 * 10) / 10;
-                return Math.abs(result) <= 0.1 ? '' : 
-                    result.toFixed(1).replace(/\.0$/, '');
-            });
-
-            container.querySelector('.results').innerHTML = results
-                .map(r => `<div>${r}</div>`).join('');
-            
-            container.querySelector('.numbering').innerHTML = numbers
-                .map((_, i) => `<div>${i + 1}.</div>`).join('');
+        if (newLineAdded) {
+          newCursorPos = newValue.lastIndexOf('\n') + 3;
+        } else {
+          newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
         }
+        
+        requestAnimationFrame(() => {
+          input.setSelectionRange(newCursorPos, newCursorPos);
+        });
+      } else {
+        calculateResults(input);
+      }
+    }
 
-        function handleInput(event) {
-            const input = event.target;
-            const isBackspace = event.inputType.startsWith('delete');
-            
-            // 입력 처리 로직 (기존 코드 유지)
-            // ... [기존 handleInput 함수 내용 유지] ...
-            
-            calculateResults(input);
-        }
+    function calculateAllResults() {
+      document.querySelectorAll('.input-numbers').forEach(input => {
+        calculateResults(input);
+      });
+    }
 
-        function calculateAllResults() {
-            document.querySelectorAll('.input-numbers').forEach(input => {
-                calculateResults(input);
-            });
-        }
-
-        window.onload = function() {
-            document.getElementById('targetNumber').value = 144;
-            document.querySelectorAll('.input-numbers').forEach(input => {
-                input.value = initialPrefix;
-                input.addEventListener('input', handleInput);
-                input.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
-            });
-            calculateAllResults();
-        }
-    </script>
+    window.onload = function() {
+      document.getElementById('targetNumber').value = 144;
+      initialPrefix = document.getElementById('targetNumber').value.toString().slice(0, 2);
+      document.querySelectorAll('.input-numbers').forEach(input => {
+        input.value = initialPrefix;
+        input.addEventListener('input', handleInput);
+        input.addEventListener('keydown', e => { if(e.key === 'Enter') e.preventDefault(); });
+      });
+      calculateAllResults();
+    }
+  </script>
 </head>
 <body>
-    <h2>목표수 계산</h2>
-    <div class="number-control">
-        <button onclick="adjustTargetNumber(-1)">-</button>
-        <input type="number" id="targetNumber" value="144">
-        <button onclick="adjustTargetNumber(1)">+</button>
+  <h2>목표수 계산</h2>
+  <div class="number-control">
+    <button onclick="adjustTargetNumber(-1)">-</button>
+    <input type="number" id="targetNumber" value="144">
+    <button onclick="adjustTargetNumber(1)">+</button>
+  </div>
+  <div class="input-group">
+    <!-- 첫 번째 입력 컨테이너 (번호 매기기창 보임) -->
+    <div class="input-container">
+      <div class="numbering"></div>
+      <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
+      <div class="results"></div>
     </div>
-
-    <div class="input-group">
-        <!-- 첫 번째 입력 컨테이너 -->
-        <div class="input-container">
-            <div class="numbering"></div>
-            <textarea class="input-numbers" rows="9"></textarea>
-            <div class="results"></div>
-        </div>
-
-        <!-- 추가 입력 컨테이너 3개 -->
-        <div class="input-container">
-            <div class="numbering"></div>
-            <textarea class="input-numbers" rows="9"></textarea>
-            <div class="results"></div>
-        </div>
-        <div class="input-container">
-            <div class="numbering"></div>
-            <textarea class="input-numbers" rows="9"></textarea>
-            <div class="results"></div>
-        </div>
-        <div class="input-container">
-            <div class="numbering"></div>
-            <textarea class="input-numbers" rows="9"></textarea>
-            <div class="results"></div>
-        </div>
+    <!-- 추가 입력 컨테이너 3개 (가로 모드시 번호 매기기창 숨김) -->
+    <div class="input-container">
+      <div class="numbering"></div>
+      <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
+      <div class="results"></div>
     </div>
+    <div class="input-container">
+      <div class="numbering"></div>
+      <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
+      <div class="results"></div>
+    </div>
+    <div class="input-container">
+      <div class="numbering"></div>
+      <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
+      <div class="results"></div>
+    </div>
+  </div>
 </body>
 </html>

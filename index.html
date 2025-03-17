@@ -91,22 +91,20 @@
         @media (orientation: landscape) and (max-width: 1023px) {
             .groups-container {
                 overflow-x: auto;
-                padding-bottom: 10px;
-            }
-            .input-group:not(:first-child) .numbering {
-                display: none;
+                flex-wrap: nowrap;
             }
             .input-group {
                 min-width: 150px !important;
+                flex: 0 0 auto;
             }
             .numbering {
-                width: 24px !important;
-                font-size: 14px;
+                width: 20px !important;
+                font-size: 12px;
             }
             .input-numbers,
             .results {
-                width: 60px !important;
-                font-size: 14px;
+                width: 50px !important;
+                font-size: 12px;
             }
         }
     </style>
@@ -140,11 +138,12 @@
                     return num.length > 0 ? '<span style="color:red">⚠</span>' : '';
                 }
                 const n = parseInt(num);
-                if (n === target) return ''; // 목표값과 동일할 경우 빈 줄
                 const diff = target - n;
                 const result = Math.trunc(diff * 0.125 * 10) / 10;
 
+                /* 0.1~-0.1 사이 빈 줄 처리 */
                 if (Math.abs(result) <= 0.1) return '';
+                
                 const formatted = result.toFixed(1).replace(/\.0$/, '');
                 return result < 0 
                     ? `<span class="negative">${formatted}</span>` 

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 2 -->
+    <!-- Revision: 3 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FUEL SHIM 계산</title>
@@ -15,95 +15,95 @@
         }
         h2 {
             color: #444;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             text-align: center;
         }
         .number-control {
             display: flex;
             align-items: center;
-            gap: 5px;
-            margin-bottom: 15px;
+            gap: 4px;
+            margin-bottom: 12px;
             padding: 0 10px;
             justify-content: center;
         }
         .number-control input {
             width: 50px;
-            height: 20px;
+            height: 18px;
             text-align: center;
-            padding: 5px;
+            padding: 3px;
             border: 2px solid #007bff;
-            border-radius: 5px;
-            font-size: 14px;
+            border-radius: 4px;
+            font-size: 13px;
             -webkit-appearance: none;
             -moz-appearance: textfield;
         }
         .groups-container {
             display: flex;
-            gap: 5px;
+            gap: 4px;
             justify-content: center;
             flex-wrap: wrap;
         }
         .input-group {
             display: flex;
             flex-direction: row;
-            gap: 3px;
-            width: auto;
-            padding: 25px 5px 5px;
+            gap: 2px;
+            padding: 18px 3px 3px;
             border: 2px solid #007bff;
-            border-radius: 8px;
+            border-radius: 6px;
             background-color: white;
             position: relative;
             align-items: flex-start;
+            height: 172px;
         }
         .bed-label {
             position: absolute;
-            top: -12px;
+            top: -9px;
             left: 50%;
             transform: translateX(-50%);
             background: white;
-            padding: 0 8px;
+            padding: 0 6px;
             font-weight: bold;
             color: #007bff;
-            font-size: 14px;
+            font-size: 13px;
         }
         .numbering,
         .input-numbers,
         .results {
-            height: 180px;
-            padding: 5px;
+            height: 160px;
+            padding: 3px;
             border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 12px;
-            line-height: 24px;
+            border-radius: 3px;
+            font-size: 11px;
+            line-height: 22px;
             flex-shrink: 0;
         }
         .numbering {
-            width: 20px !important;
+            width: 14px !important;
             text-align: right;
             background-color: #f0f0f0;
             overflow-y: auto;
         }
         .input-numbers {
-            width: 60px !important;
+            width: 58px !important;
             resize: none;
             background-color: white;
         }
         .results {
-            width: 60px !important;
+            width: 58px !important;
             background-color: #f0f0f0;
         }
         .negative {
             color: red;
         }
         .results div:empty {
-            height: 24px;
+            height: 22px;
             visibility: hidden;
         }
         #averageDisplay {
             margin-left: 10px;
             color: #007bff;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 13px;
         }
         #revisionDisplay {
             position: absolute;
@@ -114,13 +114,13 @@
         }
         button {
             padding: 0;
-            width: 30px;
-            height: 20px;
+            width: 28px;
+            height: 18px;
             background-color: #007bff;
             color: white;
             border: none;
-            border-radius: 5px;
-            font-size: 14px;
+            border-radius: 4px;
+            font-size: 13px;
             cursor: pointer;
             transition: background-color 0.3s;
             flex-shrink: 0;
@@ -128,10 +128,25 @@
         button:hover {
             background-color: #0056b3;
         }
+
+        /* 가로 모드 스타일 */
+        @media (orientation: landscape) {
+            .input-group:not(:first-child) .numbering {
+                display: none;
+            }
+            .input-group {
+                height: 150px;
+            }
+            .numbering,
+            .input-numbers,
+            .results {
+                height: 140px;
+            }
+        }
     </style>
     <script>
-        // 리비전 번호 (주석과 동일하게 유지)
-        const revision = 2; // <!-- Revision: 2 -->
+        // 리비전 번호
+        const revision = 3; // <!-- Revision: 3 -->
 
         let initialPrefix = '14';
         const MAX_LINES = 9;

@@ -27,27 +27,27 @@
         }
         .number-control input {
             width: 100px;
-            height: 60px;
+            height: 40px; /* 높이 반으로 축소 */
             text-align: center;
             padding: 10px;
             border: 2px solid #007bff;
             border-radius: 8px;
-            font-size: 20px;
+            font-size: 18px;
             -webkit-appearance: none;
             -moz-appearance: textfield;
         }
         .groups-container {
             display: flex;
-            gap: 15px;
+            gap: 8px; /* 묶음 간 거리 반으로 축소 */
             justify-content: center;
             flex-wrap: wrap;
         }
         .input-group {
             display: flex;
-            flex-direction: row; /* 가로 배치 */
+            flex-direction: row;
             gap: 5px;
             width: auto;
-            padding: 35px 15px 15px;
+            padding: 35px 10px 15px;
             border: 2px solid #007bff;
             border-radius: 10px;
             background-color: white;
@@ -68,7 +68,6 @@
         .input-numbers,
         .results {
             height: 200px;
-            width: 70px !important;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 6px;
@@ -77,16 +76,19 @@
             flex-shrink: 0;
         }
         .numbering {
+            width: 40px !important; /* 폭 1/3으로 축소 */
             text-align: right;
             background-color: #f0f0f0;
             overflow-y: auto;
         }
         .input-numbers {
+            width: 80px !important;
             resize: none;
             background-color: white;
             inputmode: numeric;
         }
         .results {
+            width: 80px !important;
             background-color: #f0f0f0;
             overflow-y: auto;
         }
@@ -106,57 +108,55 @@
 
         /* 세로 모드 스타일 */
         @media (orientation: portrait) {
-            .input-group {
-                width: 100%;
-                max-width: 400px;
-                padding: 35px 10px 10px;
+            .numbering {
+                width: 30px !important; /* 폭 추가 축소 */
             }
-            .numbering,
             .input-numbers,
             .results {
-                width: 30% !important;
-                height: 180px;
+                width: 70px !important;
             }
         }
 
         /* 가로 모드 스타일 */
         @media (orientation: landscape) {
             .groups-container {
-                gap: 10px;
-                padding: 0 5px;
+                gap: 5px; /* 묶음 간 거리 반으로 축소 */
+                padding: 0 3px;
             }
             .input-group {
-                padding: 35px 10px 10px;
+                padding: 25px 5px 5px; /* 내부 여백 축소 */
             }
-            .numbering,
+            .numbering {
+                width: 20px !important; /* 폭 1/3으로 축소 */
+            }
             .input-numbers,
             .results {
-                width: 50px !important;
+                width: 48px !important; /* 4/5 크기로 축소 */
                 height: 160px;
             }
             .input-group:not(:first-child) .numbering {
                 display: none;
             }
             .number-control input {
-                height: 40px;
-                font-size: 18px;
+                height: 30px; /* 높이 추가 축소 */
+                font-size: 16px;
             }
             button {
-                width: 40px !important;
-                height: 40px !important;
-                font-size: 18px !important;
+                width: 30px !important;
+                height: 30px !important;
+                font-size: 16px !important;
             }
         }
 
         button {
             padding: 0;
-            width: 60px;
-            height: 60px;
+            width: 40px;
+            height: 40px;
             background-color: #007bff;
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: 24px;
+            font-size: 20px;
             cursor: pointer;
             transition: background-color 0.3s;
             flex-shrink: 0;

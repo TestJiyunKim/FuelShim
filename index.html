@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>목표수 계산</title>
     <style>
-        /* 기본 스타일 유지 */
         body {
             font-family: Arial, sans-serif;
             padding: 20px;
@@ -44,7 +43,6 @@
         .numbering,
         .input-numbers,
         .results {
-            width: 100px;
             height: 270px;
             padding: 10px;
             border: 1px solid #ccc;
@@ -59,16 +57,23 @@
             overflow-y: auto;
         }
         .input-numbers {
+            width: 100px;
             resize: none;
             background-color: white;
             inputmode: numeric;
         }
         .results {
+            width: 100px;
             background-color: #f0f0f0;
             overflow-y: auto;
         }
         .negative {
             color: red;
+        }
+        .results div {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         /* 모바일 세로 모드 */
@@ -92,12 +97,20 @@
                 display: none;
             }
             .input-group {
-                min-width: 200px;
+                min-width: 150px !important;
+            }
+            .numbering {
+                width: 24px !important;
+                font-size: 14px;
+            }
+            .input-numbers,
+            .results {
+                width: 60px !important;
+                font-size: 14px;
             }
         }
     </style>
     <script>
-        // JavaScript 코드는 이전 버전 유지
         let initialPrefix = '14';
         const MAX_LINES = 9;
 
@@ -127,6 +140,7 @@
                     return num.length > 0 ? '<span style="color:red">⚠</span>' : '';
                 }
                 const n = parseInt(num);
+                if (n === target) return ''; // 목표값과 동일할 경우 빈 줄
                 const diff = target - n;
                 const result = Math.trunc(diff * 0.125 * 10) / 10;
 

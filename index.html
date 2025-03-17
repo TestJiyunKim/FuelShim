@@ -76,7 +76,6 @@
             text-overflow: ellipsis;
         }
 
-        /* 모바일 세로 모드 */
         @media (orientation: portrait) and (max-width: 1023px) {
             .groups-container {
                 flex-direction: column;
@@ -87,15 +86,13 @@
             }
         }
 
-        /* 모바일 가로 모드 */
         @media (orientation: landscape) and (max-width: 1023px) {
             .groups-container {
                 overflow-x: auto;
-                flex-wrap: nowrap;
+                padding-bottom: 10px;
             }
             .input-group {
                 min-width: 150px !important;
-                flex: 0 0 auto;
             }
             .numbering {
                 width: 20px !important;
@@ -135,19 +132,16 @@
             
             const results = numbers.map(num => {
                 if (num.length !== 3) {
-                    return num.length > 0 ? '<span style="color:red">⚠</span>' : '';
+                    return num.length > 0 ? '⚠' : '';
                 }
                 const n = parseInt(num);
                 const diff = target - n;
-                const result = Math.trunc(diff * 0.125 * 10) / 10;
+                const result = Math.round(diff * 0.125 * 10) / 10;
 
-                /* 0.1~-0.1 사이 빈 줄 처리 */
-                if (Math.abs(result) <= 0.1) return '';
-                
-                const formatted = result.toFixed(1).replace(/\.0$/, '');
+                if (result === 0) return '';
                 return result < 0 
-                    ? `<span class="negative">${formatted}</span>` 
-                    : formatted;
+                    ? `<span class="negative">${result.toFixed(1)}</span>` 
+                    : result.toFixed(1);
             });
 
             group.querySelector('.results').innerHTML = results

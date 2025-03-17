@@ -15,25 +15,25 @@
         }
         h2 {
             color: #444;
-            margin-bottom: 10px; /* 간격 축소 */
+            margin-bottom: 10px;
             text-align: center;
         }
         .number-control {
             display: flex;
             align-items: center;
-            gap: 5px; /* 간격 축소 */
+            gap: 5px;
             margin-bottom: 15px;
             padding: 0 10px;
             justify-content: center;
         }
         .number-control input {
-            width: 50px; /* 폭 반으로 축소 */
-            height: 20px; /* 높이 반으로 축소 */
+            width: 50px;
+            height: 20px;
             text-align: center;
             padding: 5px;
             border: 2px solid #007bff;
             border-radius: 5px;
-            font-size: 14px; /* 글자 크기 조정 */
+            font-size: 14px;
             -webkit-appearance: none;
             -moz-appearance: textfield;
         }
@@ -46,9 +46,9 @@
         .input-group {
             display: flex;
             flex-direction: row;
-            gap: 3px; /* 요소 간 간격 축소 */
+            gap: 3px;
             width: auto;
-            padding: 25px 5px 5px; /* 상단 패딩 축소 */
+            padding: 25px 5px 5px;
             border: 2px solid #007bff;
             border-radius: 8px;
             background-color: white;
@@ -57,44 +57,54 @@
         }
         .bed-label {
             position: absolute;
-            top: -12px; /* 위치 상향 조정 */
+            top: -12px;
             left: 50%;
             transform: translateX(-50%);
             background: white;
             padding: 0 8px;
             font-weight: bold;
             color: #007bff;
-            font-size: 14px; /* 글자 크기 조정 */
+            font-size: 14px;
         }
         .numbering,
         .input-numbers,
         .results {
-            height: 180px; /* 전체 높이 조정 */
+            height: 180px;
             padding: 5px;
             border: 1px solid #ccc;
             border-radius: 4px;
-            font-size: 12px; /* 글자 크기 조정 */
-            line-height: 24px; /* 줄 간격 조정 */
+            font-size: 12px;
+            line-height: 24px;
             flex-shrink: 0;
         }
         .numbering {
-            width: 20px !important; /* 폭 반으로 축소 */
+            width: 20px !important;
             text-align: right;
             background-color: #f0f0f0;
             overflow-y: auto;
         }
         .input-numbers {
-            width: 60px !important; /* 폭 조정 */
+            width: 60px !important;
             resize: none;
             background-color: white;
         }
         .results {
-            width: 60px !important; /* 폭 조정 */
+            width: 60px !important;
             background-color: #f0f0f0;
         }
-        /* ... 기존 스타일 유지 ... */
-
-        /* 리비전 표시 스타일 */
+        .negative {
+            color: red;
+        }
+        .results div:empty {
+            height: 24px;
+            visibility: hidden;
+        }
+        #averageDisplay {
+            margin-left: 10px;
+            color: #007bff;
+            font-weight: bold;
+            font-size: 14px;
+        }
         #revisionDisplay {
             position: absolute;
             top: 10px;
@@ -102,16 +112,162 @@
             color: #666;
             font-size: 12px;
         }
+        button {
+            padding: 0;
+            width: 30px;
+            height: 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            flex-shrink: 0;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
     </style>
     <script>
-        // 리비전 번호 추출 (주석에서 직접 수정 필요)
-        const revision = 2; // <!-- Revision: 2 --> 주석과 동일하게 유지
+        // 리비전 번호 (주석과 동일하게 유지)
+        const revision = 2; // <!-- Revision: 2 -->
 
-        /* ... 기존 스크립트 유지 ... */
-        
+        let initialPrefix = '14';
+        const MAX_LINES = 9;
+
+        function adjustTargetNumber(value) {
+            const targetInput = document.getElementById('targetNumber');
+            const newValue = parseInt(targetInput.value) + value;
+            targetInput.value = newValue;
+            initialPrefix = targetInput.value.toString().slice(0, 2);
+            
+            document.querySelectorAll('.input-numbers').forEach(input => {
+                calculateResults(input);
+            });
+            updateAverage();
+        }
+
+        function initializeInput(inputElement) {
+            inputElement.value = initialPrefix;
+            calculateResults(inputElement);
+        }
+
+        function calculateResults(inputElement) {
+            const group = inputElement.closest('.input-group');
+            const target = parseInt(document.getElementById('targetNumber').value);
+            const numbers = inputElement.value.split('\n');
+            
+            const results = numbers.map(num => {
+                if (num.length !== 3) {
+                    return num.length > 0 ? '⚠' : '';
+                }
+                const n = parseInt(num);
+                const diff = target - n;
+                const result = Math.trunc(diff * 0.125 * 10) / 10;
+
+                if (Math.abs(result) <= 0.1) return '';
+                
+                const formatted = result.toFixed(1).replace(/\.0$/, '');
+                return result < 0 
+                    ? `<span class="negative">${formatted}</span>` 
+                    : formatted;
+            });
+
+            group.querySelector('.results').innerHTML = results
+                .map(r => r === '' ? '<div></div>' : `<div>${r}</div>`)
+                .join('');
+            group.querySelector('.numbering').innerHTML = numbers
+                .map((_, i) => `<div>${i + 1}.</div>`)
+                .join('');
+        }
+
+        function updateAverage() {
+            const inputs = Array.from(document.querySelectorAll('.input-numbers'))
+                .slice(0, 4)
+                .flatMap(input => 
+                    input.value.split('\n')
+                    .filter(num => num.length === 3)
+                    .map(num => parseInt(num))
+                )
+                .filter(num => !isNaN(num));
+
+            const average = inputs.length > 0 
+                ? (inputs.reduce((a, b) => a + b, 0) / inputs.length).toFixed(1)
+                : '0.0';
+
+            document.getElementById('averageDisplay').textContent = `평균: ${average}`;
+        }
+
+        function handleInput(event) {
+            const input = event.target;
+            const isBackspace = event.inputType.startsWith('delete');
+            
+            const cursorPos = input.selectionStart;
+            const prevValue = input.value;
+            const prevLines = prevValue.split('\n');
+            
+            let currentLine = 0;
+            let posInLine = cursorPos;
+            let accumulatedLength = 0;
+            for (; currentLine < prevLines.length; currentLine++) {
+                const lineLength = prevLines[currentLine].length + 1;
+                if (posInLine <= accumulatedLength + lineLength) {
+                    posInLine -= accumulatedLength;
+                    break;
+                }
+                accumulatedLength += lineLength;
+            }
+            posInLine = Math.min(posInLine, prevLines[currentLine]?.length || 0);
+
+            let values = input.value.replace(/[^\d\n]/g, '').split('\n')
+                .map(line => line.slice(0, 3))
+                .slice(0, MAX_LINES);
+
+            let newLineAdded = false;
+            if (!isBackspace && values.length < MAX_LINES && values[values.length - 1].length === 3) {
+                values.push(values[values.length - 1].slice(0, 2));
+                newLineAdded = true;
+            }
+
+            const newValue = values.join('\n');
+            if (newValue !== prevValue) {
+                input.value = newValue;
+                calculateResults(input);
+
+                let newCursorPos;
+                if (newLineAdded) {
+                    newCursorPos = newValue.length;
+                } else {
+                    const newLines = newValue.split('\n');
+                    newCursorPos = 0;
+                    for (let i = 0; i < currentLine; i++) {
+                        newCursorPos += (newLines[i]?.length || 0) + 1;
+                    }
+                    newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
+                }
+
+                requestAnimationFrame(() => {
+                    input.setSelectionRange(newCursorPos, newCursorPos);
+                });
+            } else {
+                calculateResults(input);
+            }
+            
+            updateAverage();
+        }
+
         window.onload = function () {
             document.getElementById('revisionDisplay').textContent = `Rev: ${revision}`;
-            // ... 기존 초기화 코드 ...
+            document.getElementById('targetNumber').value = 144;
+            initialPrefix = document.getElementById('targetNumber').value.toString().slice(0, 2);
+            
+            document.querySelectorAll('.input-numbers').forEach(input => {
+                initializeInput(input);
+                input.addEventListener('input', handleInput);
+                input.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
+            });
+            updateAverage();
         }
     </script>
 </head>
@@ -124,6 +280,31 @@
         <button onclick="adjustTargetNumber(1)">+</button>
         <span id="averageDisplay">평균: 0.0</span>
     </div>
-    <!-- ... 기존 HTML 구조 유지 ... -->
+    <div class="groups-container">
+        <div class="input-group">
+            <div class="bed-label">1번 베드</div>
+            <div class="numbering"></div>
+            <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
+            <div class="results"></div>
+        </div>
+        <div class="input-group">
+            <div class="bed-label">2번 베드</div>
+            <div class="numbering"></div>
+            <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
+            <div class="results"></div>
+        </div>
+        <div class="input-group">
+            <div class="bed-label">3번 베드</div>
+            <div class="numbering"></div>
+            <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
+            <div class="results"></div>
+        </div>
+        <div class="input-group">
+            <div class="bed-label">4번 베드</div>
+            <div class="numbering"></div>
+            <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
+            <div class="results"></div>
+        </div>
+    </div>
 </body>
 </html>

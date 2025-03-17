@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 3 -->
+    <!-- Revision: 4 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FUEL SHIM 계산</title>
@@ -53,7 +53,9 @@
             background-color: white;
             position: relative;
             align-items: flex-start;
-            height: 172px;
+            height: 210px; /* 그룹 높이 증가 */
+            width: 98%; /* 세로 모드에서 전체 너비 */
+            margin-bottom: 8px;
         }
         .bed-label {
             position: absolute;
@@ -69,7 +71,7 @@
         .numbering,
         .input-numbers,
         .results {
-            height: 160px;
+            height: 190px; /* 내용물 높이 증가 */
             padding: 3px;
             border: 1px solid #ccc;
             border-radius: 3px;
@@ -129,24 +131,43 @@
             background-color: #0056b3;
         }
 
-        /* 가로 모드 스타일 */
-        @media (orientation: landscape) {
-            .input-group:not(:first-child) .numbering {
-                display: none;
-            }
+        /* 세로 모드 스타일 */
+        @media (orientation: portrait) {
             .input-group {
-                height: 150px;
+                width: 98% !important; /* 화면 전체 너비 사용 */
+                height: 210px;
             }
             .numbering,
             .input-numbers,
             .results {
-                height: 140px;
+                height: 190px;
+            }
+        }
+
+        /* 가로 모드 스타일 */
+        @media (orientation: landscape) {
+            .input-group {
+                width: auto !important;
+                height: 170px; /* 높이 조정 */
+                flex: 1;
+            }
+            .input-group:not(:first-child) .numbering {
+                display: none;
+            }
+            .numbering,
+            .input-numbers,
+            .results {
+                height: 150px;
+            }
+            .groups-container {
+                gap: 6px;
+                padding: 0 5px;
             }
         }
     </style>
     <script>
         // 리비전 번호
-        const revision = 3; // <!-- Revision: 3 -->
+        const revision = 4; // <!-- Revision: 4 -->
 
         let initialPrefix = '14';
         const MAX_LINES = 9;

@@ -136,12 +136,15 @@
                 }
                 const n = parseInt(num);
                 const diff = target - n;
-                const result = Math.round(diff * 0.125 * 10) / 10;
+                const result = Math.trunc(diff * 0.125 * 10) / 10; // 소수점 둘째 자리 버림
 
-                if (result === 0) return '';
+                /* 0.1~-0.1 사이 빈 줄 처리 */
+                if (Math.abs(result) <= 0.1) return '';
+                
+                const formatted = result.toFixed(1).replace(/\.0$/, '');
                 return result < 0 
-                    ? `<span class="negative">${result.toFixed(1)}</span>` 
-                    : result.toFixed(1);
+                    ? `<span class="negative">${formatted}</span>` 
+                    : formatted;
             });
 
             group.querySelector('.results').innerHTML = results

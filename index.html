@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>목표수 계산</title>
     <style>
+        /* 기본 스타일 유지 */
         body {
             font-family: Arial, sans-serif;
             padding: 20px;
@@ -33,12 +34,12 @@
         }
         .groups-container {
             display: flex;
-            flex-direction: column;
             gap: 20px;
         }
         .input-group {
             display: flex;
             gap: 10px;
+            min-width: 240px;
         }
         .numbering,
         .input-numbers,
@@ -50,7 +51,6 @@
             border-radius: 5px;
             font-size: 16px;
             line-height: 30px;
-            background-color: #fff;
         }
         .numbering {
             width: 30px;
@@ -60,6 +60,7 @@
         }
         .input-numbers {
             resize: none;
+            background-color: white;
             inputmode: numeric;
         }
         .results {
@@ -69,43 +70,26 @@
         .negative {
             color: red;
         }
-        button {
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
 
+        /* 모바일 세로 모드 */
         @media (orientation: portrait) and (max-width: 1023px) {
-            .input-group {
+            .groups-container {
                 flex-direction: column;
             }
-            .numbering,
-            .input-numbers,
-            .results {
-                width: auto !important;
+            .input-group {
+                width: 100%;
+                min-width: auto;
             }
         }
 
+        /* 모바일 가로 모드 */
         @media (orientation: landscape) and (max-width: 1023px) {
             .groups-container {
-                flex-direction: row;
+                overflow-x: auto;
+                padding-bottom: 10px;
             }
-            .input-group:not(:first-child) {
+            .input-group:not(:first-child) .numbering {
                 display: none;
-            }
-        }
-
-        @media (min-width: 1024px) {
-            .groups-container {
-                flex-direction: row;
-                flex-wrap: nowrap;
             }
             .input-group {
                 min-width: 200px;
@@ -113,6 +97,7 @@
         }
     </style>
     <script>
+        // JavaScript 코드는 이전 버전 유지
         let initialPrefix = '14';
         const MAX_LINES = 9;
 

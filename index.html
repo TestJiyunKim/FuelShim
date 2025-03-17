@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>목표수 계산</title>
+    <title>FUEL SHIM 계산</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -80,6 +80,12 @@
             height: 30px;
             visibility: hidden;
         }
+        /* 평균 표시 스타일 */
+        #averageDisplay {
+            margin-left: 15px;
+            color: #007bff;
+            font-weight: bold;
+        }
 
         @media (orientation: portrait) and (max-width: 1023px) {
             .groups-container {
@@ -95,6 +101,9 @@
             .groups-container {
                 overflow-x: auto;
                 padding-bottom: 10px;
+            }
+            .input-group:not(:first-child) .numbering {
+                display: none;
             }
             .input-group {
                 min-width: 150px !important;
@@ -123,6 +132,7 @@
             document.querySelectorAll('.input-numbers').forEach(input => {
                 calculateResults(input);
             });
+            updateAverage(); // 평균값 업데이트
         }
 
         function initializeInput(inputElement) {
@@ -160,6 +170,23 @@
             group.querySelector('.numbering').innerHTML = numbers
                 .map((_, i) => `<div>${i + 1}.</div>`)
                 .join('');
+        }
+
+        function updateAverage() {
+            const inputs = Array.from(document.querySelectorAll('.input-numbers'))
+                .slice(0, 4) // 첫 4개 입력창만 선택
+                .flatMap(input => 
+                    input.value.split('\n')
+                    .filter(num => num.length === 3)
+                    .map(num => parseInt(num))
+                )
+                .filter(num => !isNaN(num));
+
+            const average = inputs.length > 0 
+                ? (inputs.reduce((a, b) => a + b, 0) / inputs.length).toFixed(1)
+                : '0.0';
+
+            document.getElementById('averageDisplay').textContent = `평균: ${average}`;
         }
 
         function handleInput(event) {
@@ -216,6 +243,8 @@
             } else {
                 calculateResults(input);
             }
+            
+            updateAverage(); // 평균값 실시간 업데이트
         }
 
         window.onload = function () {
@@ -227,15 +256,17 @@
                 input.addEventListener('input', handleInput);
                 input.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
             });
+            updateAverage(); // 초기 평균값 표시
         }
     </script>
 </head>
 <body>
-    <h2>목표수 계산</h2>
+    <h2>FUEL SHIM 계산</h2>
     <div class="number-control">
         <button onclick="adjustTargetNumber(-1)">-</button>
         <input type="number" id="targetNumber" value="144">
         <button onclick="adjustTargetNumber(1)">+</button>
+        <span id="averageDisplay">평균: 0.0</span>
     </div>
     <div class="groups-container">
         <div class="input-group">

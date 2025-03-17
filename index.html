@@ -23,6 +23,7 @@
             gap: 8px;
             margin-bottom: 20px;
             padding: 0 10px;
+            justify-content: center;
         }
         .number-control input {
             width: 100px;
@@ -43,14 +44,15 @@
         }
         .input-group {
             display: flex;
-            flex-direction: column;
-            gap: 8px;
-            width: 180px;
-            padding: 15px;
+            flex-direction: row; /* 가로 배치 */
+            gap: 5px;
+            width: auto;
+            padding: 35px 15px 15px;
             border: 2px solid #007bff;
             border-radius: 10px;
             background-color: white;
             position: relative;
+            align-items: flex-start;
         }
         .bed-label {
             position: absolute;
@@ -66,12 +68,13 @@
         .input-numbers,
         .results {
             height: 200px;
-            width: 100% !important;
+            width: 70px !important;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 6px;
             font-size: 14px;
             line-height: 28px;
+            flex-shrink: 0;
         }
         .numbering {
             text-align: right;
@@ -101,36 +104,47 @@
             font-size: 16px;
         }
 
-        @media (orientation: landscape) and (max-width: 1023px) {
-            body {
-                padding: 10px 5px;
+        /* 세로 모드 스타일 */
+        @media (orientation: portrait) {
+            .input-group {
+                width: 100%;
+                max-width: 400px;
+                padding: 35px 10px 10px;
             }
-            .number-control {
+            .numbering,
+            .input-numbers,
+            .results {
+                width: 30% !important;
+                height: 180px;
+            }
+        }
+
+        /* 가로 모드 스타일 */
+        @media (orientation: landscape) {
+            .groups-container {
+                gap: 10px;
                 padding: 0 5px;
+            }
+            .input-group {
+                padding: 35px 10px 10px;
+            }
+            .numbering,
+            .input-numbers,
+            .results {
+                width: 50px !important;
+                height: 160px;
+            }
+            .input-group:not(:first-child) .numbering {
+                display: none;
             }
             .number-control input {
                 height: 40px;
                 font-size: 18px;
             }
-            .groups-container {
-                gap: 10px;
-            }
-            .input-group {
-                width: 160px;
-                padding: 10px;
-            }
-            .numbering,
-            .input-numbers,
-            .results {
-                height: 180px;
-            }
             button {
                 width: 40px !important;
                 height: 40px !important;
                 font-size: 18px !important;
-            }
-            .input-group:not(:first-child) .numbering {
-                display: none;
             }
         }
 
@@ -145,6 +159,7 @@
             font-size: 24px;
             cursor: pointer;
             transition: background-color 0.3s;
+            flex-shrink: 0;
         }
         button:hover {
             background-color: #0056b3;

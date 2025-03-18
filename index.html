@@ -1,349 +1,152 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 12 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FUEL SHIM 계산</title>
+    <title>목표수 계산</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            padding: 10px;
+            padding: 20px;
             background-color: #f4f4f9;
             color: #333;
-            margin: 0;
         }
         h2 {
             color: #444;
-            margin-bottom: 8px;
-            text-align: center;
         }
         .number-control {
             display: flex;
             align-items: center;
-            gap: 4px;
-            margin-bottom: 12px;
-            padding: 0 10px;
-            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
         }
         .number-control input {
-            width: 50px;
-            height: 18px;
+            width: 80px;
             text-align: center;
-            padding: 3px;
-            border: 2px solid #007bff;
-            border-radius: 4px;
-            font-size: 13px;
-            -webkit-appearance: none;
-            -moz-appearance: textfield;
-        }
-        .groups-container {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        .group-wrapper {
-            display: flex;
-            gap: 2px;
-            width: 100%;
-            align-items: flex-start; /* 상단 정렬 */
-        }
-        .input-group {
-            display: flex;
-            gap: 2px;
-            padding: 18px 3px 5px;
-            border: 2px solid #007bff;
-            border-radius: 6px;
-            background-color: white;
-            position: relative;
-            align-items: flex-start;
-            height: 360px; /* 세로 모드 높이 */
-            box-sizing: border-box;
-            flex: 1;
-        }
-        .bed-label {
-            position: absolute;
-            top: -9px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: white;
-            padding: 0 6px;
-            font-weight: bold;
-            color: #007bff;
-            font-size: 13px;
-        }
-        .numbering {
-            width: 29px !important;
-            height: 360px; /* 세로 모드 높이 */
-            padding: 3px;
+            padding: 10px;
             border: 1px solid #ccc;
-            border-radius: 3px;
-            background-color: #f0f0f0;
-            font-size: 24px;
-            line-height: 36px;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        #input-container {
+            display: flex;
+            gap: 10px;
+            align-items: stretch; /* 높이를 동일하게 유지 */
+        }
+        #numbering {
+            width: 35%;
             text-align: right;
-            overflow-y: hidden;
-        }
-        .input-numbers,
-        .results {
-            height: 360px; /* 세로 모드 높이 */
-            padding: 3px;
+            padding: 10px;
             border: 1px solid #ccc;
-            border-radius: 3px;
-            font-size: 24px;
-            line-height: 36px;
-            flex-shrink: 0;
+            border-radius: 5px;
+            background-color: #fff;
+            overflow-y: auto;
+            height: 150px;
+            font-size: 16px;
+            box-sizing: border-box; /* 패딩과 보더를 높이 계산에 포함 */
+            line-height: 1.5; /* 행 간격 조정 */
+            display: flex;
+            flex-direction: column; /* 세로 방향으로 정렬 */
         }
-        .input-numbers {
-            width: 144px !important;
+        #numbering div {
+            flex: 1; /* 각 행의 높이를 동일하게 유지 */
+            min-height: 24px; /* 입력창의 행 높이와 일치 */
+            display: flex;
+            align-items: center; /* 세로 중앙 정렬 */
+            justify-content: flex-end; /* 오른쪽 정렬 */
+            padding: 2px 0; /* 간격 조정 */
+        }
+        #inputNumbers {
+            width: 65%;
+            height: 150px;
             resize: none;
-            background-color: white;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box; /* 패딩과 보더를 높이 계산에 포함 */
+            line-height: 1.5; /* 행 간격 조정 */
         }
-        .results {
-            width: 144px !important;
-            background-color: #f0f0f0;
+        #results {
+            flex: 1;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            overflow-y: auto;
+            height: 150px;
         }
-        .negative {
-            color: red;
-        }
-        .results div:empty {
-            height: 36px;
-            visibility: hidden;
-        }
-        #averageDisplay {
-            margin-left: 10px;
-            color: #007bff;
-            font-weight: bold;
-            font-size: 13px;
-        }
-        #revisionDisplay {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            color: #666;
-            font-size: 12px;
+        #results div {
+            margin: 5px 0;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
         }
         button {
-            padding: 0;
-            width: 28px;
-            height: 18px;
+            padding: 10px 20px;
             background-color: #007bff;
             color: white;
             border: none;
-            border-radius: 4px;
-            font-size: 13px;
+            border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.3s;
-            flex-shrink: 0;
+            font-size: 16px;
         }
         button:hover {
             background-color: #0056b3;
         }
-
-        /* 가로 모드 스타일 */
-        @media (orientation: landscape) {
-            .groups-container {
-                flex-direction: row;
-                gap: 4px;
-            }
-            .group-wrapper {
-                width: auto;
-            }
-            .group-wrapper:not(:first-child) .numbering {
-                display: none !important; /* 2-4번 베드 번호 숨김 */
-            }
-            .input-group {
-                height: 300px; /* 가로 모드 높이 */
-                width: fit-content !important;
-                padding-bottom: 5px;
-            }
-            .input-numbers,
-            .results {
-                height: 300px; /* 가로 모드 높이 */
-                width: 50px !important;
-                font-size: 20px;
-                line-height: 30px;
-            }
-        }
     </style>
     <script>
-        // 리비전 번호
-        const revision = 12; // <!-- Revision: 12 -->
-
-        let initialPrefix = '14';
-        const MAX_LINES = 9;
-
         function adjustTargetNumber(value) {
-            const targetInput = document.getElementById('targetNumber');
-            const newValue = parseInt(targetInput.value) + value;
+            let targetInput = document.getElementById('targetNumber');
+            let newValue = parseInt(targetInput.value) + value;
             targetInput.value = newValue;
-            initialPrefix = targetInput.value.toString().slice(0, 2);
-            
-            document.querySelectorAll('.input-numbers').forEach(input => {
-                calculateResults(input);
-            });
-            updateAverage();
+            calculateResults(); // 목표수가 변경되면 결과 다시 계산
         }
 
-        function initializeInput(inputElement) {
-            inputElement.value = initialPrefix;
-            calculateResults(inputElement);
-        }
+        function calculateResults() {
+            let target = parseInt(document.getElementById('targetNumber').value);
+            let numbers = document.getElementById('inputNumbers').value.split('\n').map(num => parseInt(num.trim()));
+            let resultArea = document.getElementById('results');
+            let numberingArea = document.getElementById('numbering');
+            resultArea.innerHTML = '';
+            numberingArea.innerHTML = '';
 
-        function calculateResults(inputElement) {
-            const wrapper = inputElement.closest('.group-wrapper');
-            const target = parseInt(document.getElementById('targetNumber').value);
-            const numbers = inputElement.value.split('\n');
-            
-            const results = numbers.map(num => {
-                if (num.length !== 3) return num.length > 0 ? '⚠' : '';
-                const n = parseInt(num);
-                const diff = target - n;
-                const result = Math.trunc(diff * 0.125 * 10) / 10;
-                if (Math.abs(result) <= 0.1) return '';
-                const formatted = result.toFixed(1).replace(/\.0$/, '');
-                return result < 0 ? `<span class="negative">${formatted}</span>` : formatted;
-            });
-
-            wrapper.querySelector('.results').innerHTML = results
-                .map(r => r === '' ? '<div></div>' : `<div>${r}</div>`)
-                .join('');
-            wrapper.querySelector('.numbering').innerHTML = numbers
-                .map((_, i) => `<div>${i + 1}.</div>`)
-                .join('');
-        }
-
-        function updateAverage() {
-            const inputs = Array.from(document.querySelectorAll('.input-numbers'))
-                .slice(0, 4)
-                .flatMap(input => 
-                    input.value.split('\n')
-                    .filter(num => num.length === 3)
-                    .map(num => parseInt(num))
-                )
-                .filter(num => !isNaN(num));
-
-            const average = inputs.length > 0 
-                ? (inputs.reduce((a, b) => a + b, 0) / inputs.length).toFixed(1)
-                : '0.0';
-
-            document.getElementById('averageDisplay').textContent = `평균: ${average}`;
-        }
-
-        function handleInput(event) {
-            const input = event.target;
-            const isBackspace = event.inputType?.startsWith('delete') || event.key === 'Backspace';
-            
-            const cursorPos = input.selectionStart;
-            const prevValue = input.value;
-            const prevLines = prevValue.split('\n');
-            
-            let currentLine = 0;
-            let posInLine = cursorPos;
-            let accumulatedLength = 0;
-            for (; currentLine < prevLines.length; currentLine++) {
-                const lineLength = prevLines[currentLine].length + 1;
-                if (posInLine <= accumulatedLength + lineLength) {
-                    posInLine -= accumulatedLength;
-                    break;
+            numbers.forEach((num, index) => {
+                if (!isNaN(num) && num >= 100 && num <= 999) {
+                    let result = ((target - num) * 0.125).toFixed(1);
+                    resultArea.innerHTML += `<div>${result}</div>`;
+                    numberingArea.innerHTML += `<div>${index + 1}.</div>`;
+                } else if (num) {
+                    resultArea.innerHTML += `<div style="color: red;">잘못된 입력</div>`;
+                    numberingArea.innerHTML += `<div>${index + 1}.</div>`;
                 }
-                accumulatedLength += lineLength;
+            });
+        }
+
+        function autoNumbering(event) {
+            if (event.key === 'Enter') {
+                calculateResults(); // 엔터를 누를 때 결과 업데이트
             }
-            posInLine = Math.min(posInLine, prevLines[currentLine]?.length || 0);
-
-            let values = input.value.replace(/[^\d\n]/g, '').split('\n')
-                .map(line => line.slice(0, 3))
-                .slice(0, MAX_LINES);
-
-            let newLineAdded = false;
-            if (!isBackspace && values.length < MAX_LINES && values[values.length - 1].length === 3) {
-                values.push(values[values.length - 1].slice(0, 2));
-                newLineAdded = true;
-            }
-
-            const newValue = values.join('\n');
-            if (newValue !== prevValue) {
-                input.value = newValue;
-                calculateResults(input);
-
-                let newCursorPos;
-                if (newLineAdded) {
-                    newCursorPos = newValue.length;
-                } else {
-                    const newLines = newValue.split('\n');
-                    newCursorPos = 0;
-                    for (let i = 0; i < currentLine; i++) {
-                        newCursorPos += (newLines[i]?.length || 0) + 1;
-                    }
-                    newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
-                }
-
-                requestAnimationFrame(() => {
-                    input.setSelectionRange(newCursorPos, newCursorPos);
-                });
-            } else {
-                calculateResults(input);
-            }
-            
-            updateAverage();
         }
 
         window.onload = function () {
-            document.getElementById('revisionDisplay').textContent = `Rev: ${revision}`;
             document.getElementById('targetNumber').value = 144;
-            initialPrefix = document.getElementById('targetNumber').value.toString().slice(0, 2);
-            
-            document.querySelectorAll('.input-numbers').forEach(input => {
-                initializeInput(input);
-                input.addEventListener('input', handleInput);
-                input.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
-            });
-            updateAverage();
+            document.getElementById('inputNumbers').addEventListener('keydown', autoNumbering);
+            document.getElementById('inputNumbers').addEventListener('input', calculateResults);
         }
     </script>
 </head>
 <body>
-    <div id="revisionDisplay"></div>
-    <h2>FUEL SHIM 계산</h2>
+    <h2>목표 수 계산</h2>
     <div class="number-control">
         <button onclick="adjustTargetNumber(-1)">-</button>
-        <input type="number" id="targetNumber" value="144">
+        <input type="number" id="targetNumber" value="144" inputmode="numeric">
         <button onclick="adjustTargetNumber(1)">+</button>
-        <span id="averageDisplay">평균: 0.0</span>
     </div>
-    <div class="groups-container">
-        <div class="group-wrapper">
-            <div class="numbering"></div>
-            <div class="input-group">
-                <div class="bed-label">1번 베드</div>
-                <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
-                <div class="results"></div>
-            </div>
-        </div>
-        <div class="group-wrapper">
-            <div class="numbering"></div>
-            <div class="input-group">
-                <div class="bed-label">2번 베드</div>
-                <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
-                <div class="results"></div>
-            </div>
-        </div>
-        <div class="group-wrapper">
-            <div class="numbering"></div>
-            <div class="input-group">
-                <div class="bed-label">3번 베드</div>
-                <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
-                <div class="results"></div>
-            </div>
-        </div>
-        <div class="group-wrapper">
-            <div class="numbering"></div>
-            <div class="input-group">
-                <div class="bed-label">4번 베드</div>
-                <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
-                <div class="results"></div>
-            </div>
-        </div>
+    <br>
+    <div id="input-container">
+        <div id="numbering"></div>
+        <textarea id="inputNumbers" rows="6" placeholder="숫자를 입력하세요 (엔터로 구분)" inputmode="numeric"></textarea>
+        <div id="results"></div>
     </div>
 </body>
 </html>

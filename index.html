@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 21c -->
+    <!-- Revision: 21 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>FUEL SHIM 계산</title>
     <style>
-        /* 원본 CSS 100% 유지 */
         body {
             font-family: Arial, sans-serif;
             padding: 10px;
@@ -61,6 +60,8 @@
             height: 438px;
             box-sizing: border-box;
             flex: 1;
+            will-change: transform;
+            backface-visibility: hidden;
         }
         .bed-label {
             position: absolute;
@@ -85,6 +86,8 @@
             line-height: 42px;
             text-align: right;
             overflow-y: hidden;
+            contain: strict;
+            content-visibility: auto;
         }
         .input-numbers,
         .results {
@@ -146,6 +149,19 @@
             background-color: #0056b3;
         }
 
+        /* iOS 사파리 전용 픽스 */
+        @supports (-webkit-touch-callout: none) {
+            .input-numbers {
+                -webkit-user-select: none;
+            }
+        }
+
+        /* 안드로이드 크롬 스크롤바 숨김 */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* 가로 모드 스타일 */
         @media (orientation: landscape) {
             .groups-container {
                 flex-direction: row;
@@ -180,121 +196,156 @@
         }
     </style>
     <script>
-        (function() {
-            const revision = '21c';
-            let initialPrefix = '14';
-            const MAX_LINES = 9;
-            const resultCache = new Map();
+        const revision = 21;
 
-            // 계산 결과 캐시 시스템
-            function getCachedResult(num, target) {
-                const key = `${num}-${target}`;
-                return resultCache.get(key) || calculateAndCache(num, target);
-            }
+        let initialPrefix = '14';
+        const MAX_LINES = 9;
 
-            function calculateAndCache(num, target) {
-                let result;
-                if (num.length !== 3) {
-                    result = num.length > 0 ? '⚠' : '';
-                } else {
-                    const n = parseInt(num);
-                    const diff = target - n;
-                    const calcResult = Math.trunc(diff * 0.125 * 10) / 10;
-                    result = Math.abs(calcResult) <= 0.1 ? '' 
-                        : calcResult < 0 ? `<span class="negative">${calcResult.toFixed(1)}</span>` 
-                        : calcResult.toFixed(1);
+        // JavaScript 성능 개선 없이 초기 버전 유지
+        function adjustTargetNumber(value) {
+            const targetInput = document.getElementById('targetNumber');
+            const newValue = parseInt(targetInput.value) + value;
+            targetInput.value = newValue;
+            initialPrefix = targetInput.value.toString().slice(0, 2);
+            
+            document.querySelectorAll('.input-numbers').forEach(input => {
+                calculateResults(input);
+            });
+            updateAverage();
+        }
+
+        function initializeInput(inputElement) {
+            inputElement.value = initialPrefix;
+            calculateResults(inputElement);
+        }
+
+        function calculateResults(inputElement) {
+            const wrapper = inputElement.closest('.group-wrapper');
+            const target = parseInt(document.getElementById('targetNumber').value);
+            const numbers = inputElement.value.split('\n');
+            
+            const results = numbers.map(num => {
+                if (num.length !== 3) return num.length > 0 ? '⚠' : '';
+                const n = parseInt(num);
+                const diff = target - n;
+                const result = Math.trunc(diff * 0.125 * 10) / 10;
+                if (Math.abs(result) <= 0.1) return '';
+                const formatted = result.toFixed(1).replace(/\.0$/, '');
+                return result < 0 ? `<span class="negative">${formatted}</span>` : formatted;
+            });
+
+            wrapper.querySelector('.results').innerHTML = results
+                .map(r => r === '' ? '<div></div>' : `<div>${r}</div>`)
+                .join('');
+            wrapper.querySelector('.numbering').innerHTML = numbers
+                .map((_, i) => `<div>${i + 1}.</div>`)
+                .join('');
+        }
+
+        function updateAverage() {
+            const inputs = Array.from(document.querySelectorAll('.input-numbers'))
+                .slice(0, 4)
+                .flatMap(input => 
+                    input.value.split('\n')
+                    .filter(num => num.length === 3)
+                    .map(num => parseInt(num))
+                )
+                .filter(num => !isNaN(num));
+
+            const average = inputs.length > 0 
+                ? (inputs.reduce((a, b) => a + b, 0) / inputs.length).toFixed(1)
+                : '0.0';
+
+            document.getElementById('averageDisplay').textContent = `평균: ${average}`;
+        }
+
+        function handleInput(event) {
+            const input = event.target;
+            const isBackspace = event.inputType?.startsWith('delete') || event.key === 'Backspace';
+            
+            const cursorPos = input.selectionStart;
+            const prevValue = input.value;
+            const prevLines = prevValue.split('\n');
+            
+            let currentLine = 0;
+            let posInLine = cursorPos;
+            let accumulatedLength = 0;
+            for (; currentLine < prevLines.length; currentLine++) {
+                const lineLength = prevLines[currentLine].length + 1;
+                if (posInLine <= accumulatedLength + lineLength) {
+                    posInLine -= accumulatedLength;
+                    break;
                 }
-                resultCache.set(`${num}-${target}`, result);
-                return result;
+                accumulatedLength += lineLength;
+            }
+            posInLine = Math.min(posInLine, prevLines[currentLine]?.length || 0);
+
+            let values = input.value.replace(/[^\d\n]/g, '').split('\n')
+                .map(line => line.slice(0, 3))
+                .slice(0, MAX_LINES);
+
+            let newLineAdded = false;
+            if (!isBackspace && values.length < MAX_LINES && values[values.length - 1].length === 3) {
+                values.push(values[values.length - 1].slice(0, 2));
+                newLineAdded = true;
             }
 
-            // 입력 처리 최적화
-            function createInputHandler() {
-                let timeout;
-                return function(event) {
-                    clearTimeout(timeout);
-                    timeout = setTimeout(() => processInput(event.target), 50);
-                };
+            const newValue = values.join('\n');
+            if (newValue !== prevValue) {
+                input.value = newValue;
+                calculateResults(input);
+
+                let newCursorPos;
+                if (newLineAdded) {
+                    newCursorPos = newValue.length;
+                } else {
+                    const newLines = newValue.split('\n');
+                    newCursorPos = 0;
+                    for (let i = 0; i < currentLine; i++) {
+                        newCursorPos += (newLines[i]?.length || 0) + 1;
+                    }
+                    newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
+                }
+
+                requestAnimationFrame(() => {
+                    input.setSelectionRange(newCursorPos, newCursorPos);
+                });
+            } else {
+                calculateResults(input);
             }
+            
+            updateAverage();
+        }
 
-            function processInput(input) {
-                const target = parseInt(document.getElementById('targetNumber').value);
-                const values = input.value.replace(/[^\d\n]/g, '')
-                    .split('\n')
-                    .map(line => line.slice(0, 3))
-                    .slice(0, MAX_LINES);
+        window.onload = function () {
+            document.getElementById('revisionDisplay').textContent = `Rev: ${revision}`;
+            document.getElementById('targetNumber').value = 144;
+            initialPrefix = document.getElementById('targetNumber').value.toString().slice(0, 2);
 
-                updateUI(input.closest('.group-wrapper'), values, target);
-                updateGlobalAverage();
-            }
-
-            // UI 업데이트
-            function updateUI(wrapper, values, target) {
-                const results = values.map(num => getCachedResult(num, target));
-                wrapper.querySelector('.results').innerHTML = 
-                    results.map(r => r ? `<div>${r}</div>` : '<div></div>').join('');
-                wrapper.querySelector('.numbering').innerHTML = 
-                    values.map((_, i) => `<div>${i + 1}.</div>`).join('');
-            }
-
-            // 평균 계산
-            function updateGlobalAverage() {
-                const numbers = Array.from(document.querySelectorAll('.input-numbers'))
-                    .slice(0, 4)
-                    .flatMap(input => 
-                        input.value.split('\n')
-                            .filter(num => num.length === 3)
-                            .map(Number)
-                            .filter(n => !isNaN(n))
-                    );
-
-                const avg = numbers.length 
-                    ? (numbers.reduce((a, b) => a + b, 0) / numbers.length).toFixed(1)
-                    : '0.0';
-                document.getElementById('averageDisplay').textContent = `평균: ${avg}`;
+            // 베드 동적 생성 (HTML 개선 유지)
+            const bedContainer = document.getElementById('bedContainer');
+            for (let i = 1; i <= 4; i++) {
+                const bed = `
+                    <div class="group-wrapper">
+                        <div class="numbering"></div>
+                        <div class="input-group">
+                            <div class="bed-label">${i}번 베드</div>
+                            <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
+                            <div class="results"></div>
+                        </div>
+                    </div>
+                `;
+                bedContainer.insertAdjacentHTML('beforeend', bed);
             }
 
             // 초기화
-            function init() {
-                document.getElementById('revisionDisplay').textContent = `Rev: ${revision}`;
-                const targetInput = document.getElementById('targetNumber');
-                targetInput.value = 144;
-                initialPrefix = targetInput.value.toString().slice(0, 2);
-
-                const bedContainer = document.getElementById('bedContainer');
-                for (let i = 1; i <= 4; i++) {
-                    bedContainer.innerHTML += `
-                        <div class="group-wrapper">
-                            <div class="numbering"></div>
-                            <div class="input-group">
-                                <div class="bed-label">${i}번 베드</div>
-                                <textarea class="input-numbers" rows="9"></textarea>
-                                <div class="results"></div>
-                            </div>
-                        </div>
-                    `;
-                }
-
-                const handleInput = createInputHandler();
-                document.querySelectorAll('.input-numbers').forEach(input => {
-                    input.value = initialPrefix;
-                    input.addEventListener('input', handleInput);
-                });
-
-                updateGlobalAverage();
-            }
-
-            // 목표값 조정
-            window.adjustTargetNumber = function(value) {
-                const targetInput = document.getElementById('targetNumber');
-                targetInput.value = parseInt(targetInput.value) + value;
-                initialPrefix = targetInput.value.toString().slice(0, 2);
-                resultCache.clear();
-                document.querySelectorAll('.input-numbers').forEach(input => processInput(input));
-            };
-
-            window.addEventListener('DOMContentLoaded', init);
-        })();
+            document.querySelectorAll('.input-numbers').forEach(input => {
+                initializeInput(input);
+                input.addEventListener('input', handleInput);
+                input.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
+            });
+            updateAverage();
+        }
     </script>
 </head>
 <body>

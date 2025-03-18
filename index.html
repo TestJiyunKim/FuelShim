@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 15 -->
+    <!-- Revision: 16 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FUEL SHIM 계산</title>
@@ -56,42 +56,42 @@
             border-radius: 6px;
             background-color: white;
             position: relative;
-            height: 445px; /* 높이 증가 */
+            height: 438px; /* 높이 조정 */
             box-sizing: border-box;
             flex: 1;
         }
         .bed-label {
             position: absolute;
-            top: -11px; /* 위치 조정 */
+            top: -11px;
             left: 50%;
             transform: translateX(-50%);
             background: white;
             padding: 0 6px;
             font-weight: bold;
             color: #007bff;
-            font-size: 13px; /* 폰트 축소 */
+            font-size: 13px;
         }
         .numbering {
-            margin-top: 9px; /* 4px 아래로 배치 */
+            margin-top: 9px;
             width: 29px !important;
-            height: 423px; /* 23px 증가 */
+            height: 416px; /* 7px 감소 */
             padding: 3px;
             border: 1px solid #ccc;
             border-radius: 3px;
             background-color: #f0f0f0;
-            font-size: 28px; /* 2포인트 증가 */
-            line-height: 40px; /* 조정 */
+            font-size: 30px; /* 2포인트 증가 */
+            line-height: 42px; /* 조정 */
             text-align: right;
             overflow-y: hidden;
         }
         .input-numbers,
         .results {
-            height: 423px; /* 30px 증가 */
+            height: 416px; /* 7px 감소 */
             padding: 3px;
             border: 1px solid #ccc;
             border-radius: 3px;
-            font-size: 28px; /* 2포인트 증가 */
-            line-height: 40px; /* 조정 */
+            font-size: 30px; /* 2포인트 증가 */
+            line-height: 42px; /* 조정 */
             flex-shrink: 0;
             box-sizing: border-box;
         }
@@ -108,7 +108,7 @@
             color: red;
         }
         .results div:empty {
-            height: 40px; /* 높이 동기화 */
+            height: 42px; /* 동기화 */
             visibility: hidden;
         }
         #averageDisplay {
@@ -154,29 +154,29 @@
                 display: none !important;
             }
             .input-group {
-                height: 373px; /* 높이 조정 */
+                height: 373px;
                 padding: 7px 3px 8px;
             }
             .input-numbers,
             .results {
-                height: 358px; /* 30px 증가 */
+                height: 358px;
                 width: 63px !important;
-                font-size: 24px; /* 2포인트 증가 */
-                line-height: 34px; /* 조정 */
+                font-size: 26px; /* 2포인트 증가 */
+                line-height: 36px; /* 조정 */
             }
             .numbering {
-                height: 358px; /* 23px 증가 */
+                height: 358px;
                 margin-top: 9px;
-                font-size: 24px; /* 2포인트 증가 */
-                line-height: 34px; /* 조정 */
+                font-size: 26px; /* 2포인트 증가 */
+                line-height: 36px; /* 조정 */
             }
             .results div:empty {
-                height: 34px; /* 동기화 */
+                height: 36px; /* 동기화 */
             }
         }
     </style>
     <script>
-        const revision = 15;
+        const revision = 16;
 
         let initialPrefix = '14';
         const MAX_LINES = 9;

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 19 -->
+    <!-- Revision: 20 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -60,6 +60,8 @@
             height: 438px;
             box-sizing: border-box;
             flex: 1;
+            will-change: transform;
+            backface-visibility: hidden;
         }
         .bed-label {
             position: absolute;
@@ -84,6 +86,8 @@
             line-height: 42px;
             text-align: right;
             overflow-y: hidden;
+            contain: strict;
+            content-visibility: auto;
         }
         .input-numbers,
         .results {
@@ -95,6 +99,9 @@
             line-height: 42px;
             flex-shrink: 0;
             box-sizing: border-box;
+            min-width: 44px;
+            min-height: 44px;
+            touch-action: manipulation;
         }
         .input-numbers {
             width: 144px !important;
@@ -189,38 +196,49 @@
         }
     </style>
     <script>
-        const revision = 19;
+        const revision = 20;
 
         let initialPrefix = '14';
         const MAX_LINES = 9;
 
-        function adjustTargetNumber(value) {
-            const targetInput = document.getElementById('targetNumber');
-            const newValue = parseInt(targetInput.value) + value;
-            targetInput.value = newValue;
-            initialPrefix = targetInput.value.toString().slice(0, 2);
-            
-            document.querySelectorAll('.input-numbers').forEach(input => {
+        // DOM 캐싱
+        const cached = {
+            inputs: [],
+            target: document.getElementById('targetNumber')
+        };
+
+        // 디바운싱
+        let timeout;
+        function handleInput(event) {
+            const input = event.target;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
                 calculateResults(input);
-            });
-            updateAverage();
+                updateAverage();
+            }, 150);
         }
 
-        function initializeInput(inputElement) {
-            inputElement.value = initialPrefix;
-            calculateResults(inputElement);
+        // 계산 결과 캐싱
+        const calcCache = new Map();
+        function getResult(target, num) {
+            const key = `${target}-${num}`;
+            if (!calcCache.has(key)) {
+                const diff = target - num;
+                const result = Math.trunc(diff * 0.125 * 10) / 10;
+                calcCache.set(key, result);
+            }
+            return calcCache.get(key);
         }
 
         function calculateResults(inputElement) {
             const wrapper = inputElement.closest('.group-wrapper');
-            const target = parseInt(document.getElementById('targetNumber').value);
+            const target = parseInt(cached.target.value);
             const numbers = inputElement.value.split('\n');
-            
+
             const results = numbers.map(num => {
                 if (num.length !== 3) return num.length > 0 ? '⚠' : '';
                 const n = parseInt(num);
-                const diff = target - n;
-                const result = Math.trunc(diff * 0.125 * 10) / 10;
+                const result = getResult(target, n);
                 if (Math.abs(result) <= 0.1) return '';
                 const formatted = result.toFixed(1).replace(/\.0$/, '');
                 return result < 0 ? `<span class="negative">${formatted}</span>` : formatted;
@@ -235,86 +253,23 @@
         }
 
         function updateAverage() {
-            const inputs = Array.from(document.querySelectorAll('.input-numbers'))
-                .slice(0, 4)
-                .flatMap(input => 
-                    input.value.split('\n')
-                    .filter(num => num.length === 3)
-                    .map(num => parseInt(num))
-                )
+            const inputs = cached.inputs
+                .flatMap(input => input.value.split('\n')
+                .filter(num => num.length === 3)
+                .map(num => parseInt(num))
                 .filter(num => !isNaN(num));
 
-            const average = inputs.length > 0 
+            const average = inputs.length > 0
                 ? (inputs.reduce((a, b) => a + b, 0) / inputs.length).toFixed(1)
                 : '0.0';
 
             document.getElementById('averageDisplay').textContent = `평균: ${average}`;
         }
 
-        let timeout;
-        function handleInput(event) {
-            const input = event.target;
-            const isBackspace = event.inputType?.startsWith('delete') || event.key === 'Backspace';
-            
-            const cursorPos = input.selectionStart;
-            const prevValue = input.value;
-            const prevLines = prevValue.split('\n');
-            
-            let currentLine = 0;
-            let posInLine = cursorPos;
-            let accumulatedLength = 0;
-            for (; currentLine < prevLines.length; currentLine++) {
-                const lineLength = prevLines[currentLine].length + 1;
-                if (posInLine <= accumulatedLength + lineLength) {
-                    posInLine -= accumulatedLength;
-                    break;
-                }
-                accumulatedLength += lineLength;
-            }
-            posInLine = Math.min(posInLine, prevLines[currentLine]?.length || 0);
-
-            let values = input.value.replace(/[^\d\n]/g, '').split('\n')
-                .map(line => line.slice(0, 3))
-                .slice(0, MAX_LINES);
-
-            let newLineAdded = false;
-            if (!isBackspace && values.length < MAX_LINES && values[values.length - 1].length === 3) {
-                values.push(values[values.length - 1].slice(0, 2));
-                newLineAdded = true;
-            }
-
-            const newValue = values.join('\n');
-            if (newValue !== prevValue) {
-                input.value = newValue;
-                calculateResults(input);
-
-                let newCursorPos;
-                if (newLineAdded) {
-                    newCursorPos = newValue.length;
-                } else {
-                    const newLines = newValue.split('\n');
-                    newCursorPos = 0;
-                    for (let i = 0; i < currentLine; i++) {
-                        newCursorPos += (newLines[i]?.length || 0) + 1;
-                    }
-                    newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
-                }
-
-                requestAnimationFrame(() => {
-                    input.setSelectionRange(newCursorPos, newCursorPos);
-                });
-            } else {
-                calculateResults(input);
-            }
-            
-            clearTimeout(timeout);
-            timeout = setTimeout(updateAverage, 100);
-        }
-
         window.onload = function () {
             document.getElementById('revisionDisplay').textContent = `Rev: ${revision}`;
-            document.getElementById('targetNumber').value = 144;
-            initialPrefix = document.getElementById('targetNumber').value.toString().slice(0, 2);
+            cached.target.value = 144;
+            initialPrefix = cached.target.value.toString().slice(0, 2);
 
             // 베드 동적 생성
             const bedContainer = document.getElementById('bedContainer');
@@ -333,11 +288,13 @@
             }
 
             // 이벤트 리스너 등록
-            document.querySelectorAll('.input-numbers').forEach(input => {
-                initializeInput(input);
+            cached.inputs = Array.from(document.querySelectorAll('.input-numbers'));
+            cached.inputs.forEach(input => {
+                input.value = initialPrefix;
                 input.addEventListener('input', handleInput);
                 input.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
             });
+
             updateAverage();
         }
     </script>

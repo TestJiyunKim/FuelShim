@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 9 -->
+    <!-- Revision: 11 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FUEL SHIM 계산</title>
@@ -39,24 +39,26 @@
         }
         .groups-container {
             display: flex;
+            flex-direction: column;
             gap: 4px;
-            justify-content: center;
-            flex-wrap: wrap;
+        }
+        .group-wrapper {
+            display: flex;
+            gap: 2px;
+            width: 100%;
         }
         .input-group {
             display: flex;
-            flex-direction: row;
             gap: 2px;
-            padding: 18px 3px 5px; /* 하단 패딩 추가 */
+            padding: 18px 3px 5px;
             border: 2px solid #007bff;
             border-radius: 6px;
             background-color: white;
             position: relative;
             align-items: flex-start;
-            height: 400px; /* 세로 모드 그룹 높이 */
-            width: 100%;
-            margin-bottom: 8px;
+            height: 400px;
             box-sizing: border-box;
+            flex: 1;
         }
         .bed-label {
             position: absolute;
@@ -69,30 +71,35 @@
             color: #007bff;
             font-size: 13px;
         }
-        .numbering,
-        .input-numbers,
-        .results {
-            height: 360px; /* 세로 모드 높이 */
+        .numbering {
+            width: 29px !important;
+            height: 360px;
             padding: 3px;
             border: 1px solid #ccc;
             border-radius: 3px;
-            font-size: 24px; /* 세로 모드 폰트 크기 */
-            line-height: 36px; /* 세로 모드 줄 간격 */
-            flex-shrink: 0;
-        }
-        .numbering {
-            width: 29px !important; /* 세로 모드 폭 20% 축소 */
-            text-align: right;
             background-color: #f0f0f0;
+            font-size: 24px;
+            line-height: 36px;
+            text-align: right;
             overflow-y: hidden;
         }
+        .input-numbers,
+        .results {
+            height: 360px;
+            padding: 3px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 24px;
+            line-height: 36px;
+            flex-shrink: 0;
+        }
         .input-numbers {
-            width: 144px !important; /* 세로 모드 폭 */
+            width: 144px !important;
             resize: none;
             background-color: white;
         }
         .results {
-            width: 144px !important; /* 세로 모드 폭 */
+            width: 144px !important;
             background-color: #f0f0f0;
         }
         .negative {
@@ -134,36 +141,33 @@
 
         /* 가로 모드 스타일 */
         @media (orientation: landscape) {
+            .groups-container {
+                flex-direction: row;
+                gap: 4px;
+            }
+            .group-wrapper {
+                width: auto;
+            }
+            .numbering {
+                display: none !important;
+            }
             .input-group {
-                height: 321px; /* 높이 1px 조정 */
-                width: fit-content !important; /* 폭 최소화 */
-                padding-bottom: 5px; /* 하단 패딩 추가 */
+                height: 321px;
+                width: fit-content !important;
+                padding-bottom: 5px;
             }
-            .input-group:not(:first-child) .numbering {
-                display: none; /* 2-4번 베드 번호 숨김 */
-            }
-            .numbering,
             .input-numbers,
             .results {
                 height: 300px;
+                width: 50px !important;
                 font-size: 20px;
                 line-height: 30px;
-            }
-            .numbering {
-                width: 28px !important; /* 폭 10% 축소 */
-            }
-            .input-numbers,
-            .results {
-                width: 50px !important; /* 폭 10% 축소 */
-            }
-            .groups-container {
-                gap: 4px; /* 그룹 간 간격 축소 */
             }
         }
     </style>
     <script>
         // 리비전 번호
-        const revision = 9; // <!-- Revision: 9 -->
+        const revision = 11; // <!-- Revision: 11 -->
 
         let initialPrefix = '14';
         const MAX_LINES = 9;
@@ -186,30 +190,24 @@
         }
 
         function calculateResults(inputElement) {
-            const group = inputElement.closest('.input-group');
+            const wrapper = inputElement.closest('.group-wrapper');
             const target = parseInt(document.getElementById('targetNumber').value);
             const numbers = inputElement.value.split('\n');
             
             const results = numbers.map(num => {
-                if (num.length !== 3) {
-                    return num.length > 0 ? '⚠' : '';
-                }
+                if (num.length !== 3) return num.length > 0 ? '⚠' : '';
                 const n = parseInt(num);
                 const diff = target - n;
                 const result = Math.trunc(diff * 0.125 * 10) / 10;
-
                 if (Math.abs(result) <= 0.1) return '';
-                
                 const formatted = result.toFixed(1).replace(/\.0$/, '');
-                return result < 0 
-                    ? `<span class="negative">${formatted}</span>` 
-                    : formatted;
+                return result < 0 ? `<span class="negative">${formatted}</span>` : formatted;
             });
 
-            group.querySelector('.results').innerHTML = results
+            wrapper.querySelector('.results').innerHTML = results
                 .map(r => r === '' ? '<div></div>' : `<div>${r}</div>`)
                 .join('');
-            group.querySelector('.numbering').innerHTML = numbers
+            wrapper.querySelector('.numbering').innerHTML = numbers
                 .map((_, i) => `<div>${i + 1}.</div>`)
                 .join('');
         }
@@ -233,7 +231,7 @@
 
         function handleInput(event) {
             const input = event.target;
-            const isBackspace = event.inputType.startsWith('delete');
+            const isBackspace = event.inputType?.startsWith('delete') || event.key === 'Backspace';
             
             const cursorPos = input.selectionStart;
             const prevValue = input.value;
@@ -313,29 +311,37 @@
         <span id="averageDisplay">평균: 0.0</span>
     </div>
     <div class="groups-container">
-        <div class="input-group">
-            <div class="bed-label">1번 베드</div>
+        <div class="group-wrapper">
             <div class="numbering"></div>
-            <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
-            <div class="results"></div>
+            <div class="input-group">
+                <div class="bed-label">1번 베드</div>
+                <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
+                <div class="results"></div>
+            </div>
         </div>
-        <div class="input-group">
-            <div class="bed-label">2번 베드</div>
+        <div class="group-wrapper">
             <div class="numbering"></div>
-            <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
-            <div class="results"></div>
+            <div class="input-group">
+                <div class="bed-label">2번 베드</div>
+                <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
+                <div class="results"></div>
+            </div>
         </div>
-        <div class="input-group">
-            <div class="bed-label">3번 베드</div>
+        <div class="group-wrapper">
             <div class="numbering"></div>
-            <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
-            <div class="results"></div>
+            <div class="input-group">
+                <div class="bed-label">3번 베드</div>
+                <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
+                <div class="results"></div>
+            </div>
         </div>
-        <div class="input-group">
-            <div class="bed-label">4번 베드</div>
+        <div class="group-wrapper">
             <div class="numbering"></div>
-            <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
-            <div class="results"></div>
+            <div class="input-group">
+                <div class="bed-label">4번 베드</div>
+                <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
+                <div class="results"></div>
+            </div>
         </div>
     </div>
 </body>

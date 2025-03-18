@@ -1,34 +1,24 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 21 -->
+    <!-- Revision: 21b -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>FUEL SHIM 계산</title>
     <style>
-        :root {
-            --primary-color: #007bff;
-            --background-light: #f4f4f9;
-            --text-dark: #333;
-            --border-color: #ccc;
-            --warning-color: #ff4444;
-        }
-
         body {
             font-family: Arial, sans-serif;
             padding: 10px;
-            background-color: var(--background-light);
-            color: var(--text-dark);
+            background-color: #f4f4f9;
+            color: #333;
             margin: 0;
         }
-
         h2 {
             color: #444;
             margin-bottom: 8px;
             text-align: center;
         }
-
         .number-control {
             display: flex;
             align-items: center;
@@ -37,37 +27,33 @@
             padding: 0 10px;
             justify-content: center;
         }
-
         .number-control input {
             width: 50px;
             height: 18px;
             text-align: center;
             padding: 3px;
-            border: 2px solid var(--primary-color);
+            border: 2px solid #007bff;
             border-radius: 4px;
             font-size: 13px;
             -webkit-appearance: none;
             -moz-appearance: textfield;
         }
-
         .groups-container {
             display: flex;
             flex-direction: column;
             gap: 4px;
         }
-
         .group-wrapper {
             display: flex;
             gap: 2px;
             width: 100%;
             align-items: flex-start;
         }
-
         .input-group {
             display: flex;
             gap: 2px;
             padding: 7px 3px 8px;
-            border: 2px solid var(--primary-color);
+            border: 2px solid #007bff;
             border-radius: 6px;
             background-color: white;
             position: relative;
@@ -75,7 +61,6 @@
             box-sizing: border-box;
             flex: 1;
         }
-
         .bed-label {
             position: absolute;
             top: -11px;
@@ -84,18 +69,15 @@
             background: white;
             padding: 0 6px;
             font-weight: bold;
-            color: var(--primary-color);
+            color: #007bff;
             font-size: 13px;
-            role: heading;
-            aria-level: 2;
         }
-
         .numbering {
             margin-top: 9px;
             width: 29px !important;
             height: 416px;
             padding: 3px;
-            border: 1px solid var(--border-color);
+            border: 1px solid #ccc;
             border-radius: 3px;
             background-color: #f0f0f0;
             font-size: 30px;
@@ -103,12 +85,11 @@
             text-align: right;
             overflow-y: hidden;
         }
-
         .input-numbers,
         .results {
             height: 416px;
             padding: 3px;
-            border: 1px solid var(--border-color);
+            border: 1px solid #ccc;
             border-radius: 3px;
             font-size: 30px;
             line-height: 42px;
@@ -118,34 +99,28 @@
             min-height: 44px;
             touch-action: manipulation;
         }
-
         .input-numbers {
             width: 144px !important;
             resize: none;
             background-color: white;
         }
-
         .results {
             width: 144px !important;
             background-color: #f0f0f0;
         }
-
         .negative {
-            color: var(--warning-color);
+            color: red;
         }
-
         .results div:empty {
             height: 42px;
             visibility: hidden;
         }
-
         #averageDisplay {
             margin-left: 10px;
-            color: var(--primary-color);
+            color: #007bff;
             font-weight: bold;
             font-size: 13px;
         }
-
         #revisionDisplay {
             position: absolute;
             top: 10px;
@@ -153,12 +128,11 @@
             color: #666;
             font-size: 12px;
         }
-
         button {
             padding: 0;
             width: 28px;
             height: 18px;
-            background-color: var(--primary-color);
+            background-color: #007bff;
             color: white;
             border: none;
             border-radius: 4px;
@@ -167,7 +141,6 @@
             transition: background-color 0.3s;
             flex-shrink: 0;
         }
-
         button:hover {
             background-color: #0056b3;
         }
@@ -206,70 +179,71 @@
         }
     </style>
     <script>
-        const revision = 21;
+        const revision = '21b';
         let initialPrefix = '14';
         const MAX_LINES = 9;
         const resultCache = new Map();
 
-        function calculateSingleResult(num, target) {
+        // 계산 결과 캐싱
+        function calculateResult(num, target) {
             const cacheKey = `${num}-${target}`;
             if (resultCache.has(cacheKey)) return resultCache.get(cacheKey);
 
-            if (num.length !== 3) return { result: num.length > 0 ? '⚠' : '', cacheable: false };
-            
-            const n = parseInt(num);
-            const diff = target - n;
-            const resultValue = Math.trunc(diff * 0.125 * 10) / 10;
-            
             let result;
-            if (Math.abs(resultValue) <= 0.1) {
-                result = '';
+            if (num.length !== 3) {
+                result = num.length > 0 ? '⚠' : '';
             } else {
-                const formatted = resultValue.toFixed(1).replace(/\.0$/, '');
-                result = resultValue < 0 
-                    ? `<span class="negative">${formatted}</span>` 
-                    : formatted;
+                const n = parseInt(num);
+                const diff = target - n;
+                const calcResult = Math.trunc(diff * 0.125 * 10) / 10;
+                if (Math.abs(calcResult) <= 0.1) {
+                    result = '';
+                } else {
+                    const formatted = calcResult.toFixed(1).replace(/\.0$/, '');
+                    result = calcResult < 0 
+                        ? `<span class="negative">${formatted}</span>` 
+                        : formatted;
+                }
             }
 
-            resultCache.set(cacheKey, { result, cacheable: true });
-            return { result, cacheable: true };
+            resultCache.set(cacheKey, result);
+            return result;
         }
 
-        function updateResultsDOM(wrapper, results) {
-            const fragment = document.createDocumentFragment();
-            results.forEach(r => {
-                const div = document.createElement('div');
-                div.innerHTML = r === '' ? '&nbsp;' : r;
-                fragment.appendChild(div);
-            });
-            wrapper.querySelector('.results').replaceChildren(fragment);
-        }
-
+        // 입력 처리 (디바운싱 적용)
+        let inputTimeout;
         function handleInput(event) {
+            clearTimeout(inputTimeout);
+            inputTimeout = setTimeout(() => processInput(event), 50);
+        }
+
+        function processInput(event) {
             const input = event.target;
             const target = parseInt(document.getElementById('targetNumber').value);
             const values = input.value.replace(/[^\d\n]/g, '').split('\n')
                 .map(line => line.slice(0, 3))
                 .slice(0, MAX_LINES);
 
-            const results = values.map(num => {
-                const { result } = calculateSingleResult(num, target);
-                return result;
-            });
-
+            const results = values.map(num => calculateResult(num, target));
             const wrapper = input.closest('.group-wrapper');
-            updateResultsDOM(wrapper, results);
+            updateResults(wrapper, results);
             updateNumbering(wrapper, values.length);
             updateAverage();
         }
 
-        function updateNumbering(wrapper, lineCount) {
-            const numbering = wrapper.querySelector('.numbering');
-            numbering.innerHTML = Array.from({length: lineCount}, (_, i) => 
-                `<div>${i + 1}.</div>`
-            ).join('');
+        // 결과 업데이트
+        function updateResults(wrapper, results) {
+            const resultsHTML = results.map(r => r === '' ? '<div></div>' : `<div>${r}</div>`).join('');
+            wrapper.querySelector('.results').innerHTML = resultsHTML;
         }
 
+        // 넘버링 업데이트
+        function updateNumbering(wrapper, lineCount) {
+            const numberingHTML = Array.from({length: lineCount}, (_, i) => `<div>${i + 1}.</div>`).join('');
+            wrapper.querySelector('.numbering').innerHTML = numberingHTML;
+        }
+
+        // 평균 계산
         function updateAverage() {
             const inputs = Array.from(document.querySelectorAll('.input-numbers'))
                 .slice(0, 4)
@@ -277,77 +251,63 @@
                     input.value.split('\n')
                     .filter(num => num.length === 3)
                     .map(num => parseInt(num))
-                )
                 .filter(num => !isNaN(num));
 
             const average = inputs.length > 0 
-                ? (inputs.reduce((a, b) => a + b, 0) / inputs.length
-                : 0;
+                ? (inputs.reduce((a, b) => a + b, 0) / inputs.length).toFixed(1)
+                : '0.0';
 
-            document.getElementById('averageDisplay').textContent = 
-                `평균: ${average.toFixed(1)}`;
+            document.getElementById('averageDisplay').textContent = `평균: ${average}`;
         }
 
+        // 초기화
         window.addEventListener('DOMContentLoaded', () => {
             document.getElementById('revisionDisplay').textContent = `Rev: ${revision}`;
             document.getElementById('targetNumber').value = 144;
-            initialPrefix = document.getElementById('targetNumber').value.toString().slice(0, 2);
-
-            const bedTemplate = document.createElement('template');
-            bedTemplate.innerHTML = `
-                <div class="group-wrapper">
-                    <div class="numbering" aria-hidden="true"></div>
-                    <div class="input-group">
-                        <div class="bed-label" role="heading" aria-level="2"></div>
-                        <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
-                        <div class="results" role="status"></div>
-                    </div>
-                </div>
-            `;
+            initialPrefix = '144'.slice(0, 2);
 
             const bedContainer = document.getElementById('bedContainer');
             for (let i = 1; i <= 4; i++) {
-                const clone = bedTemplate.content.cloneNode(true);
-                const bedLabel = clone.querySelector('.bed-label');
-                bedLabel.textContent = `${i}번 베드`;
-                
-                const input = clone.querySelector('.input-numbers');
-                input.value = initialPrefix;
-                input.addEventListener('input', handleInput);
-                
-                bedContainer.appendChild(clone);
+                const bedHTML = `
+                    <div class="group-wrapper">
+                        <div class="numbering"></div>
+                        <div class="input-group">
+                            <div class="bed-label">${i}번 베드</div>
+                            <textarea class="input-numbers" rows="9"></textarea>
+                            <div class="results"></div>
+                        </div>
+                    </div>
+                `;
+                bedContainer.insertAdjacentHTML('beforeend', bedHTML);
             }
 
-            document.querySelectorAll('button').forEach(button => {
-                button.setAttribute('aria-label', 
-                    button.textContent === '-' 
-                        ? '목표값 감소' 
-                        : '목표값 증가');
+            document.querySelectorAll('.input-numbers').forEach(input => {
+                input.value = initialPrefix;
+                input.addEventListener('input', handleInput);
             });
+
+            updateAverage();
         });
 
+        // 목표값 조정
         function adjustTargetNumber(value) {
             const targetInput = document.getElementById('targetNumber');
             const newValue = parseInt(targetInput.value) + value;
             targetInput.value = newValue;
-            initialPrefix = targetInput.value.toString().slice(0, 2);
-            
+            initialPrefix = newValue.toString().slice(0, 2);
             resultCache.clear();
-            document.querySelectorAll('.input-numbers').forEach(input => {
-                handleInput({ target: input });
-            });
+            document.querySelectorAll('.input-numbers').forEach(input => processInput({ target: input }));
         }
     </script>
 </head>
 <body>
-    <div id="revisionDisplay" aria-live="polite"></div>
+    <div id="revisionDisplay"></div>
     <h2>FUEL SHIM 계산</h2>
     <div class="number-control">
-        <button onclick="adjustTargetNumber(-1)" aria-label="목표값 감소">-</button>
-        <input type="number" id="targetNumber" value="144" 
-               inputmode="numeric" aria-label="목표 값 입력">
-        <button onclick="adjustTargetNumber(1)" aria-label="목표값 증가">+</button>
-        <span id="averageDisplay" aria-live="polite">평균: 0.0</span>
+        <button onclick="adjustTargetNumber(-1)">-</button>
+        <input type="number" id="targetNumber" value="144" pattern="[0-9]*" inputmode="numeric">
+        <button onclick="adjustTargetNumber(1)">+</button>
+        <span id="averageDisplay">평균: 0.0</span>
     </div>
     <div class="groups-container" id="bedContainer"></div>
 </body>

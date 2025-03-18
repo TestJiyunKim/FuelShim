@@ -46,7 +46,8 @@
             display: flex;
             gap: 2px;
             width: 100%;
-            align-items: stretch; /* 높이 일치 */
+            /* 입력창과 번호창이 상단에서 같이 시작하도록 */
+            align-items: flex-start;
         }
         .input-group {
             display: flex;
@@ -56,6 +57,8 @@
             border-radius: 6px;
             background-color: white;
             position: relative;
+            align-items: flex-start;
+            /* 세로 모드 높이 */
             height: 360px;
             box-sizing: border-box;
             flex: 1;
@@ -72,6 +75,7 @@
             font-size: 13px;
         }
         .numbering {
+            /* 번호창도 입력창과 같은 고정 높이를 사용 */
             width: 29px !important;
             height: 360px;
             padding: 3px;
@@ -79,20 +83,18 @@
             border-radius: 3px;
             background-color: #f0f0f0;
             font-size: 24px;
-            line-height: 36px;
             text-align: right;
-            overflow-y: hidden;
+            /* 내부 행들이 입력창의 줄과 동일하게 표시되도록 */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            gap: 0;
             box-sizing: border-box;
-            display: flex;
-            flex-direction: column; /* 세로 정렬 */
         }
+        /* 각 행의 높이와 줄 간격를 입력창과 동일하게 (세로 모드: 360px/9 ≒ 40px 대신 기존 36px를 사용) */
         .numbering div {
-            flex: 1;
-            min-height: 36px; /* 행 높이 고정 */
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding: 2px 0;
+            height: 36px;
+            line-height: 36px;
         }
         .input-numbers,
         .results {
@@ -160,6 +162,7 @@
             .group-wrapper {
                 width: auto;
             }
+            /* 첫 번째 그룹을 제외한 번호 매기기 창은 숨김 처리(단, 크기와 위치 조정은 그대로 적용) */
             .group-wrapper:not(:first-child) .numbering {
                 display: none !important;
             }
@@ -168,12 +171,6 @@
                 width: fit-content !important;
                 padding-bottom: 5px;
             }
-            .numbering {
-                height: 300px;
-            }
-            .numbering div {
-                min-height: 30px; /* 가로 모드 행 높이 */
-            }
             .input-numbers,
             .results {
                 height: 300px;
@@ -181,10 +178,19 @@
                 font-size: 20px;
                 line-height: 30px;
             }
+            .numbering {
+                height: 300px;
+            }
+            .numbering div {
+                height: 30px;
+                line-height: 30px;
+            }
         }
     </style>
     <script>
-        const revision = 12;
+        // 리비전 번호
+        const revision = 12; // <!-- Revision: 12 -->
+
         let initialPrefix = '14';
         const MAX_LINES = 9;
 

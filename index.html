@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 13 -->
+    <!-- Revision: 14 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FUEL SHIM 계산</title>
@@ -51,12 +51,12 @@
         .input-group {
             display: flex;
             gap: 2px;
-            padding: 34px 3px 8px; /* 상단/하단 패딩 증가 */
+            padding: 7px 3px 8px; /* 상단 패딩 80% 감소 */
             border: 2px solid #007bff;
             border-radius: 6px;
             background-color: white;
             position: relative;
-            height: 412px; /* 높이 증가 */
+            height: 412px;
             box-sizing: border-box;
             flex: 1;
         }
@@ -72,26 +72,26 @@
             font-size: 15px;
         }
         .numbering {
-            margin-top: 34px; /* 외곽선 두께(2px) + 상단 패딩 조정 */
+            margin-top: 5px; /* 조정된 상단 여백 (7px - 2px) */
             width: 29px !important;
-            height: 368px; /* 새 높이에 맞춤 */
+            height: 368px;
             padding: 3px;
             border: 1px solid #ccc;
             border-radius: 3px;
             background-color: #f0f0f0;
-            font-size: 24px;
-            line-height: 36px;
+            font-size: 26px; /* 2px 증가 */
+            line-height: 38px; /* 2px 증가 */
             text-align: right;
             overflow-y: hidden;
         }
         .input-numbers,
         .results {
-            height: 368px; /* 새 높이에 맞춤 */
+            height: 368px;
             padding: 3px;
             border: 1px solid #ccc;
             border-radius: 3px;
-            font-size: 24px;
-            line-height: 36px;
+            font-size: 26px; /* 2px 증가 */
+            line-height: 38px; /* 2px 증가 */
             flex-shrink: 0;
             box-sizing: border-box;
         }
@@ -108,7 +108,7 @@
             color: red;
         }
         .results div:empty {
-            height: 36px; /* 기본 높이 유지 */
+            height: 38px; /* 줄간격 동기화 */
             visibility: hidden;
         }
         #averageDisplay {
@@ -154,29 +154,29 @@
                 display: none !important;
             }
             .input-group {
-                height: 344px; /* 높이 증가 */
-                padding: 34px 3px 8px; /* 상단/하단 패딩 증가 */
+                height: 344px;
+                padding: 7px 3px 8px; /* 상단 패딩 조정 */
             }
             .input-numbers,
             .results {
-                height: 308px; /* 새 높이에 맞춤 */
-                width: 50px !important;
-                font-size: 20px;
-                line-height: 30px;
+                height: 308px;
+                width: 63px !important; /* 25% 증가 (50→63) */
+                font-size: 22px; /* 2px 증가 */
+                line-height: 32px; /* 2px 증가 */
             }
             .numbering {
-                height: 308px; /* 높이 조정 */
-                margin-top: 34px; /* 외곽선 두께 반영 */
-                font-size: 20px;
-                line-height: 30px;
+                height: 308px; /* 입력창 높이와 동일 */
+                margin-top: 5px; /* 상단 여백 조정 */
+                font-size: 22px; /* 2px 증가 */
+                line-height: 32px; /* 2px 증가 */
             }
             .results div:empty {
-                height: 30px; /* 가로 모드 높이 동기화 */
+                height: 32px; /* 줄간격 동기화 */
             }
         }
     </style>
     <script>
-        const revision = 13;
+        const revision = 14;
 
         let initialPrefix = '14';
         const MAX_LINES = 9;

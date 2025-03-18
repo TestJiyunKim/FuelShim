@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 13 -->
+    <!-- Revision: 12 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FUEL SHIM 계산</title>
@@ -46,13 +46,12 @@
             display: flex;
             gap: 2px;
             width: 100%;
-            align-items: flex-start;
+            align-items: flex-start; /* 상단 정렬 */
         }
         .input-group {
             display: flex;
             gap: 2px;
-            /* 상단 여백을 줄여 번호창과 입력창의 시작 위치를 맞춤 */
-            padding: 3px 3px 5px;
+            padding: 18px 3px 5px;
             border: 2px solid #007bff;
             border-radius: 6px;
             background-color: white;
@@ -63,9 +62,8 @@
             flex: 1;
         }
         .bed-label {
-            /* 상단 여백이 줄어든 만큼 라벨 위치도 약간 조정 */
             position: absolute;
-            top: -12px;
+            top: -9px;
             left: 50%;
             transform: translateX(-50%);
             background: white;
@@ -76,33 +74,25 @@
         }
         .numbering {
             width: 29px !important;
-            height: 360px;
+            height: 360px; /* 세로 모드 높이 */
             padding: 3px;
             border: 1px solid #ccc;
             border-radius: 3px;
             background-color: #f0f0f0;
             font-size: 24px;
-            text-align: right;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            gap: 0;
-            box-sizing: border-box;
-        }
-        .numbering div {
-            height: 36px;
             line-height: 36px;
+            text-align: right;
+            overflow-y: hidden;
         }
         .input-numbers,
         .results {
-            height: 360px;
+            height: 360px; /* 세로 모드 높이 */
             padding: 3px;
             border: 1px solid #ccc;
             border-radius: 3px;
             font-size: 24px;
             line-height: 36px;
             flex-shrink: 0;
-            box-sizing: border-box;
         }
         .input-numbers {
             width: 144px !important;
@@ -160,36 +150,25 @@
                 width: auto;
             }
             .group-wrapper:not(:first-child) .numbering {
-                display: none !important;
+                display: none !important; /* 2-4번 베드 번호 숨김 */
             }
             .input-group {
-                height: 300px;
+                height: 300px; /* 가로 모드 높이 */
                 width: fit-content !important;
-                /* 가로 모드에서도 상단 여백을 줄임 */
-                padding: 3px 3px 5px;
+                padding-bottom: 5px;
             }
             .input-numbers,
             .results {
-                height: 300px;
+                height: 300px; /* 가로 모드 높이 */
                 width: 50px !important;
                 font-size: 20px;
                 line-height: 30px;
-            }
-            .numbering {
-                height: 300px;
-            }
-            .numbering div {
-                height: 30px;
-                line-height: 30px;
-            }
-            .bed-label {
-                top: -12px;
             }
         }
     </style>
     <script>
         // 리비전 번호
-        const revision = 13; // <!-- Revision: 12 -->
+        const revision = 12; // <!-- Revision: 12 -->
 
         let initialPrefix = '14';
         const MAX_LINES = 9;

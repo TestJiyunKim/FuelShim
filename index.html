@@ -7,18 +7,28 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>FUEL SHIM 계산</title>
     <style>
+        :root {
+            --primary-color: #007bff;
+            --background-light: #f4f4f9;
+            --text-dark: #333;
+            --border-color: #ccc;
+            --warning-color: #ff4444;
+        }
+
         body {
             font-family: Arial, sans-serif;
             padding: 10px;
-            background-color: #f4f4f9;
-            color: #333;
+            background-color: var(--background-light);
+            color: var(--text-dark);
             margin: 0;
         }
+
         h2 {
             color: #444;
             margin-bottom: 8px;
             text-align: center;
         }
+
         .number-control {
             display: flex;
             align-items: center;
@@ -27,42 +37,45 @@
             padding: 0 10px;
             justify-content: center;
         }
+
         .number-control input {
             width: 50px;
             height: 18px;
             text-align: center;
             padding: 3px;
-            border: 2px solid #007bff;
+            border: 2px solid var(--primary-color);
             border-radius: 4px;
             font-size: 13px;
             -webkit-appearance: none;
             -moz-appearance: textfield;
         }
+
         .groups-container {
             display: flex;
             flex-direction: column;
             gap: 4px;
         }
+
         .group-wrapper {
             display: flex;
             gap: 2px;
             width: 100%;
             align-items: flex-start;
         }
+
         .input-group {
             display: flex;
             gap: 2px;
             padding: 7px 3px 8px;
-            border: 2px solid #007bff;
+            border: 2px solid var(--primary-color);
             border-radius: 6px;
             background-color: white;
             position: relative;
             height: 438px;
             box-sizing: border-box;
             flex: 1;
-            will-change: transform;
-            backface-visibility: hidden;
         }
+
         .bed-label {
             position: absolute;
             top: -11px;
@@ -71,29 +84,31 @@
             background: white;
             padding: 0 6px;
             font-weight: bold;
-            color: #007bff;
+            color: var(--primary-color);
             font-size: 13px;
+            role: heading;
+            aria-level: 2;
         }
+
         .numbering {
             margin-top: 9px;
             width: 29px !important;
             height: 416px;
             padding: 3px;
-            border: 1px solid #ccc;
+            border: 1px solid var(--border-color);
             border-radius: 3px;
             background-color: #f0f0f0;
             font-size: 30px;
             line-height: 42px;
             text-align: right;
             overflow-y: hidden;
-            contain: strict;
-            content-visibility: auto;
         }
+
         .input-numbers,
         .results {
             height: 416px;
             padding: 3px;
-            border: 1px solid #ccc;
+            border: 1px solid var(--border-color);
             border-radius: 3px;
             font-size: 30px;
             line-height: 42px;
@@ -103,28 +118,34 @@
             min-height: 44px;
             touch-action: manipulation;
         }
+
         .input-numbers {
             width: 144px !important;
             resize: none;
             background-color: white;
         }
+
         .results {
             width: 144px !important;
             background-color: #f0f0f0;
         }
+
         .negative {
-            color: red;
+            color: var(--warning-color);
         }
+
         .results div:empty {
             height: 42px;
             visibility: hidden;
         }
+
         #averageDisplay {
             margin-left: 10px;
-            color: #007bff;
+            color: var(--primary-color);
             font-weight: bold;
             font-size: 13px;
         }
+
         #revisionDisplay {
             position: absolute;
             top: 10px;
@@ -132,11 +153,12 @@
             color: #666;
             font-size: 12px;
         }
+
         button {
             padding: 0;
             width: 28px;
             height: 18px;
-            background-color: #007bff;
+            background-color: var(--primary-color);
             color: white;
             border: none;
             border-radius: 4px;
@@ -145,23 +167,11 @@
             transition: background-color 0.3s;
             flex-shrink: 0;
         }
+
         button:hover {
             background-color: #0056b3;
         }
 
-        /* iOS 사파리 전용 픽스 */
-        @supports (-webkit-touch-callout: none) {
-            .input-numbers {
-                -webkit-user-select: none;
-            }
-        }
-
-        /* 안드로이드 크롬 스크롤바 숨김 */
-        ::-webkit-scrollbar {
-            display: none;
-        }
-
-        /* 가로 모드 스타일 */
         @media (orientation: landscape) {
             .groups-container {
                 flex-direction: row;
@@ -197,49 +207,67 @@
     </style>
     <script>
         const revision = 21;
-
         let initialPrefix = '14';
         const MAX_LINES = 9;
+        const resultCache = new Map();
 
-        // JavaScript 성능 개선 없이 초기 버전 유지
-        function adjustTargetNumber(value) {
-            const targetInput = document.getElementById('targetNumber');
-            const newValue = parseInt(targetInput.value) + value;
-            targetInput.value = newValue;
-            initialPrefix = targetInput.value.toString().slice(0, 2);
+        function calculateSingleResult(num, target) {
+            const cacheKey = `${num}-${target}`;
+            if (resultCache.has(cacheKey)) return resultCache.get(cacheKey);
+
+            if (num.length !== 3) return { result: num.length > 0 ? '⚠' : '', cacheable: false };
             
-            document.querySelectorAll('.input-numbers').forEach(input => {
-                calculateResults(input);
+            const n = parseInt(num);
+            const diff = target - n;
+            const resultValue = Math.trunc(diff * 0.125 * 10) / 10;
+            
+            let result;
+            if (Math.abs(resultValue) <= 0.1) {
+                result = '';
+            } else {
+                const formatted = resultValue.toFixed(1).replace(/\.0$/, '');
+                result = resultValue < 0 
+                    ? `<span class="negative">${formatted}</span>` 
+                    : formatted;
+            }
+
+            resultCache.set(cacheKey, { result, cacheable: true });
+            return { result, cacheable: true };
+        }
+
+        function updateResultsDOM(wrapper, results) {
+            const fragment = document.createDocumentFragment();
+            results.forEach(r => {
+                const div = document.createElement('div');
+                div.innerHTML = r === '' ? '&nbsp;' : r;
+                fragment.appendChild(div);
             });
+            wrapper.querySelector('.results').replaceChildren(fragment);
+        }
+
+        function handleInput(event) {
+            const input = event.target;
+            const target = parseInt(document.getElementById('targetNumber').value);
+            const values = input.value.replace(/[^\d\n]/g, '').split('\n')
+                .map(line => line.slice(0, 3))
+                .slice(0, MAX_LINES);
+
+            const results = values.map(num => {
+                const { result } = calculateSingleResult(num, target);
+                return result;
+            });
+
+            const wrapper = input.closest('.group-wrapper');
+            updateResultsDOM(wrapper, results);
+            updateNumbering(wrapper, values.length);
             updateAverage();
         }
 
-        function initializeInput(inputElement) {
-            inputElement.value = initialPrefix;
-            calculateResults(inputElement);
-        }
-
-        function calculateResults(inputElement) {
-            const wrapper = inputElement.closest('.group-wrapper');
-            const target = parseInt(document.getElementById('targetNumber').value);
-            const numbers = inputElement.value.split('\n');
-            
-            const results = numbers.map(num => {
-                if (num.length !== 3) return num.length > 0 ? '⚠' : '';
-                const n = parseInt(num);
-                const diff = target - n;
-                const result = Math.trunc(diff * 0.125 * 10) / 10;
-                if (Math.abs(result) <= 0.1) return '';
-                const formatted = result.toFixed(1).replace(/\.0$/, '');
-                return result < 0 ? `<span class="negative">${formatted}</span>` : formatted;
-            });
-
-            wrapper.querySelector('.results').innerHTML = results
-                .map(r => r === '' ? '<div></div>' : `<div>${r}</div>`)
-                .join('');
-            wrapper.querySelector('.numbering').innerHTML = numbers
-                .map((_, i) => `<div>${i + 1}.</div>`)
-                .join('');
+        function updateNumbering(wrapper, lineCount) {
+            const numbering = wrapper.querySelector('.numbering');
+            numbering.innerHTML = Array.from({length: lineCount}, (_, i) => 
+                `<div>${i + 1}.</div>`
+            ).join('');
         }
 
         function updateAverage() {
@@ -253,109 +281,73 @@
                 .filter(num => !isNaN(num));
 
             const average = inputs.length > 0 
-                ? (inputs.reduce((a, b) => a + b, 0) / inputs.length).toFixed(1)
-                : '0.0';
+                ? (inputs.reduce((a, b) => a + b, 0) / inputs.length
+                : 0;
 
-            document.getElementById('averageDisplay').textContent = `평균: ${average}`;
+            document.getElementById('averageDisplay').textContent = 
+                `평균: ${average.toFixed(1)}`;
         }
 
-        function handleInput(event) {
-            const input = event.target;
-            const isBackspace = event.inputType?.startsWith('delete') || event.key === 'Backspace';
-            
-            const cursorPos = input.selectionStart;
-            const prevValue = input.value;
-            const prevLines = prevValue.split('\n');
-            
-            let currentLine = 0;
-            let posInLine = cursorPos;
-            let accumulatedLength = 0;
-            for (; currentLine < prevLines.length; currentLine++) {
-                const lineLength = prevLines[currentLine].length + 1;
-                if (posInLine <= accumulatedLength + lineLength) {
-                    posInLine -= accumulatedLength;
-                    break;
-                }
-                accumulatedLength += lineLength;
-            }
-            posInLine = Math.min(posInLine, prevLines[currentLine]?.length || 0);
-
-            let values = input.value.replace(/[^\d\n]/g, '').split('\n')
-                .map(line => line.slice(0, 3))
-                .slice(0, MAX_LINES);
-
-            let newLineAdded = false;
-            if (!isBackspace && values.length < MAX_LINES && values[values.length - 1].length === 3) {
-                values.push(values[values.length - 1].slice(0, 2));
-                newLineAdded = true;
-            }
-
-            const newValue = values.join('\n');
-            if (newValue !== prevValue) {
-                input.value = newValue;
-                calculateResults(input);
-
-                let newCursorPos;
-                if (newLineAdded) {
-                    newCursorPos = newValue.length;
-                } else {
-                    const newLines = newValue.split('\n');
-                    newCursorPos = 0;
-                    for (let i = 0; i < currentLine; i++) {
-                        newCursorPos += (newLines[i]?.length || 0) + 1;
-                    }
-                    newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
-                }
-
-                requestAnimationFrame(() => {
-                    input.setSelectionRange(newCursorPos, newCursorPos);
-                });
-            } else {
-                calculateResults(input);
-            }
-            
-            updateAverage();
-        }
-
-        window.onload = function () {
+        window.addEventListener('DOMContentLoaded', () => {
             document.getElementById('revisionDisplay').textContent = `Rev: ${revision}`;
             document.getElementById('targetNumber').value = 144;
             initialPrefix = document.getElementById('targetNumber').value.toString().slice(0, 2);
 
-            // 베드 동적 생성 (HTML 개선 유지)
+            const bedTemplate = document.createElement('template');
+            bedTemplate.innerHTML = `
+                <div class="group-wrapper">
+                    <div class="numbering" aria-hidden="true"></div>
+                    <div class="input-group">
+                        <div class="bed-label" role="heading" aria-level="2"></div>
+                        <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
+                        <div class="results" role="status"></div>
+                    </div>
+                </div>
+            `;
+
             const bedContainer = document.getElementById('bedContainer');
             for (let i = 1; i <= 4; i++) {
-                const bed = `
-                    <div class="group-wrapper">
-                        <div class="numbering"></div>
-                        <div class="input-group">
-                            <div class="bed-label">${i}번 베드</div>
-                            <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
-                            <div class="results"></div>
-                        </div>
-                    </div>
-                `;
-                bedContainer.insertAdjacentHTML('beforeend', bed);
+                const clone = bedTemplate.content.cloneNode(true);
+                const bedLabel = clone.querySelector('.bed-label');
+                bedLabel.textContent = `${i}번 베드`;
+                
+                const input = clone.querySelector('.input-numbers');
+                input.value = initialPrefix;
+                input.addEventListener('input', handleInput);
+                
+                bedContainer.appendChild(clone);
             }
 
-            // 초기화
-            document.querySelectorAll('.input-numbers').forEach(input => {
-                initializeInput(input);
-                input.addEventListener('input', handleInput);
-                input.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
+            document.querySelectorAll('button').forEach(button => {
+                button.setAttribute('aria-label', 
+                    button.textContent === '-' 
+                        ? '목표값 감소' 
+                        : '목표값 증가');
             });
-            updateAverage();
+        });
+
+        function adjustTargetNumber(value) {
+            const targetInput = document.getElementById('targetNumber');
+            const newValue = parseInt(targetInput.value) + value;
+            targetInput.value = newValue;
+            initialPrefix = targetInput.value.toString().slice(0, 2);
+            
+            resultCache.clear();
+            document.querySelectorAll('.input-numbers').forEach(input => {
+                handleInput({ target: input });
+            });
         }
     </script>
 </head>
 <body>
-    <div id="revisionDisplay"></div>
+    <div id="revisionDisplay" aria-live="polite"></div>
     <h2>FUEL SHIM 계산</h2>
     <div class="number-control">
-        <button onclick="adjustTargetNumber(-1)">-</button>
-        <input type="number" id="targetNumber" value="144" pattern="[0-9]*" inputmode="numeric">
-        <button onclick="adjustTargetNumber(1)">+</button>
-        <span id="averageDisplay">평균: 0.0</span>
+        <button onclick="adjustTargetNumber(-1)" aria-label="목표값 감소">-</button>
+        <input type="number" id="targetNumber" value="144" 
+               inputmode="numeric" aria-label="목표 값 입력">
+        <button onclick="adjustTargetNumber(1)" aria-label="목표값 증가">+</button>
+        <span id="averageDisplay" aria-live="polite">평균: 0.0</span>
     </div>
     <div class="groups-container" id="bedContainer"></div>
 </body>

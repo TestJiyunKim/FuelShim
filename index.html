@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 12 -->
+    <!-- Revision: 15 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FUEL SHIM 계산</title>
@@ -46,62 +46,52 @@
             display: flex;
             gap: 2px;
             width: 100%;
-            align-items: stretch; /* 높이 일치 */
+            align-items: flex-start;
         }
         .input-group {
             display: flex;
             gap: 2px;
-            padding: 18px 3px 5px;
+            padding: 7px 3px 8px;
             border: 2px solid #007bff;
             border-radius: 6px;
             background-color: white;
             position: relative;
-            height: 360px;
+            height: 445px; /* 높이 증가 */
             box-sizing: border-box;
             flex: 1;
         }
         .bed-label {
             position: absolute;
-            top: -9px;
+            top: -11px; /* 위치 조정 */
             left: 50%;
             transform: translateX(-50%);
             background: white;
             padding: 0 6px;
             font-weight: bold;
             color: #007bff;
-            font-size: 13px;
+            font-size: 13px; /* 폰트 축소 */
         }
         .numbering {
+            margin-top: 9px; /* 4px 아래로 배치 */
             width: 29px !important;
-            height: 360px;
+            height: 423px; /* 23px 증가 */
             padding: 3px;
             border: 1px solid #ccc;
             border-radius: 3px;
             background-color: #f0f0f0;
-            font-size: 24px;
-            line-height: 36px;
+            font-size: 28px; /* 2포인트 증가 */
+            line-height: 40px; /* 조정 */
             text-align: right;
             overflow-y: hidden;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column; /* 세로 정렬 */
-        }
-        .numbering div {
-            flex: 1;
-            min-height: 36px; /* 행 높이 고정 */
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding: 2px 0;
         }
         .input-numbers,
         .results {
-            height: 360px;
+            height: 423px; /* 30px 증가 */
             padding: 3px;
             border: 1px solid #ccc;
             border-radius: 3px;
-            font-size: 24px;
-            line-height: 36px;
+            font-size: 28px; /* 2포인트 증가 */
+            line-height: 40px; /* 조정 */
             flex-shrink: 0;
             box-sizing: border-box;
         }
@@ -118,7 +108,7 @@
             color: red;
         }
         .results div:empty {
-            height: 36px;
+            height: 40px; /* 높이 동기화 */
             visibility: hidden;
         }
         #averageDisplay {
@@ -164,27 +154,30 @@
                 display: none !important;
             }
             .input-group {
-                height: 300px;
-                width: fit-content !important;
-                padding-bottom: 5px;
-            }
-            .numbering {
-                height: 300px;
-            }
-            .numbering div {
-                min-height: 30px; /* 가로 모드 행 높이 */
+                height: 373px; /* 높이 조정 */
+                padding: 7px 3px 8px;
             }
             .input-numbers,
             .results {
-                height: 300px;
-                width: 50px !important;
-                font-size: 20px;
-                line-height: 30px;
+                height: 358px; /* 30px 증가 */
+                width: 63px !important;
+                font-size: 24px; /* 2포인트 증가 */
+                line-height: 34px; /* 조정 */
+            }
+            .numbering {
+                height: 358px; /* 23px 증가 */
+                margin-top: 9px;
+                font-size: 24px; /* 2포인트 증가 */
+                line-height: 34px; /* 조정 */
+            }
+            .results div:empty {
+                height: 34px; /* 동기화 */
             }
         }
     </style>
     <script>
-        const revision = 12;
+        const revision = 15;
+
         let initialPrefix = '14';
         const MAX_LINES = 9;
 

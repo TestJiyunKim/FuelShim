@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 11 -->
+    <!-- Revision: 12 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FUEL SHIM 계산</title>
@@ -46,6 +46,7 @@
             display: flex;
             gap: 2px;
             width: 100%;
+            align-items: flex-start; /* 상단 정렬 */
         }
         .input-group {
             display: flex;
@@ -56,7 +57,7 @@
             background-color: white;
             position: relative;
             align-items: flex-start;
-            height: 400px;
+            height: 360px; /* 세로 모드 높이 */
             box-sizing: border-box;
             flex: 1;
         }
@@ -73,7 +74,7 @@
         }
         .numbering {
             width: 29px !important;
-            height: 360px;
+            height: 360px; /* 세로 모드 높이 */
             padding: 3px;
             border: 1px solid #ccc;
             border-radius: 3px;
@@ -85,7 +86,7 @@
         }
         .input-numbers,
         .results {
-            height: 360px;
+            height: 360px; /* 세로 모드 높이 */
             padding: 3px;
             border: 1px solid #ccc;
             border-radius: 3px;
@@ -148,17 +149,17 @@
             .group-wrapper {
                 width: auto;
             }
-            .numbering {
-                display: none !important;
+            .group-wrapper:not(:first-child) .numbering {
+                display: none !important; /* 2-4번 베드 번호 숨김 */
             }
             .input-group {
-                height: 321px;
+                height: 300px; /* 가로 모드 높이 */
                 width: fit-content !important;
                 padding-bottom: 5px;
             }
             .input-numbers,
             .results {
-                height: 300px;
+                height: 300px; /* 가로 모드 높이 */
                 width: 50px !important;
                 font-size: 20px;
                 line-height: 30px;
@@ -167,7 +168,7 @@
     </style>
     <script>
         // 리비전 번호
-        const revision = 11; // <!-- Revision: 11 -->
+        const revision = 12; // <!-- Revision: 12 -->
 
         let initialPrefix = '14';
         const MAX_LINES = 9;

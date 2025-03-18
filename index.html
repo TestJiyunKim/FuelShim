@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 16 -->
+    <!-- Revision: 17 -->
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>FUEL SHIM 계산</title>
     <style>
+        /* 기본 스타일 */
         body {
             font-family: Arial, sans-serif;
             padding: 10px;
@@ -56,9 +58,11 @@
             border-radius: 6px;
             background-color: white;
             position: relative;
-            height: 438px; /* 높이 조정 */
+            height: 438px;
             box-sizing: border-box;
             flex: 1;
+            will-change: transform;
+            backface-visibility: hidden;
         }
         .bed-label {
             position: absolute;
@@ -74,26 +78,31 @@
         .numbering {
             margin-top: 9px;
             width: 29px !important;
-            height: 416px; /* 7px 감소 */
+            height: 416px;
             padding: 3px;
             border: 1px solid #ccc;
             border-radius: 3px;
             background-color: #f0f0f0;
-            font-size: 30px; /* 2포인트 증가 */
-            line-height: 42px; /* 조정 */
+            font-size: 30px;
+            line-height: 42px;
             text-align: right;
             overflow-y: hidden;
+            contain: strict;
+            content-visibility: auto;
         }
         .input-numbers,
         .results {
-            height: 416px; /* 7px 감소 */
+            height: 416px;
             padding: 3px;
             border: 1px solid #ccc;
             border-radius: 3px;
-            font-size: 30px; /* 2포인트 증가 */
-            line-height: 42px; /* 조정 */
+            font-size: 30px;
+            line-height: 42px;
             flex-shrink: 0;
             box-sizing: border-box;
+            min-width: 44px;
+            min-height: 44px;
+            touch-action: manipulation;
         }
         .input-numbers {
             width: 144px !important;
@@ -108,7 +117,7 @@
             color: red;
         }
         .results div:empty {
-            height: 42px; /* 동기화 */
+            height: 42px;
             visibility: hidden;
         }
         #averageDisplay {
@@ -141,6 +150,18 @@
             background-color: #0056b3;
         }
 
+        /* iOS 사파리 전용 픽스 */
+        @supports (-webkit-touch-callout: none) {
+            .input-numbers {
+                -webkit-user-select: none;
+            }
+        }
+
+        /* 안드로이드 크롬 스크롤바 숨김 */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
         /* 가로 모드 스타일 */
         @media (orientation: landscape) {
             .groups-container {
@@ -161,22 +182,22 @@
             .results {
                 height: 358px;
                 width: 63px !important;
-                font-size: 26px; /* 2포인트 증가 */
-                line-height: 36px; /* 조정 */
+                font-size: 26px;
+                line-height: 36px;
             }
             .numbering {
                 height: 358px;
                 margin-top: 9px;
-                font-size: 26px; /* 2포인트 증가 */
-                line-height: 36px; /* 조정 */
+                font-size: 26px;
+                line-height: 36px;
             }
             .results div:empty {
-                height: 36px; /* 동기화 */
+                height: 36px;
             }
         }
     </style>
     <script>
-        const revision = 16;
+        const revision = 17;
 
         let initialPrefix = '14';
         const MAX_LINES = 9;
@@ -238,6 +259,7 @@
             document.getElementById('averageDisplay').textContent = `평균: ${average}`;
         }
 
+        let timeout;
         function handleInput(event) {
             const input = event.target;
             const isBackspace = event.inputType?.startsWith('delete') || event.key === 'Backspace';
@@ -293,7 +315,8 @@
                 calculateResults(input);
             }
             
-            updateAverage();
+            clearTimeout(timeout);
+            timeout = setTimeout(updateAverage, 100);
         }
 
         window.onload = function () {
@@ -315,7 +338,7 @@
     <h2>FUEL SHIM 계산</h2>
     <div class="number-control">
         <button onclick="adjustTargetNumber(-1)">-</button>
-        <input type="number" id="targetNumber" value="144">
+        <input type="number" id="targetNumber" value="144" pattern="[0-9]*" inputmode="numeric">
         <button onclick="adjustTargetNumber(1)">+</button>
         <span id="averageDisplay">평균: 0.0</span>
     </div>

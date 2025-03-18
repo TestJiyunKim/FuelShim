@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 12 -->
+    <!-- Revision: 13 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FUEL SHIM 계산</title>
@@ -46,26 +46,26 @@
             display: flex;
             gap: 2px;
             width: 100%;
-            /* 입력창과 번호창이 상단에서 같이 시작하도록 */
             align-items: flex-start;
         }
         .input-group {
             display: flex;
             gap: 2px;
-            padding: 18px 3px 5px;
+            /* 상단 여백을 줄여 번호창과 입력창의 시작 위치를 맞춤 */
+            padding: 3px 3px 5px;
             border: 2px solid #007bff;
             border-radius: 6px;
             background-color: white;
             position: relative;
             align-items: flex-start;
-            /* 세로 모드 높이 */
-            height: 360px;
+            height: 360px; /* 세로 모드 높이 */
             box-sizing: border-box;
             flex: 1;
         }
         .bed-label {
+            /* 상단 여백이 줄어든 만큼 라벨 위치도 약간 조정 */
             position: absolute;
-            top: -9px;
+            top: -12px;
             left: 50%;
             transform: translateX(-50%);
             background: white;
@@ -75,7 +75,6 @@
             font-size: 13px;
         }
         .numbering {
-            /* 번호창도 입력창과 같은 고정 높이를 사용 */
             width: 29px !important;
             height: 360px;
             padding: 3px;
@@ -84,14 +83,12 @@
             background-color: #f0f0f0;
             font-size: 24px;
             text-align: right;
-            /* 내부 행들이 입력창의 줄과 동일하게 표시되도록 */
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
             gap: 0;
             box-sizing: border-box;
         }
-        /* 각 행의 높이와 줄 간격를 입력창과 동일하게 (세로 모드: 360px/9 ≒ 40px 대신 기존 36px를 사용) */
         .numbering div {
             height: 36px;
             line-height: 36px;
@@ -162,14 +159,14 @@
             .group-wrapper {
                 width: auto;
             }
-            /* 첫 번째 그룹을 제외한 번호 매기기 창은 숨김 처리(단, 크기와 위치 조정은 그대로 적용) */
             .group-wrapper:not(:first-child) .numbering {
                 display: none !important;
             }
             .input-group {
                 height: 300px;
                 width: fit-content !important;
-                padding-bottom: 5px;
+                /* 가로 모드에서도 상단 여백을 줄임 */
+                padding: 3px 3px 5px;
             }
             .input-numbers,
             .results {
@@ -184,6 +181,9 @@
             .numbering div {
                 height: 30px;
                 line-height: 30px;
+            }
+            .bed-label {
+                top: -12px;
             }
         }
     </style>

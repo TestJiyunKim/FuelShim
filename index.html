@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 7 -->
+    <!-- Revision: 8 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FUEL SHIM 계산</title>
@@ -53,7 +53,7 @@
             background-color: white;
             position: relative;
             align-items: flex-start;
-            height: 400px; /* 세로 모드 그룹 높이 증가 */
+            height: 400px; /* 세로 모드 그룹 높이 */
             width: 100%;
             margin-bottom: 8px;
             box-sizing: border-box;
@@ -72,34 +72,34 @@
         .numbering,
         .input-numbers,
         .results {
-            height: 360px; /* 세로 모드 높이 1.2배 추가 증가 */
+            height: 360px; /* 세로 모드 높이 */
             padding: 3px;
             border: 1px solid #ccc;
             border-radius: 3px;
-            font-size: 18px; /* 폰트 크기 추가 증가 */
-            line-height: 32px; /* 줄 간격 증가 */
+            font-size: 24px; /* 세로 모드 폰트 크기 */
+            line-height: 36px; /* 세로 모드 줄 간격 */
             flex-shrink: 0;
         }
         .numbering {
-            width: 36px !important; /* 폭 1.2배 추가 증가 */
+            width: 29px !important; /* 세로 모드 폭 20% 축소 */
             text-align: right;
             background-color: #f0f0f0;
             overflow-y: hidden;
         }
         .input-numbers {
-            width: 144px !important; /* 폭 1.2배 추가 증가 */
+            width: 144px !important; /* 세로 모드 폭 */
             resize: none;
             background-color: white;
         }
         .results {
-            width: 144px !important; /* 폭 1.2배 추가 증가 */
+            width: 144px !important; /* 세로 모드 폭 */
             background-color: #f0f0f0;
         }
         .negative {
             color: red;
         }
         .results div:empty {
-            height: 32px;
+            height: 36px;
             visibility: hidden;
         }
         #averageDisplay {
@@ -132,44 +132,24 @@
             background-color: #0056b3;
         }
 
-        /* 세로 모드 스타일 */
-        @media (orientation: portrait) {
-            .input-group {
-                width: 100% !important;
-                height: 400px; /* 최종 그룹 높이 */
-            }
-            .numbering,
-            .input-numbers,
-            .results {
-                height: 360px; /* 최종 높이 */
-                font-size: 18px; /* 최종 폰트 크기 */
-                line-height: 32px; /* 최종 줄 간격 */
-            }
-        }
-
         /* 가로 모드 스타일 */
         @media (orientation: landscape) {
             .input-group {
-                width: auto !important;
-                height: 320px; /* 높이 1.2배 추가 증가 */
-                flex: 1;
-            }
-            .input-group:not(:first-child) .numbering {
-                display: none;
+                height: 320px; /* 가로 모드 그룹 높이 */
             }
             .numbering,
             .input-numbers,
             .results {
-                height: 300px; /* 높이 1.2배 추가 증가 */
-                font-size: 16px; /* 폰트 크기 증가 */
-                line-height: 28px; /* 줄 간격 증가 */
+                height: 300px; /* 가로 모드 높이 */
+                font-size: 20px; /* 가로 모드 폰트 크기 */
+                line-height: 30px; /* 가로 모드 줄 간격 */
             }
             .numbering {
-                width: 28px !important; /* 폭 0.8배 추가 축소 */
+                width: 31px !important; /* 가로 모드 폭 10% 증가 */
             }
             .input-numbers,
             .results {
-                width: 50px !important; /* 폭 0.8배 추가 축소 */
+                width: 55px !important; /* 가로 모드 폭 10% 증가 */
             }
             .groups-container {
                 gap: 6px;
@@ -179,7 +159,7 @@
     </style>
     <script>
         // 리비전 번호
-        const revision = 7; // <!-- Revision: 7 -->
+        const revision = 8; // <!-- Revision: 8 -->
 
         let initialPrefix = '14';
         const MAX_LINES = 9;

@@ -46,35 +46,36 @@
             display: flex;
             gap: 2px;
             width: 100%;
-            align-items: flex-start; /* 상단 정렬 */
+            align-items: flex-start;
         }
         .input-group {
             display: flex;
             gap: 2px;
-            padding: 18px 3px 5px;
+            padding: 27px 3px 5px; /* 상단 여백 추가 */
             border: 2px solid #007bff;
             border-radius: 6px;
             background-color: white;
             position: relative;
             align-items: flex-start;
-            height: 360px; /* 세로 모드 높이 */
+            height: 387px; /* 세로 모드 높이 조정 */
             box-sizing: border-box;
             flex: 1;
         }
         .bed-label {
             position: absolute;
-            top: -9px;
+            top: -13px; /* 상단 여백 조정 */
             left: 50%;
             transform: translateX(-50%);
             background: white;
-            padding: 0 6px;
+            padding: 0 8px;
             font-weight: bold;
             color: #007bff;
-            font-size: 13px;
+            font-size: 15px; /* 폰트 크기 조정 */
         }
         .numbering {
+            margin-top: 27px; /* 상단 여백 추가 */
             width: 29px !important;
-            height: 360px; /* 세로 모드 높이 */
+            height: 387px; /* 세로 모드 높이 조정 */
             padding: 3px;
             border: 1px solid #ccc;
             border-radius: 3px;
@@ -86,7 +87,7 @@
         }
         .input-numbers,
         .results {
-            height: 360px; /* 세로 모드 높이 */
+            height: 387px; /* 세로 모드 높이 조정 */
             padding: 3px;
             border: 1px solid #ccc;
             border-radius: 3px;
@@ -153,16 +154,22 @@
                 display: none !important; /* 2-4번 베드 번호 숨김 */
             }
             .input-group {
-                height: 300px; /* 가로 모드 높이 */
+                height: 327px; /* 가로 모드 높이 조정 */
                 width: fit-content !important;
-                padding-bottom: 5px;
+                padding: 27px 3px 5px; /* 상단 여백 추가 */
             }
             .input-numbers,
             .results {
-                height: 300px; /* 가로 모드 높이 */
+                height: 327px; /* 가로 모드 높이 조정 */
                 width: 50px !important;
                 font-size: 20px;
                 line-height: 30px;
+            }
+            .numbering {
+                height: 327px; /* 가로 모드 높이 조정 */
+                font-size: 20px; /* 폰트 크기 조정 */
+                line-height: 30px; /* 줄간격 조정 */
+                margin-top: 27px; /* 상단 여백 추가 */
             }
         }
     </style>

@@ -145,14 +145,37 @@
             background-color: #0056b3;
         }
 
-        /* [추가] 오류 스타일 */
-        .input-error {
-            border: 2px solid #ff4444 !important;
-            background: #fff0f0 !important;
-            animation: errorBlink 0.5s 3;
-        }
-        @keyframes errorBlink {
-            50% { border-color: #ff8888; }
+        @media (orientation: landscape) {
+            .groups-container {
+                flex-direction: row;
+                gap: 4px;
+            }
+            .group-wrapper {
+                width: auto;
+            }
+            .group-wrapper:not(:first-child) .numbering {
+                display: none !important;
+            }
+            .input-group {
+                height: 373px;
+                padding: 7px 3px 8px;
+            }
+            .input-numbers,
+            .results {
+                height: 358px;
+                width: 63px !important;
+                font-size: 26px;
+                line-height: 36px;
+            }
+            .numbering {
+                height: 358px;
+                margin-top: 9px;
+                font-size: 26px;
+                line-height: 36px;
+            }
+            .results div:empty {
+                height: 36px;
+            }
         }
     </style>
     <script>
@@ -160,19 +183,8 @@
         let initialPrefix = '14';
         const MAX_LINES = 9;
 
-        // [추가] 오류 검출 함수
-        function detectErrors(inputElement) {
-            const inputs = inputElement.value.split('\n');
-            inputElement.parentNode.querySelectorAll('.input-numbers').forEach((field, index) => {
-                const isValid = inputs[index]?.length === 3 && !isNaN(inputs[index]);
-                field.classList.toggle('input-error', !isValid);
-            });
-        }
-
-        // [수정] 계산 함수에 오류 검출 추가
+        // 계산 함수 (오류 검출 제거)
         function calculateResults(inputElement) {
-            detectErrors(inputElement); // 오류 검출 호출
-            
             const wrapper = inputElement.closest('.group-wrapper');
             const target = parseInt(document.getElementById('targetNumber').value);
             const numbers = inputElement.value.split('\n');
@@ -193,7 +205,7 @@
             updateAverage();
         }
 
-        // 기존 함수들 유지
+        // 기존 기능 유지
         function adjustTargetNumber(value) {
             const targetInput = document.getElementById('targetNumber');
             const newValue = parseInt(targetInput.value) + value;
@@ -222,7 +234,7 @@
                 .filter(num => !isNaN(num));
 
             const average = inputs.length > 0 
-                ? (inputs.reduce((a, b) => a + b, 0) / inputs.length
+                ? (inputs.reduce((a, b) => a + b, 0) / inputs.length)
                 : 0.0;
 
             document.getElementById('averageDisplay').textContent = `평균: ${average.toFixed(1)}`;
@@ -252,7 +264,6 @@
                 .map(line => line.slice(0, 3))
                 .slice(0, MAX_LINES);
 
-            // 백스페이스 처리
             if (isBackspace && posInLine === 0 && currentLine > 0) {
                 values.splice(currentLine - 1, 2, 
                     values[currentLine - 1].slice(0, -1) + values[currentLine]

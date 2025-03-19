@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 21f -->
+    <!-- Revision: 21h -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -180,190 +180,159 @@
         }
     </style>
     <script>
-        (function() {
-            const revision = '21f';
-            let initialPrefix = '14';
-            const MAX_LINES = 9;
-            const resultCache = new Map();
+        const revision = 21;
+        let initialPrefix = '14';
+        const MAX_LINES = 9;
 
-            // 계산 결과 캐싱
-            function getCachedResult(num, target) {
-                const key = `${num}-${target}`;
-                if (resultCache.has(key)) return resultCache.get(key);
+        function adjustTargetNumber(value) {
+            const targetInput = document.getElementById('targetNumber');
+            const newValue = parseInt(targetInput.value) + value;
+            targetInput.value = newValue;
+            initialPrefix = targetInput.value.toString().slice(0, 2);
+            
+            document.querySelectorAll('.input-numbers').forEach(input => {
+                calculateResults(input);
+            });
+            updateAverage();
+        }
 
-                let result;
-                if (num.length !== 3) {
-                    result = num.length > 0 ? '⚠' : '';
+        function initializeInput(inputElement) {
+            inputElement.value = initialPrefix;
+            calculateResults(inputElement);
+        }
+
+        function calculateResults(inputElement) {
+            const wrapper = inputElement.closest('.group-wrapper');
+            const target = parseInt(document.getElementById('targetNumber').value);
+            const numbers = inputElement.value.split('\n');
+            
+            const results = numbers.map(num => {
+                if (num.length !== 3) return num.length > 0 ? '⚠' : '';
+                const n = parseInt(num);
+                const diff = target - n;
+                const result = Math.trunc(diff * 0.125 * 10) / 10;
+                if (Math.abs(result) <= 0.1) return '';
+                const formatted = result.toFixed(1).replace(/\.0$/, '');
+                return result < 0 ? `<span class="negative">${formatted}</span>` : formatted;
+            });
+
+            wrapper.querySelector('.results').innerHTML = results
+                .map(r => r === '' ? '<div></div>' : `<div>${r}</div>`)
+                .join('');
+            wrapper.querySelector('.numbering').innerHTML = numbers
+                .map((_, i) => `<div>${i + 1}.</div>`)
+                .join('');
+        }
+
+        function updateAverage() {
+            const inputs = Array.from(document.querySelectorAll('.input-numbers'))
+                .slice(0, 4)
+                .flatMap(input => 
+                    input.value.split('\n')
+                    .filter(num => num.length === 3)
+                    .map(num => parseInt(num))
+                )
+                .filter(num => !isNaN(num));
+
+            const average = inputs.length > 0 
+                ? (inputs.reduce((a, b) => a + b, 0) / inputs.length).toFixed(1)
+                : '0.0';
+
+            document.getElementById('averageDisplay').textContent = `평균: ${average}`;
+        }
+
+        function handleInput(event) {
+            const input = event.target;
+            const isBackspace = event.inputType?.startsWith('delete') || event.key === 'Backspace';
+            
+            const cursorPos = input.selectionStart;
+            const prevValue = input.value;
+            const prevLines = prevValue.split('\n');
+            
+            let currentLine = 0;
+            let posInLine = cursorPos;
+            let accumulatedLength = 0;
+            for (; currentLine < prevLines.length; currentLine++) {
+                const lineLength = prevLines[currentLine].length + 1;
+                if (posInLine <= accumulatedLength + lineLength) {
+                    posInLine -= accumulatedLength;
+                    break;
+                }
+                accumulatedLength += lineLength;
+            }
+
+            let values = input.value.replace(/[^\d\n]/g, '').split('\n')
+                .map(line => line.slice(0, 3))
+                .slice(0, MAX_LINES);
+
+            // 백스페이스 처리 (초기 버전 로직 복원)
+            if (isBackspace && posInLine === 0 && currentLine > 0) {
+                values.splice(currentLine - 1, 2, 
+                    values[currentLine - 1].slice(0, -1) + values[currentLine]
+                );
+                currentLine--;
+            }
+
+            let newLineAdded = false;
+            if (!isBackspace && values.length < MAX_LINES && values[values.length - 1].length === 3) {
+                values.push(values[values.length - 1].slice(0, 2));
+                newLineAdded = true;
+            }
+
+            const newValue = values.join('\n');
+            if (newValue !== prevValue) {
+                input.value = newValue;
+                calculateResults(input);
+
+                let newCursorPos;
+                if (newLineAdded) {
+                    newCursorPos = newValue.length;
                 } else {
-                    const n = parseInt(num);
-                    const diff = target - n;
-                    const calcResult = Math.trunc(diff * 0.125 * 10) / 10;
-                    result = Math.abs(calcResult) <= 0.1 ? '' 
-                        : calcResult < 0 ? `<span class="negative">${calcResult.toFixed(1)}</span>` 
-                        : calcResult.toFixed(1);
-                }
-                resultCache.set(key, result);
-                return result;
-            }
-
-            // 입력 처리 최적화
-            function createInputHandler() {
-                let timeout;
-                return function(event) {
-                    clearTimeout(timeout);
-                    timeout = setTimeout(() => processInput(event.target), 50);
-                };
-            }
-
-            function processInput(input) {
-                const target = parseInt(document.getElementById('targetNumber').value);
-                const cursorPos = input.selectionStart;
-                const prevValue = input.value;
-                const prevLines = prevValue.split('\n');
-
-                // 현재 줄 계산
-                let currentLine = 0;
-                let posInLine = cursorPos;
-                let accumulatedLength = 0;
-                for (; currentLine < prevLines.length; currentLine++) {
-                    const lineLength = prevLines[currentLine].length + 1; // +1 for newline
-                    if (posInLine <= accumulatedLength + lineLength) {
-                        posInLine -= accumulatedLength;
-                        break;
+                    const newLines = newValue.split('\n');
+                    newCursorPos = 0;
+                    for (let i = 0; i < currentLine; i++) {
+                        newCursorPos += (newLines[i]?.length || 0) + 1;
                     }
-                    accumulatedLength += lineLength;
+                    newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
                 }
 
-                // 입력값 처리
-                let values = input.value.replace(/[^\d\n]/g, '').split('\n')
-                    .map(line => line.slice(0, 3))
-                    .slice(0, MAX_LINES);
-
-                // 자동 줄바꿈 및 접두사 처리
-                let newLineAdded = false;
-                if (currentLine < values.length && values[currentLine].length >= 3) {
-                    if (currentLine < MAX_LINES - 1) {
-                        const currentVal = values[currentLine].slice(0, 2);
-                        values.splice(currentLine + 1, 0, currentVal);
-                        newLineAdded = true;
-                    }
-                }
-
-                // 새 줄 접두사 자동 채우기
-                for (let i = 1; i < values.length; i++) {
-                    if (values[i].length === 0 && values[i - 1].length >= 2) {
-                        values[i] = values[i - 1].slice(0, 2);
-                    }
-                }
-
-                const newValue = values.join('\n');
-                if (newValue !== prevValue) {
-                    input.value = newValue;
-
-                    // 커서 위치 조정
-                    let newCursorPos;
-                    if (newLineAdded) {
-                        newCursorPos = newValue.length;
-                    } else {
-                        const newLines = newValue.split('\n');
-                        newCursorPos = 0;
-                        for (let i = 0; i < currentLine; i++) {
-                            newCursorPos += (newLines[i]?.length || 0) + 1;
-                        }
-                        newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
-                    }
-
-                    requestAnimationFrame(() => {
-                        input.setSelectionRange(newCursorPos, newCursorPos);
-                        updateUI(input.closest('.group-wrapper'), values, target);
-                        updateGlobalAverage();
-                    });
-                } else {
-                    updateUI(input.closest('.group-wrapper'), values, target);
-                    updateGlobalAverage();
-                }
+                requestAnimationFrame(() => {
+                    input.setSelectionRange(newCursorPos, newCursorPos);
+                });
+            } else {
+                calculateResults(input);
             }
+            
+            updateAverage();
+        }
 
-            // UI 업데이트
-            function updateUI(wrapper, values, target) {
-                const results = values.map(num => getCachedResult(num, target));
-                wrapper.querySelector('.results').innerHTML = 
-                    results.map(r => r ? `<div>${r}</div>` : '<div></div>').join('');
-                wrapper.querySelector('.numbering').innerHTML = 
-                    values.map((_, i) => `<div>${i + 1}.</div>`).join('');
-            }
+        window.onload = function () {
+            document.getElementById('revisionDisplay').textContent = `Rev: ${revision}`;
+            document.getElementById('targetNumber').value = 144;
+            initialPrefix = document.getElementById('targetNumber').value.toString().slice(0, 2);
 
-            // 평균 계산
-            function updateGlobalAverage() {
-                const numbers = Array.from(document.querySelectorAll('.input-numbers'))
-                    .slice(0, 4)
-                    .flatMap(input => 
-                        input.value.split('\n')
-                            .filter(num => num.length === 3)
-                            .map(Number)
-                            .filter(n => !isNaN(n))
-                    );
-
-                const avg = numbers.length 
-                    ? (numbers.reduce((a, b) => a + b, 0) / numbers.length).toFixed(1)
-                    : '0.0';
-                document.getElementById('averageDisplay').textContent = `평균: ${avg}`;
-            }
-
-            // 초기화
-            function init() {
-                document.getElementById('revisionDisplay').textContent = `Rev: ${revision}`;
-                const targetInput = document.getElementById('targetNumber');
-                targetInput.value = 144;
-                initialPrefix = targetInput.value.toString().slice(0, 2);
-
-                const bedContainer = document.getElementById('bedContainer');
-                bedContainer.innerHTML = ''; // 컨테이너 초기화
-
-                const fragment = document.createDocumentFragment();
-                for (let i = 1; i <= 4; i++) {
-                    const groupWrapper = document.createElement('div');
-                    groupWrapper.className = 'group-wrapper';
-
-                    groupWrapper.innerHTML = `
+            const bedContainer = document.getElementById('bedContainer');
+            for (let i = 1; i <= 4; i++) {
+                const bed = `
+                    <div class="group-wrapper">
                         <div class="numbering"></div>
                         <div class="input-group">
                             <div class="bed-label">${i}번 베드</div>
-                            <textarea class="input-numbers" rows="9"></textarea>
+                            <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
                             <div class="results"></div>
                         </div>
-                    `;
-
-                    const input = groupWrapper.querySelector('.input-numbers');
-                    input.value = initialPrefix;
-                    input.addEventListener('input', createInputHandler());
-
-                    fragment.appendChild(groupWrapper);
-                }
-
-                bedContainer.appendChild(fragment);
-                updateGlobalAverage();
-                forceInitialRender(); // 초기 렌더링 강제 실행
+                    </div>
+                `;
+                bedContainer.insertAdjacentHTML('beforeend', bed);
             }
 
-            // 초기 렌더링 강제 실행
-            function forceInitialRender() {
-                document.querySelectorAll('.input-numbers').forEach(input => {
-                    processInput(input);
-                });
-            }
-
-            // 목표값 조정
-            window.adjustTargetNumber = function(value) {
-                const targetInput = document.getElementById('targetNumber');
-                targetInput.value = parseInt(targetInput.value) + value;
-                initialPrefix = targetInput.value.toString().slice(0, 2);
-                resultCache.clear();
-                document.querySelectorAll('.input-numbers').forEach(input => processInput(input));
-            };
-
-            window.addEventListener('DOMContentLoaded', init);
-        })();
+            document.querySelectorAll('.input-numbers').forEach(input => {
+                initializeInput(input);
+                input.addEventListener('input', handleInput);
+                input.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
+            });
+            updateAverage();
+        }
     </script>
 </head>
 <body>

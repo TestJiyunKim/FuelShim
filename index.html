@@ -337,24 +337,41 @@
                 });
             });
 
+            // 열 너비 설정
+            const columnWidths = {
+                lineNo: 3,    // 줄번호 (1자리 + 공백)
+                input: 5,     // 입력값 (3자리 + 공백 2)
+                result: 5     // 결과값 (4자리 + 공백 1)
+            };
+
             const reportLines = [];
             reportLines.push(`TM1 FUEL SHIM 계산 데이터`);
-            reportLines.push(`목표수: ${target}, 평균: ${average}, 기본심: ${basicShim}`);
-            reportLines.push('\t|' + beds.map(b => b.label).join('\t|') + '\t|');
-            reportLines.push('-'.repeat(60));
+            reportLines.push(`목표수: ${target}  평균: ${average}  기본심: ${basicShim}\n`);
 
+            // 헤더 생성
+            const headerLine = beds.map(bed => {
+                const bedNumber = bed.label.replace('번 베드', '');
+                return `│ ${bedNumber.padStart(2)}번베드 `.padEnd(columnWidths.input + columnWidths.result + 3, ' ');
+            }).join('');
+            reportLines.push(`┌${'─'.repeat(8)}${Array(beds.length).fill('┬───────').join('')}┐`);
+            reportLines.push(`│  줄 │${headerLine}│`);
+            reportLines.push(`├${'─'.repeat(8)}${Array(beds.length).fill('┼───────').join('')}┤`);
+
+            // 데이터 행 생성
             for(let i=0; i<MAX_LINES; i++) {
                 const rowData = beds.map(bed => {
-                    const input = bed.inputs[i]?.trim() || '';
-                    const result = bed.results[i]?.trim() || '';
-                    return input ? (result ? `${input} | ${result}` : input) : '';
+                    const input = bed.inputs[i]?.trim().padEnd(3, ' ') || '   ';
+                    const result = bed.results[i]?.trim().padStart(4, ' ') || '    ';
+                    return `${input} ${result}`.padEnd(columnWidths.input + columnWidths.result + 1, ' ');
                 });
 
-                if(rowData.some(cell => cell)) {
-                    reportLines.push(`${i+1}\t|` + rowData.join('\t|') + '\t|');
+                if(rowData.some(cell => cell.trim())) {
+                    const lineNo = (i+1).toString().padStart(2, ' ');
+                    reportLines.push(`│ ${lineNo} │ ${rowData.join(' │ ')} │`);
                 }
             }
 
+            reportLines.push(`└${'─'.repeat(8)}${Array(beds.length).fill('┴───────').join('')}┘`);
             return reportLines.join('\n');
         }
 

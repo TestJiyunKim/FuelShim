@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 21h -->
+    <!-- Revision: 21 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,52 +14,18 @@
             color: #333;
             margin: 0;
         }
-        header {
-            position: relative;
-            padding: 10px 15px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
-        }
         h2 {
             color: #444;
             margin-bottom: 8px;
             text-align: center;
-        }
-        #headerControls {
-            position: absolute;
-            top: 50%;
-            right: 15px;
-            transform: translateY(-50%);
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-        #revisionDisplay {
-            color: #007bff;
-            font-size: 14px;
-            font-weight: bold;
-        }
-        #copyReportBtn {
-            padding: 6px 12px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
         }
         .number-control {
             display: flex;
             align-items: center;
             gap: 4px;
             margin-bottom: 12px;
-            padding: 10px;
+            padding: 0 10px;
             justify-content: center;
-            min-height: 40px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            position: relative;
-            z-index: 500;
         }
         .number-control input {
             width: 50px;
@@ -76,7 +42,6 @@
             display: flex;
             flex-direction: column;
             gap: 4px;
-            margin-top: 20px;
         }
         .group-wrapper {
             display: flex;
@@ -156,45 +121,38 @@
             font-weight: bold;
             font-size: 13px;
         }
+        #revisionDisplay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #666;
+            font-size: 12px;
+        }
+        button {
+            padding: 0;
+            width: 28px;
+            height: 18px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            flex-shrink: 0;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /* [추가] 오류 스타일 */
         .input-error {
             border: 2px solid #ff4444 !important;
+            background: #fff0f0 !important;
             animation: errorBlink 0.5s 3;
         }
         @keyframes errorBlink {
             50% { border-color: #ff8888; }
-        }
-
-        @media (orientation: landscape) {
-            .groups-container {
-                flex-direction: row;
-                gap: 4px;
-            }
-            .group-wrapper {
-                width: auto;
-            }
-            .group-wrapper:not(:first-child) .numbering {
-                display: none !important;
-            }
-            .input-group {
-                height: 373px;
-                padding: 7px 3px 8px;
-            }
-            .input-numbers,
-            .results {
-                height: 358px;
-                width: 63px !important;
-                font-size: 26px;
-                line-height: 36px;
-            }
-            .numbering {
-                height: 358px;
-                margin-top: 9px;
-                font-size: 26px;
-                line-height: 36px;
-            }
-            .results div:empty {
-                height: 36px;
-            }
         }
     </style>
     <script>
@@ -202,120 +160,19 @@
         let initialPrefix = '14';
         const MAX_LINES = 9;
 
-        // [추가] 보고서 생성 함수
-        function generateReport() {
-            const reportData = {
-                header: `TM1 FUEL SHIM 계산 데이터`,
-                target: document.getElementById('targetNumber').value,
-                average: document.getElementById('averageDisplay').textContent.split(': ')[1],
-                beds: []
-            };
-
-            // 데이터 수집 및 오류 검출
-            let errorList = [];
-            document.querySelectorAll('.group-wrapper').forEach((wrapper, bedIndex) => {
-                const inputs = wrapper.querySelector('.input-numbers').value.split('\n');
-                const results = Array.from(wrapper.querySelector('.results').children)
-                    .map(div => div.textContent);
-
-                const bedData = {
-                    bedNumber: bedIndex + 1,
-                    entries: []
-                };
-
-                inputs.forEach((input, lineIndex) => {
-                    const result = results[lineIndex] || '';
-                    const hasError = result.includes('⚠') || input.length !== 3;
-                    
-                    if (hasError) {
-                        errorList.push(`${bedIndex+1}번 베드 ${lineIndex+1}번`);
-                        wrapper.querySelectorAll('.input-numbers')[lineIndex]?.classList.add('input-error');
-                        setTimeout(() => {
-                            wrapper.querySelectorAll('.input-numbers')[lineIndex]?.classList.remove('input-error');
-                        }, 1500);
-                    }
-
-                    bedData.entries.push({
-                        input: input.padEnd(3, ' '),
-                        result: result.padEnd(4, ' ')
-                    });
-                });
-
-                reportData.beds.push(bedData);
+        // [추가] 오류 검출 함수
+        function detectErrors(inputElement) {
+            const inputs = inputElement.value.split('\n');
+            inputElement.parentNode.querySelectorAll('.input-numbers').forEach((field, index) => {
+                const isValid = inputs[index]?.length === 3 && !isNaN(inputs[index]);
+                field.classList.toggle('input-error', !isValid);
             });
-
-            return { reportData, errorList };
         }
 
-        // [추가] 보고서 포맷팅 함수
-        function formatReport(reportData) {
-            let reportText = `************************************************************\n`;
-            reportText += `${reportData.header}\n`;
-            reportText += `목표수: ${reportData.target}, 평균: ${reportData.average}\n`;
-            reportText += "\t|1번 베드\t|2번 베드\t|3번 베드\t|4번 베드\t|\n";
-            reportText += "--------------------------------------------------------------\n";
-
-            for (let line = 0; line < 9; line++) {
-                let lineContent = `${line + 1}\t|`;
-                reportData.beds.forEach(bed => {
-                    const entry = bed.entries[line] || { input: '   ', result: '    ' };
-                    lineContent += `${entry.input}|${entry.result}\t|`;
-                });
-                reportText += `${lineContent}\n`;
-            }
-
-            reportText += "************************************************************";
-            return reportText;
-        }
-
-        // [추가] 클립보드 복사 핸들러
-        document.getElementById('copyReportBtn').addEventListener('click', async () => {
-            const { reportData, errorList } = generateReport();
-            
-            if (errorList.length > 0) {
-                const confirmCopy = confirm(`⚠ ${errorList.length}개의 입력 오류가 있습니다!\n계속 복사하시겠습니까?`);
-                if (!confirmCopy) return;
-            }
-
-            try {
-                const reportText = formatReport(reportData);
-                await navigator.clipboard.writeText(reportText);
-                alert('보고서가 클립보드에 복사되었습니다!\n카카오톡에 붙여넣기(Ctrl+V) 해주세요.');
-                
-                // 모바일 환경 대응
-                if (/Android|iPhone/i.test(navigator.userAgent)) {
-                    window.location.href = 'kakaotalk://';
-                }
-            } catch (err) {
-                const textArea = document.createElement('textarea');
-                textArea.value = reportText;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                alert('수동 복사 완료! 붙여넣기 해주세요.');
-            }
-        });
-
-        // 기존 기능 유지
-        function adjustTargetNumber(value) {
-            const targetInput = document.getElementById('targetNumber');
-            const newValue = parseInt(targetInput.value) + value;
-            targetInput.value = newValue;
-            initialPrefix = targetInput.value.toString().slice(0, 2);
-            
-            document.querySelectorAll('.input-numbers').forEach(input => {
-                calculateResults(input);
-            });
-            updateAverage();
-        }
-
-        function initializeInput(inputElement) {
-            inputElement.value = initialPrefix;
-            calculateResults(inputElement);
-        }
-
+        // [수정] 계산 함수에 오류 검출 추가
         function calculateResults(inputElement) {
+            detectErrors(inputElement); // 오류 검출 호출
+            
             const wrapper = inputElement.closest('.group-wrapper');
             const target = parseInt(document.getElementById('targetNumber').value);
             const numbers = inputElement.value.split('\n');
@@ -333,9 +190,25 @@
             wrapper.querySelector('.results').innerHTML = results
                 .map(r => r === '' ? '<div></div>' : `<div>${r}</div>`)
                 .join('');
-            wrapper.querySelector('.numbering').innerHTML = numbers
-                .map((_, i) => `<div>${i + 1}.</div>`)
-                .join('');
+            updateAverage();
+        }
+
+        // 기존 함수들 유지
+        function adjustTargetNumber(value) {
+            const targetInput = document.getElementById('targetNumber');
+            const newValue = parseInt(targetInput.value) + value;
+            targetInput.value = newValue;
+            initialPrefix = targetInput.value.toString().slice(0, 2);
+            
+            document.querySelectorAll('.input-numbers').forEach(input => {
+                calculateResults(input);
+            });
+            updateAverage();
+        }
+
+        function initializeInput(inputElement) {
+            inputElement.value = initialPrefix;
+            calculateResults(inputElement);
         }
 
         function updateAverage() {
@@ -450,21 +323,14 @@
     </script>
 </head>
 <body>
-    <header>
-        <h2>FUEL SHIM 계산</h2>
-        <div id="headerControls">
-            <div id="revisionDisplay"></div>
-            <button id="copyReportBtn">📋 보고서 복사</button>
-        </div>
-    </header>
-    <main>
-        <div class="number-control">
-            <button onclick="adjustTargetNumber(-1)">-</button>
-            <input type="number" id="targetNumber" value="144" pattern="[0-9]*" inputmode="numeric">
-            <button onclick="adjustTargetNumber(1)">+</button>
-            <span id="averageDisplay">평균: 0.0</span>
-        </div>
-        <div class="groups-container" id="bedContainer"></div>
-    </main>
+    <div id="revisionDisplay"></div>
+    <h2>FUEL SHIM 계산</h2>
+    <div class="number-control">
+        <button onclick="adjustTargetNumber(-1)">-</button>
+        <input type="number" id="targetNumber" value="144" pattern="[0-9]*" inputmode="numeric">
+        <button onclick="adjustTargetNumber(1)">+</button>
+        <span id="averageDisplay">평균: 0.0</span>
+    </div>
+    <div class="groups-container" id="bedContainer"></div>
 </body>
 </html>

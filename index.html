@@ -14,19 +14,52 @@
             color: #333;
             margin: 0;
         }
+        header {
+            position: relative;
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
         h2 {
             color: #444;
             margin-bottom: 8px;
             text-align: center;
+        }
+        #headerControls {
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        #revisionDisplay {
+            color: #007bff;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        #copyReportBtn {
+            padding: 6px 12px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
         }
         .number-control {
             display: flex;
             align-items: center;
             gap: 4px;
             margin-bottom: 12px;
-            padding: 0 10px;
+            padding: 10px;
             justify-content: center;
-            min-height: 40px; /* [추가] 최소 높이 보장 */
+            min-height: 40px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 500;
         }
         .number-control input {
             width: 50px;
@@ -43,7 +76,7 @@
             display: flex;
             flex-direction: column;
             gap: 4px;
-            margin-top: 20px; /* [추가] 상단 간격 확보 */
+            margin-top: 20px;
         }
         .group-wrapper {
             display: flex;
@@ -122,26 +155,6 @@
             color: #007bff;
             font-weight: bold;
             font-size: 13px;
-        }
-        #revisionDisplay {
-            position: absolute;
-            top: 12px;
-            right: 130px;
-            color: #007bff;
-            font-size: 14px;
-            z-index: 1000; /* [추가] 최상단 표시 보장 */
-        }
-        #copyReportBtn {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            padding: 6px 12px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            z-index: 1000;
         }
         .input-error {
             border: 2px solid #ff4444 !important;
@@ -437,15 +450,21 @@
     </script>
 </head>
 <body>
-    <div id="revisionDisplay"></div>
-    <button id="copyReportBtn">📋 보고서 복사</button>
-    <h2>FUEL SHIM 계산</h2>
-    <div class="number-control">
-        <button onclick="adjustTargetNumber(-1)">-</button>
-        <input type="number" id="targetNumber" value="144" pattern="[0-9]*" inputmode="numeric">
-        <button onclick="adjustTargetNumber(1)">+</button>
-        <span id="averageDisplay">평균: 0.0</span>
-    </div>
-    <div class="groups-container" id="bedContainer"></div>
+    <header>
+        <h2>FUEL SHIM 계산</h2>
+        <div id="headerControls">
+            <div id="revisionDisplay"></div>
+            <button id="copyReportBtn">📋 보고서 복사</button>
+        </div>
+    </header>
+    <main>
+        <div class="number-control">
+            <button onclick="adjustTargetNumber(-1)">-</button>
+            <input type="number" id="targetNumber" value="144" pattern="[0-9]*" inputmode="numeric">
+            <button onclick="adjustTargetNumber(1)">+</button>
+            <span id="averageDisplay">평균: 0.0</span>
+        </div>
+        <div class="groups-container" id="bedContainer"></div>
+    </main>
 </body>
 </html>

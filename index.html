@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 22a -->
+    <!-- Revision: 22c -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -192,7 +192,7 @@
         }
     </style>
     <script>
-        const revision = '22a';
+        const revision = '22c';
         let initialPrefix = '14';
         const MAX_LINES = 9;
 
@@ -331,55 +331,40 @@
             }));
 
             const reportLines = [];
-            reportLines.push(`TM1 FUEL SHIM 계산 데이터`);
-            reportLines.push(`목표수: ${target}, 평균: ${average}, 기본심: ${basicShim}`);
-            
-            // 고정폭 컬럼 설정
-            const colWidth = {
-                lineNo: 4,
-                bedHeader: 12,
-                bedData: 11
-            };
+            reportLines.push(`🔧 TM1 FUEL SHIM 계산 데이터 🔧`);
+            reportLines.push(`목표수: ${target}\t│ 평균: ${average}\t│ 기본심: ${basicShim}`);
+            reportLines.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-            // 1-2번 베드 표
-            reportLines.push('\n┌' + '─'.repeat(colWidth.lineNo) + '┬' + '─'.repeat(colWidth.bedHeader*2+1) + '┐');
-            reportLines.push(`│ ${'줄'.padEnd(colWidth.lineNo-1)} │ ${formatBedHeader('1번베드')} │ ${formatBedHeader('2번베드')} │`);
-            reportLines.push('├' + '─'.repeat(colWidth.lineNo) + '┼' + '─'.repeat(colWidth.bedHeader*2+1) + '┤');
-            generateBedSection(reportLines, beds.slice(0, 2), colWidth);
-            reportLines.push('└' + '─'.repeat(colWidth.lineNo) + '┴' + '─'.repeat(colWidth.bedHeader*2+1) + '┘');
+            // 1-2번 베드 출력
+            reportLines.push('\n[ 1-2번 베드 ]\n├──────────┬──────────┤');
+            reportLines.push('│ 라인 │  1번베드  │  2번베드  │');
+            reportLines.push('├──────────┼──────────┤');
+            generateBedSection(reportLines, beds.slice(0, 2));
 
-            // 3-4번 베드 표
-            reportLines.push('\n┌' + '─'.repeat(colWidth.lineNo) + '┬' + '─'.repeat(colWidth.bedHeader*2+1) + '┐');
-            reportLines.push(`│ ${'줄'.padEnd(colWidth.lineNo-1)} │ ${formatBedHeader('3번베드')} │ ${formatBedHeader('4번베드')} │`);
-            reportLines.push('├' + '─'.repeat(colWidth.lineNo) + '┼' + '─'.repeat(colWidth.bedHeader*2+1) + '┤');
-            generateBedSection(reportLines, beds.slice(2, 4), colWidth);
-            reportLines.push('└' + '─'.repeat(colWidth.lineNo) + '┴' + '─'.repeat(colWidth.bedHeader*2+1) + '┘');
+            // 3-4번 베드 출력
+            reportLines.push('\n[ 3-4번 베드 ]\n├──────────┬──────────┤');
+            reportLines.push('│ 라인 │  3번베드  │  4번베드  │');
+            reportLines.push('├──────────┼──────────┤');
+            generateBedSection(reportLines, beds.slice(2, 4));
 
             return reportLines.join('\n');
         }
 
-        function formatBedHeader(label) {
-            return label.padStart(9, ' ').padEnd(12, ' ');
-        }
-
-        function formatCell(input, result) {
-            const formattedInput = (input || '　').padEnd(3, '　');
-            const formattedResult = (result || '　').padStart(4, '　');
-            return `${formattedInput}│${formattedResult}`.padEnd(11, ' ');
-        }
-
-        function generateBedSection(reportLines, beds, colWidth) {
+        function generateBedSection(reportLines, beds) {
             const MAX_LINES = 9;
             for(let i=0; i<MAX_LINES; i++) {
-                const cells = beds.map(bed => 
-                    formatCell(bed.inputs[i]?.trim(), bed.results[i]?.trim())
-                );
+                const rowData = beds.map(bed => {
+                    const input = bed.inputs[i]?.trim().padEnd(3, ' ') || '　';
+                    const result = bed.results[i]?.trim().padStart(4, ' ') || '　';
+                    return `${input} ${result}`.replace(/　/g, ' ').padEnd(9, ' ');
+                });
 
-                if(cells.some(cell => !/^　+│　+$/.test(cell))) {
-                    const lineNo = (i+1).toString().padStart(2, ' ');
-                    reportLines.push(`│ ${lineNo} │ ${cells.join(' │ ')} │`);
+                if(rowData.some(cell => cell.trim())) {
+                    reportLines.push(`│  ${(i+1).toString().padStart(2)}  │ ${rowData.join(' │ ')} │`);
+                    if(i < MAX_LINES-1) reportLines.push('├──────────┼──────────┤');
                 }
             }
+            reportLines.push('└──────────┴──────────┘');
         }
 
         window.onload = function () {

@@ -324,55 +324,42 @@
             const basicShim = '12mm';
             const MAX_LINES = 9;
 
-            const beds = [];
-            document.querySelectorAll('.group-wrapper').forEach(wrapper => {
-                const label = wrapper.querySelector('.bed-label').textContent.trim();
-                const inputs = wrapper.querySelector('.input-numbers').value.split('\n').slice(0, MAX_LINES);
-                const results = Array.from(wrapper.querySelectorAll('.results div')).map(div => div.textContent.trim());
-                
-                beds.push({
-                    label,
-                    inputs: [...inputs, ...Array(MAX_LINES - inputs.length).fill('')],
-                    results: [...results, ...Array(MAX_LINES - results.length).fill('')]
-                });
-            });
-
-            // 열 너비 설정
-            const columnWidths = {
-                lineNo: 3,    // 줄번호 (1자리 + 공백)
-                input: 5,     // 입력값 (3자리 + 공백 2)
-                result: 5     // 결과값 (4자리 + 공백 1)
-            };
+            const beds = Array.from(document.querySelectorAll('.group-wrapper')).map(wrapper => ({
+                label: wrapper.querySelector('.bed-label').textContent.trim(),
+                inputs: wrapper.querySelector('.input-numbers').value.split('\n').slice(0, MAX_LINES),
+                results: Array.from(wrapper.querySelectorAll('.results div')).map(div => div.textContent.trim())
+            }));
 
             const reportLines = [];
             reportLines.push(`TM1 FUEL SHIM 계산 데이터`);
-            reportLines.push(`목표수: ${target}  평균: ${average}  기본심: ${basicShim}\n`);
+            reportLines.push(`목표수: ${target}, 평균: ${average}, 기본심: ${basicShim}`);
+            
+            // 1-2번 베드 출력
+            reportLines.push('\n\t|1번 베드\t|2번 베드\t|');
+            reportLines.push('------------------------------------------------');
+            generateBedSection(reportLines, beds.slice(0, 2));
 
-            // 헤더 생성
-            const headerLine = beds.map(bed => {
-                const bedNumber = bed.label.replace('번 베드', '');
-                return `│ ${bedNumber.padStart(2)}번베드 `.padEnd(columnWidths.input + columnWidths.result + 3, ' ');
-            }).join('');
-            reportLines.push(`┌${'─'.repeat(8)}${Array(beds.length).fill('┬───────').join('')}┐`);
-            reportLines.push(`│  줄 │${headerLine}│`);
-            reportLines.push(`├${'─'.repeat(8)}${Array(beds.length).fill('┼───────').join('')}┤`);
+            // 3-4번 베드 출력
+            reportLines.push('\n\t|3번 베드\t|4번 베드\t|');
+            reportLines.push('------------------------------------------------');
+            generateBedSection(reportLines, beds.slice(2, 4));
 
-            // 데이터 행 생성
+            return reportLines.join('\n');
+        }
+
+        function generateBedSection(reportLines, beds) {
+            const MAX_LINES = 9;
             for(let i=0; i<MAX_LINES; i++) {
                 const rowData = beds.map(bed => {
-                    const input = bed.inputs[i]?.trim().padEnd(3, ' ') || '   ';
-                    const result = bed.results[i]?.trim().padStart(4, ' ') || '    ';
-                    return `${input} ${result}`.padEnd(columnWidths.input + columnWidths.result + 1, ' ');
+                    const input = bed.inputs[i]?.trim() || '';
+                    const result = bed.results[i]?.trim() || '';
+                    return input ? (result ? `${input} | ${result}` : input) : '';
                 });
 
-                if(rowData.some(cell => cell.trim())) {
-                    const lineNo = (i+1).toString().padStart(2, ' ');
-                    reportLines.push(`│ ${lineNo} │ ${rowData.join(' │ ')} │`);
+                if(rowData.some(cell => cell)) {
+                    reportLines.push(`${i+1}\t|${rowData.join('\t|')}\t|`);
                 }
             }
-
-            reportLines.push(`└${'─'.repeat(8)}${Array(beds.length).fill('┴───────').join('')}┘`);
-            return reportLines.join('\n');
         }
 
         window.onload = function () {

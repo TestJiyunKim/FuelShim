@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 24 -->
+    <!-- Revision: 21h -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -48,10 +48,6 @@
             gap: 2px;
             width: 100%;
             align-items: flex-start;
-            position: relative;
-            margin: 5px 0;
-            border: 1px solid #ddd;
-            padding: 8px;
         }
         .input-group {
             display: flex;
@@ -77,8 +73,6 @@
             font-size: 13px;
         }
         .numbering {
-            display: block !important;
-            visibility: visible !important;
             margin-top: 9px;
             width: 29px !important;
             height: 416px;
@@ -86,11 +80,10 @@
             border: 1px solid #ccc;
             border-radius: 3px;
             background-color: #f0f0f0;
-            font-size: 26px !important;
+            font-size: 30px;
             line-height: 42px;
             text-align: right;
             overflow-y: hidden;
-            color: #666 !important;
         }
         .input-numbers,
         .results {
@@ -130,18 +123,10 @@
         }
         #revisionDisplay {
             position: absolute;
-            top: 12px;
-            right: 100px;
-            font-weight: bold;
-            color: #007bff !important;
-        }
-        #copyReportBtn {
-            position: absolute;
             top: 10px;
             right: 10px;
-            padding: 5px 10px;
-            width: auto;
-            height: auto;
+            color: #666;
+            font-size: 12px;
         }
         button {
             padding: 0;
@@ -158,6 +143,25 @@
         }
         button:hover {
             background-color: #0056b3;
+        }
+        #copyReportBtn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 6px 12px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+        .input-error {
+            border: 2px solid #ff4444 !important;
+            animation: errorBlink 0.5s 3;
+        }
+        @keyframes errorBlink {
+            50% { border-color: #ff8888; }
         }
 
         @media (orientation: landscape) {
@@ -194,41 +198,125 @@
         }
     </style>
     <script>
-        const revision = 24;
+        const revision = 21;
         let initialPrefix = '14';
         const MAX_LINES = 9;
 
-        // [수정] 평균 계산 로직
-        function updateAverage() {
-            const inputs = Array.from(document.querySelectorAll('.input-numbers'))
-                .slice(0, 4)
-                .flatMap(input => 
-                    input.value.split('\n')
-                    .filter(num => /^\d{3}$/.test(num)) // 3자리 숫자만 허용
-                    .map(num => parseInt(num))
-                )
-                .filter(num => !isNaN(num));
+        // [추가] 보고서 생성 함수
+        function generateReport() {
+            const reportData = {
+                header: `TM1 FUEL SHIM 계산 데이터`,
+                target: document.getElementById('targetNumber').value,
+                average: document.getElementById('averageDisplay').textContent.split(': ')[1],
+                beds: []
+            };
 
-            const average = inputs.length > 0 
-                ? (inputs.reduce((a, b) => a + b, 0) / inputs.length
-                : 0.0;
+            // 데이터 수집 및 오류 검출
+            let errorList = [];
+            document.querySelectorAll('.group-wrapper').forEach((wrapper, bedIndex) => {
+                const inputs = wrapper.querySelector('.input-numbers').value.split('\n');
+                const results = Array.from(wrapper.querySelector('.results').children)
+                    .map(div => div.textContent);
 
-            document.getElementById('averageDisplay').textContent = `평균: ${average.toFixed(1)}`;
+                const bedData = {
+                    bedNumber: bedIndex + 1,
+                    entries: []
+                };
+
+                inputs.forEach((input, lineIndex) => {
+                    const result = results[lineIndex] || '';
+                    const hasError = result.includes('⚠') || input.length !== 3;
+                    
+                    if (hasError) {
+                        errorList.push(`${bedIndex+1}번 베드 ${lineIndex+1}번`);
+                        wrapper.querySelectorAll('.input-numbers')[lineIndex]?.classList.add('input-error');
+                        setTimeout(() => {
+                            wrapper.querySelectorAll('.input-numbers')[lineIndex]?.classList.remove('input-error');
+                        }, 1500);
+                    }
+
+                    bedData.entries.push({
+                        input: input.padEnd(3, ' '),
+                        result: result.padEnd(4, ' ')
+                    });
+                });
+
+                reportData.beds.push(bedData);
+            });
+
+            return { reportData, errorList };
         }
 
-        // [수정] 넘버링 생성 로직
-        function refreshNumbering(wrapper) {
-            const numbering = wrapper.querySelector('.numbering');
-            numbering.innerHTML = Array.from({length: MAX_LINES}, (_, i) => 
-                `<div>${i + 1}.</div>`
-            ).join('');
+        // [추가] 보고서 포맷팅 함수
+        function formatReport(reportData) {
+            let reportText = `************************************************************\n`;
+            reportText += `${reportData.header}\n`;
+            reportText += `목표수: ${reportData.target}, 평균: ${reportData.average}\n`;
+            reportText += "\t|1번 베드\t|2번 베드\t|3번 베드\t|4번 베드\t|\n";
+            reportText += "--------------------------------------------------------------\n";
+
+            for (let line = 0; line < 9; line++) {
+                let lineContent = `${line + 1}\t|`;
+                reportData.beds.forEach(bed => {
+                    const entry = bed.entries[line] || { input: '   ', result: '    ' };
+                    lineContent += `${entry.input}|${entry.result}\t|`;
+                });
+                reportText += `${lineContent}\n`;
+            }
+
+            reportText += "************************************************************";
+            return reportText;
         }
 
-        // [수정] 결과 계산 시 넘버링 갱신
+        // [추가] 클립보드 복사 핸들러
+        document.getElementById('copyReportBtn').addEventListener('click', async () => {
+            const { reportData, errorList } = generateReport();
+            
+            if (errorList.length > 0) {
+                const confirmCopy = confirm(`⚠ ${errorList.length}개의 입력 오류가 있습니다!\n계속 복사하시겠습니까?`);
+                if (!confirmCopy) return;
+            }
+
+            try {
+                const reportText = formatReport(reportData);
+                await navigator.clipboard.writeText(reportText);
+                alert('보고서가 클립보드에 복사되었습니다!\n카카오톡에 붙여넣기(Ctrl+V) 해주세요.');
+                
+                // 모바일 환경 대응
+                if (/Android|iPhone/i.test(navigator.userAgent)) {
+                    window.location.href = 'kakaotalk://';
+                }
+            } catch (err) {
+                const textArea = document.createElement('textarea');
+                textArea.value = reportText;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('수동 복사 완료! 붙여넣기 해주세요.');
+            }
+        });
+
+        // 기존 기능 유지
+        function adjustTargetNumber(value) {
+            const targetInput = document.getElementById('targetNumber');
+            const newValue = parseInt(targetInput.value) + value;
+            targetInput.value = newValue;
+            initialPrefix = targetInput.value.toString().slice(0, 2);
+            
+            document.querySelectorAll('.input-numbers').forEach(input => {
+                calculateResults(input);
+            });
+            updateAverage();
+        }
+
+        function initializeInput(inputElement) {
+            inputElement.value = initialPrefix;
+            calculateResults(inputElement);
+        }
+
         function calculateResults(inputElement) {
             const wrapper = inputElement.closest('.group-wrapper');
-            refreshNumbering(wrapper); // 넘버링 강제 갱신
-            
             const target = parseInt(document.getElementById('targetNumber').value);
             const numbers = inputElement.value.split('\n');
             
@@ -245,42 +333,28 @@
             wrapper.querySelector('.results').innerHTML = results
                 .map(r => r === '' ? '<div></div>' : `<div>${r}</div>`)
                 .join('');
-            
-            updateAverage(); // 평균 갱신 호출
+            wrapper.querySelector('.numbering').innerHTML = numbers
+                .map((_, i) => `<div>${i + 1}.</div>`)
+                .join('');
         }
 
-        // [수정] 초기화 시 그룹 생성 로직
-        window.onload = function () {
-            document.getElementById('revisionDisplay').textContent = `Rev.${revision}`;
-            document.getElementById('targetNumber').value = 144;
-            initialPrefix = document.getElementById('targetNumber').value.toString().slice(0, 2);
+        function updateAverage() {
+            const inputs = Array.from(document.querySelectorAll('.input-numbers'))
+                .slice(0, 4)
+                .flatMap(input => 
+                    input.value.split('\n')
+                    .filter(num => num.length === 3)
+                    .map(num => parseInt(num))
+                )
+                .filter(num => !isNaN(num));
 
-            const bedContainer = document.getElementById('bedContainer');
-            for (let i = 1; i <= 4; i++) {
-                const bed = `
-                    <div class="group-wrapper">
-                        <div class="numbering"></div>
-                        <div class="input-group">
-                            <div class="bed-label">${i}번 베드</div>
-                            <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
-                            <div class="results"></div>
-                        </div>
-                    </div>
-                `;
-                bedContainer.insertAdjacentHTML('beforeend', bed);
-                refreshNumbering(bedContainer.lastElementChild); // 넘버링 초기화
-            }
+            const average = inputs.length > 0 
+                ? (inputs.reduce((a, b) => a + b, 0) / inputs.length
+                : 0.0;
 
-            document.querySelectorAll('.input-numbers').forEach(input => {
-                input.value = initialPrefix;
-                calculateResults(input);
-                input.addEventListener('input', handleInput);
-                input.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
-            });
-            updateAverage();
+            document.getElementById('averageDisplay').textContent = `평균: ${average.toFixed(1)}`;
         }
 
-        // [수정] 입력 처리 로직
         function handleInput(event) {
             const input = event.target;
             const isBackspace = event.inputType?.startsWith('delete') || event.key === 'Backspace';
@@ -342,14 +416,42 @@
             } else {
                 calculateResults(input);
             }
+            
+            updateAverage();
+        }
+
+        window.onload = function () {
+            document.getElementById('revisionDisplay').textContent = `Rev: ${revision}`;
+            document.getElementById('targetNumber').value = 144;
+            initialPrefix = document.getElementById('targetNumber').value.toString().slice(0, 2);
+
+            const bedContainer = document.getElementById('bedContainer');
+            for (let i = 1; i <= 4; i++) {
+                const bed = `
+                    <div class="group-wrapper">
+                        <div class="numbering"></div>
+                        <div class="input-group">
+                            <div class="bed-label">${i}번 베드</div>
+                            <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>
+                            <div class="results"></div>
+                        </div>
+                    </div>
+                `;
+                bedContainer.insertAdjacentHTML('beforeend', bed);
+            }
+
+            document.querySelectorAll('.input-numbers').forEach(input => {
+                initializeInput(input);
+                input.addEventListener('input', handleInput);
+                input.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
+            });
+            updateAverage();
         }
     </script>
 </head>
 <body>
-    <div id="headerSection">
-        <div id="revisionDisplay"></div>
-        <button id="copyReportBtn">📋 보고서 복사</button>
-    </div>
+    <div id="revisionDisplay"></div>
+    <button id="copyReportBtn">📋 보고서 복사</button>
     <h2>FUEL SHIM 계산</h2>
     <div class="number-control">
         <button onclick="adjustTargetNumber(-1)">-</button>

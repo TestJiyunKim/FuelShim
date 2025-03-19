@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 21e -->
+    <!-- Revision: 21f -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -181,7 +181,7 @@
     </style>
     <script>
         (function() {
-            const revision = '21e';
+            const revision = '21f';
             let initialPrefix = '14';
             const MAX_LINES = 9;
             const resultCache = new Map();
@@ -217,13 +217,71 @@
 
             function processInput(input) {
                 const target = parseInt(document.getElementById('targetNumber').value);
-                const values = input.value.replace(/[^\d\n]/g, '')
-                    .split('\n')
+                const cursorPos = input.selectionStart;
+                const prevValue = input.value;
+                const prevLines = prevValue.split('\n');
+
+                // 현재 줄 계산
+                let currentLine = 0;
+                let posInLine = cursorPos;
+                let accumulatedLength = 0;
+                for (; currentLine < prevLines.length; currentLine++) {
+                    const lineLength = prevLines[currentLine].length + 1; // +1 for newline
+                    if (posInLine <= accumulatedLength + lineLength) {
+                        posInLine -= accumulatedLength;
+                        break;
+                    }
+                    accumulatedLength += lineLength;
+                }
+
+                // 입력값 처리
+                let values = input.value.replace(/[^\d\n]/g, '').split('\n')
                     .map(line => line.slice(0, 3))
                     .slice(0, MAX_LINES);
 
-                updateUI(input.closest('.group-wrapper'), values, target);
-                updateGlobalAverage();
+                // 자동 줄바꿈 및 접두사 처리
+                let newLineAdded = false;
+                if (currentLine < values.length && values[currentLine].length >= 3) {
+                    if (currentLine < MAX_LINES - 1) {
+                        const currentVal = values[currentLine].slice(0, 2);
+                        values.splice(currentLine + 1, 0, currentVal);
+                        newLineAdded = true;
+                    }
+                }
+
+                // 새 줄 접두사 자동 채우기
+                for (let i = 1; i < values.length; i++) {
+                    if (values[i].length === 0 && values[i - 1].length >= 2) {
+                        values[i] = values[i - 1].slice(0, 2);
+                    }
+                }
+
+                const newValue = values.join('\n');
+                if (newValue !== prevValue) {
+                    input.value = newValue;
+
+                    // 커서 위치 조정
+                    let newCursorPos;
+                    if (newLineAdded) {
+                        newCursorPos = newValue.length;
+                    } else {
+                        const newLines = newValue.split('\n');
+                        newCursorPos = 0;
+                        for (let i = 0; i < currentLine; i++) {
+                            newCursorPos += (newLines[i]?.length || 0) + 1;
+                        }
+                        newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
+                    }
+
+                    requestAnimationFrame(() => {
+                        input.setSelectionRange(newCursorPos, newCursorPos);
+                        updateUI(input.closest('.group-wrapper'), values, target);
+                        updateGlobalAverage();
+                    });
+                } else {
+                    updateUI(input.closest('.group-wrapper'), values, target);
+                    updateGlobalAverage();
+                }
             }
 
             // UI 업데이트

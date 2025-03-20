@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <!-- Revision: 22k -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>FUEL SHIM 계산</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 10px;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+        }
+        h2 {
+            color: #444;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .number-control {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 12px;
+            padding: 0 10px;
+            justify-content: center;
+        }
+        .number-control input {
+            width: 50px;
+            height: 18px;
+            text-align: center;
+            padding: 3px;
+            border: 2px solid #007bff;
+            border-radius: 4px;
+            font-size: 13px;
+            -webkit-appearance: none;
+            -moz-appearance: textfield;
+        }
+        .groups-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .group-wrapper {
+            display: flex;
+            gap: 2px;
+            width: 100%;
+            align-items: flex-start;
+        }
+        .input-group {
+            display: flex;
+            gap: 2px;
+            padding: 7px 3px 8px;
+            border: 2px solid #007bff;
+            border-radius: 6px;
+            background-color: white;
+            position: relative;
+            height: 438px;
+            box-sizing: border-box;
+            flex: 1;
+        }
+        .bed-label {
+            position: absolute;
+            top: -11px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 0 6px;
+            font-weight: bold;
+            color: #007bff;
+            font-size: 13px;
+        }
+        .numbering {
+            margin-top: 9px;
+            width: 29px !important;
+            height: 416px;
+            padding: 3px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            background-color: #f0f0f0;
+            font-size: 30px;
+            line-height: 42px;
+            text-align: right;
+            overflow-y: hidden;
+        }
+        .input-numbers,
+        .results {
+            height: 416px;
+            padding: 3px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 30px;
+            line-height: 42px;
+            flex-shrink: 0;
+            box-sizing: border-box;
+            min-width: 44px;
+            min-height: 44px;
+            touch-action: manipulation;
+        }
+        .input-numbers {
+            width: 144px !important;
+            resize: none;
+            background-color: white;
+        }
+        .results {
+            width: 144px !important;
+            background-color: #f0f0f0;
+        }
+        .negative {
+            color: red;
+        }
+        .results div:empty {
+            height: 42px;
+            visibility: hidden;
+        }
+        #averageDisplay {
+            margin-left: 10px;
+            color: #007bff;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        #revisionDisplay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #666;
+            font-size: 12px;
+        }
+        #copyReportButton {
+            position: absolute;
+            top: 10px;
+            right: 100px;
+            padding: 2px 6px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+        button {
+            padding: 0;
+            width: 28px;
+            height: 18px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            flex-shrink: 0;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        @media (orientation: landscape) {
+            .groups-container {
+                flex-direction: row;
+                gap: 4px;
+            }
+            .group-wrapper {
+                width: auto;
+            }
+            .group-wrapper:not(:first-child) .numbering {
+                display: none !important;
+            }
+            .input-group {
+                height: 373px;
+                padding: 7px 3px 8px;
+            }
+            .input-numbers,
+            .results {
+                height: 358px;
+                width: 63px !important;
+                font-size: 26px;
+                line-height: 36px;
+            }
+            .numbering {
+                height: 358px;
+                margin-top: 9px;
+                font-size: 26px;
+                line-height: 36px;
+            }
+            .results div:empty {
+                height: 36px;
+            }
+        }
+    </style>
+    <script>
+        const revision = '22k';
+        let initialPrefix = '14';
+        const MAX_LINES = 9;
+        const staticNumbering = Array.from({length: MAX_LINES}, (_, i) => `${i+1}.`).join('\n');
+
+        function adjustTargetNumber(value) {
+            const targetInput = document.getElementById('targetNumber');
+            const newValue = parseInt(targetInput.value) + value;
+            targetInput.value = newValue;
+            initialPrefix = targetInput.value.toString().slice(0, 2);
+            
+            document.querySelectorAll('.input-numbers').forEach(input => {
+                calculateResults(input);
+            });
+            updateAverage();
+        }
+
+        function initializeInput(inputElement) {
+            inputElement.value = '';
+            inputElement.addEventListener('focus', handleFirstFocus);
+            inputElement.addEventListener('blur', cleanEmptyLines);
+        }
+
+        function handleFirstFocus(event) {
+            const input = event.target;
+            if (input.value === '') {
+                input.value = initialPrefix;
+                calculateResults(input);
+                input.setSelectionRange(initialPrefix.length, initialPrefix.length);
+            }
+            input.removeEventListener('focus', handleFirstFocus);
+        }
+
+        function cleanEmptyLines(event) {
+            const input = event.target;
+            let values = input.value.split('\n')
+                .filter(line => line.trim() !== '' && line !== initialPrefix)
+                .slice(0, MAX_LINES);
+            
+            input.value = values.join('\n');
+            calculateResults(input);
+        }
+
+        function calculateResults(inputElement) {
+            const wrapper = inputElement.closest('.group-wrapper');
+            const target = parseInt(document.getElementById('targetNumber').value);
+            const numbers = inputElement.value.split('\n');
+            
+            const results = numbers.map(num => {
+                if (num.length !== 3) return num.length > 0 ? '⚠' : '';
+                const n = parseInt(num);
+                const diff = target - n;
+                const result = Math.trunc(diff * 0.125 * 10) / 10;
+                return Math.abs(result) > 0.1 ? result.toFixed(1).replace(/\.0$/, '') : '';
+            });
+
+            wrapper.querySelector('.results').innerHTML = results
+                .map(r => r ? `<div>${r}</div>` : '<div></div>')
+                .join('');
+        }
+
+        function handleInput(event) {
+            const input = event.target;
+            const isBackspace = event.inputType?.startsWith('delete') || event.key === 'Backspace';
+            
+            const cursorPos = input.selectionStart;
+            const prevValue = input.value;
+            const prevLines = prevValue.split('\n');
+            
+            let currentLine = 0;
+            let posInLine = cursorPos;
+            let accumulatedLength = 0;
+            for (; currentLine < prevLines.length; currentLine++) {
+                const lineLength = prevLines[currentLine].length + 1;
+                if (posInLine <= accumulatedLength + lineLength) {
+                    posInLine -= accumulatedLength;
+                    break;
+                }
+                accumulatedLength += lineLength;
+            }
+
+            let values = input.value.replace(/[^\d\n]/g, '').split('\n')
+                .map(line => line.slice(0, 3))
+                .filter((line, index, arr) => 
+                    index === arr.length - 1 || line.trim() !== ''
+                )
+                .slice(0, MAX_LINES);
+
+            let newLineAdded = false;
+            if (!isBackspace && values.length < MAX_LINES && 
+                values[values.length - 1].length === 3 && 
+                values[values.length - 1] !== initialPrefix) {
+                values.push(initialPrefix);
+                newLineAdded = true;
+            }
+
+            const newValue = values.join('\n');
+            if (newValue !== prevValue) {
+                input.value = newValue;
+                calculateResults(input);
+
+                let newCursorPos;
+                if (newLineAdded) {
+                    newCursorPos = newValue.length;
+                } else {
+                    const newLines = newValue.split('\n');
+                    newCursorPos = 0;
+                    for (let i = 0; i < currentLine; i++) {
+                        newCursorPos += (newLines[i]?.length || 0) + 1;
+                    }
+                    newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
+                }
+
+                requestAnimationFrame(() => {
+                    input.setSelectionRange(newCursorPos, newCursorPos);
+                });
+            } else {
+                calculateResults(input);
+            }
+            
+            updateAverage();
+        }
+
+        function updateAverage() {
+            const inputs = Array.from(document.querySelectorAll('.input-numbers'))
+                .slice(0, 4)
+                .flatMap(input => 
+                    input.value.split('\n')
+                    .filter(num => num.length === 3)
+                    .map(num => parseInt(num))
+                )
+                .filter(num => !isNaN(num));
+
+            const average = inputs.length > 0 
+                ? (inputs.reduce((a, b) => a + b, 0) / inputs.length).toFixed(1)
+                : '0.0';
+
+            document.getElementById('averageDisplay').textContent = `평균: ${average}`;
+        }
+
+        function createBedGroup(i) {
+            return `
+                <div class="group-wrapper">
+                    <div class="numbering">${staticNumbering}</div>
+                    <div class="input-group">
+                        <div class="bed-label">${i}번 베드</div>
+                        <textarea class="input-numbers" 
+                            rows="9" 
+                            inputmode="numeric"
+                            data-initialized="false"></textarea>
+                        <div class="results"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.onload = function () {
+            document.getElementById('revisionDisplay').textContent = `Rev: ${revision}`;
+            document.getElementById('targetNumber').value = 144;
+            initialPrefix = document.getElementById('targetNumber').value.toString().slice(0, 2);
+
+            const bedContainer = document.getElementById('bedContainer');
+            for (let i = 1; i <= 4; i++) {
+                bedContainer.insertAdjacentHTML('beforeend', createBedGroup(i));
+            }
+
+            document.querySelectorAll('.input-numbers').forEach(input => {
+                initializeInput(input);
+                input.addEventListener('input', handleInput);
+                input.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
+            });
+
+            document.getElementById('copyReportButton').addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(generateReport());
+                    alert('보고서가 클립보드에 복사되었습니다.');
+                } catch(err) {
+                    alert('보고서 복사 실패: ' + err.message);
+                }
+            });
+
+            updateAverage();
+        }
+    </script>
+</head>
+<body>
+    <div id="revisionDisplay"></div>
+    <button id="copyReportButton">보고서 복사</button>
+    <h2>FUEL SHIM 계산</h2>
+    <div class="number-control">
+        <button onclick="adjustTargetNumber(-1)">-</button>
+        <input type="number" id="targetNumber" value="144" pattern="[0-9]*" inputmode="numeric">
+        <button onclick="adjustTargetNumber(1)">+</button>
+        <span id="averageDisplay">평균: 0.0</span>
+    </div>
+    <div class="groups-container" id="bedContainer"></div>
+</body>
+</html>

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 22h -->
+    <!-- Revision: 22i -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -192,9 +192,12 @@
         }
     </style>
     <script>
-        const revision = '22h';
+        const revision = '22i';
         let initialPrefix = '14';
         const MAX_LINES = 9;
+
+        // 초기 번호 생성 제거
+        const staticNumbering = Array.from({length: MAX_LINES}, (_, i) => `${i+1}.`).join('\n');
 
         function adjustTargetNumber(value) {
             const targetInput = document.getElementById('targetNumber');
@@ -211,6 +214,22 @@
         function initializeInput(inputElement) {
             inputElement.value = initialPrefix;
             calculateResults(inputElement);
+            inputElement.addEventListener('blur', cleanEmptyLines); // blur 이벤트 추가
+        }
+
+        function cleanEmptyLines(event) {
+            const input = event.target;
+            let values = input.value.split('\n')
+                .filter(line => line.trim() !== '')
+                .slice(0, MAX_LINES);
+            
+            // 마지막 줄이 기본 접두사만 있는 경우 제거
+            if(values.length > 0 && values[values.length-1] === initialPrefix) {
+                values.pop();
+            }
+            
+            input.value = values.join('\n');
+            calculateResults(input);
         }
 
         function calculateResults(inputElement) {
@@ -223,34 +242,12 @@
                 const n = parseInt(num);
                 const diff = target - n;
                 const result = Math.trunc(diff * 0.125 * 10) / 10;
-                if (Math.abs(result) <= 0.1) return '';
-                const formatted = result.toFixed(1).replace(/\.0$/, '');
-                return result < 0 ? `<span class="negative">${formatted}</span>` : formatted;
+                return Math.abs(result) > 0.1 ? result.toFixed(1).replace(/\.0$/, '') : '';
             });
 
             wrapper.querySelector('.results').innerHTML = results
-                .map(r => r === '' ? '<div></div>' : `<div>${r}</div>`)
+                .map(r => r ? `<div>${r}</div>` : '<div></div>')
                 .join('');
-            wrapper.querySelector('.numbering').innerHTML = numbers
-                .map((_, i) => `<div>${i + 1}.</div>`)
-                .join('');
-        }
-
-        function updateAverage() {
-            const inputs = Array.from(document.querySelectorAll('.input-numbers'))
-                .slice(0, 4)
-                .flatMap(input => 
-                    input.value.split('\n')
-                    .filter(num => num.length === 3)
-                    .map(num => parseInt(num))
-                )
-                .filter(num => !isNaN(num));
-
-            const average = inputs.length > 0 
-                ? (inputs.reduce((a, b) => a + b, 0) / inputs.length).toFixed(1)
-                : '0.0';
-
-            document.getElementById('averageDisplay').textContent = `평균: ${average}`;
         }
 
         function handleInput(event) {
@@ -275,20 +272,16 @@
 
             let values = input.value.replace(/[^\d\n]/g, '').split('\n')
                 .map(line => line.slice(0, 3))
+                .filter((line, index, arr) => 
+                    index === arr.length - 1 || line.trim() !== ''
+                )
                 .slice(0, MAX_LINES);
 
-            // 백스페이스 처리 (초기 버전 로직 복원)
-            if (isBackspace && posInLine === 0 && currentLine > 0) {
-                values.splice(currentLine - 1, 2, 
-                    values[currentLine - 1].slice(0, -1) + values[currentLine]
-                );
-                currentLine--;
-            }
-
-            let newLineAdded = false;
-            if (!isBackspace && values.length < MAX_LINES && values[values.length - 1].length === 3) {
-                values.push(values[values.length - 1].slice(0, 2));
-                newLineAdded = true;
+            // 새 줄 자동 추가 조건 강화
+            if (!isBackspace && values.length < MAX_LINES && 
+                values[values.length - 1].length === 3 && 
+                values[values.length - 1] !== initialPrefix) {
+                values.push(initialPrefix);
             }
 
             const newValue = values.join('\n');
@@ -318,72 +311,21 @@
             updateAverage();
         }
 
-        function formatCell(value, width) {
-            return (value === '⚠' ? '⚠ ' : value || '').padEnd(width, ' ');
-        }
+        function updateAverage() {
+            const inputs = Array.from(document.querySelectorAll('.input-numbers'))
+                .slice(0, 4)
+                .flatMap(input => 
+                    input.value.split('\n')
+                    .filter(num => num.length === 3)
+                    .map(num => parseInt(num))
+                )
+                .filter(num => !isNaN(num));
 
-        function createAsciiTable(bedGroup, groupLabels) {
-            const TOTAL_WIDTH = 24;
-            const COL_NO = 4;    // "| No |"
-            const COL_BED = 10;  // "| 1번 베드 |"
+            const average = inputs.length > 0 
+                ? (inputs.reduce((a, b) => a + b, 0) / inputs.length).toFixed(1)
+                : '0.0';
 
-            // 헤더 생성
-            function headerRow() {
-                const bed1 = groupLabels[0].padStart(5, ' ').padEnd(9, ' ');
-                const bed2 = groupLabels[1].padStart(5, ' ').padEnd(9, ' ');
-                return `| No |${bed1}|${bed2}|`;
-            }
-
-            // 데이터 행 생성
-            let rows = [];
-            for (let i = 0; i < MAX_LINES; i++) {
-                const no = String(i+1).padStart(2, ' ');
-                const bed1Input = formatCell(bedGroup[0].inputs[i], 3).padStart(4, ' ');
-                const bed1Result = formatCell(bedGroup[0].results[i], 4).padEnd(5, ' ');
-                const bed2Input = formatCell(bedGroup[1].inputs[i], 3).padStart(4, ' ');
-                const bed2Result = formatCell(bedGroup[1].results[i], 4).padEnd(5, ' ');
-                
-                rows.push(`| ${no} |${bed1Input}${bed1Result}|${bed2Input}${bed2Result}|`);
-            }
-
-            // 테이블 조립
-            return [
-                '+----+----------+----------+',
-                headerRow(),
-                '+----+----------+----------+',
-                ...rows,
-                '+----+----------+----------+'
-            ];
-        }
-
-        function generateReport() {
-            const target = document.getElementById('targetNumber').value;
-            const average = document.getElementById('averageDisplay').textContent.replace('평균: ', '');
-            const basicShim = '12mm';
-
-            // 각 베드의 데이터 수집
-            const beds = Array.from(document.querySelectorAll('.group-wrapper')).map(wrapper => ({
-                inputs: wrapper.querySelector('.input-numbers').value.split('\n').slice(0, MAX_LINES),
-                results: Array.from(wrapper.querySelectorAll('.results div')).map(div => div.textContent.trim())
-            }));
-
-            let reportLines = [];
-            reportLines.push("=== FUEL SHIM 계산 데이터 ===");
-            reportLines.push(`목표수: ${target}    평균: ${average}    기본심: ${basicShim}`);
-            reportLines.push("");
-
-            // 1-2번 베드 ASCII 테이블 생성 (첫 번째 두 개)
-            reportLines.push("[ 1-2번 베드 ]");
-            let table1 = createAsciiTable(beds.slice(0, 2), ["1번", "2번"]);
-            reportLines = reportLines.concat(table1);
-            reportLines.push("");
-
-            // 3-4번 베드 ASCII 테이블 생성 (나머지 두 개)
-            reportLines.push("[ 3-4번 베드 ]");
-            let table2 = createAsciiTable(beds.slice(2, 4), ["3번", "4번"]);
-            reportLines = reportLines.concat(table2);
-
-            return reportLines.join('\n');
+            document.getElementById('averageDisplay').textContent = `평균: ${average}`;
         }
 
         window.onload = function () {
@@ -395,7 +337,7 @@
             for (let i = 1; i <= 4; i++) {
                 const bed = `
                     <div class="group-wrapper">
-                        <div class="numbering"></div>
+                        <div class="numbering">${staticNumbering}</div>
                         <div class="input-group">
                             <div class="bed-label">${i}번 베드</div>
                             <textarea class="input-numbers" rows="9" inputmode="numeric"></textarea>

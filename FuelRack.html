@@ -1,201 +1,247 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>FUEL RACK 입력</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             padding: 10px;
             margin: 0;
-            background-color: #f0f0f0;
+            background-color: #f4f4f9;
         }
         h2 {
             text-align: center;
-            color: #333;
+            color: #444;
             margin: 10px 0;
         }
-        .percentage-controls {
+        .percentage-buttons {
             display: flex;
+            justify-content: center;
             gap: 5px;
             margin: 10px 0;
-            flex-wrap: wrap;
         }
-        .percentage-group {
-            display: flex;
-            gap: 2px;
-            align-items: center;
-        }
-        .percentage-group input {
-            width: 60px;
-            padding: 5px;
-            text-align: center;
+        .percentage-buttons button {
+            padding: 8px 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
         }
         .groups-container {
             display: flex;
             flex-direction: column;
             gap: 10px;
         }
-        .bed-row {
+        .group-wrapper {
             display: flex;
             gap: 5px;
-            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .input-group {
+            border: 2px solid #007bff;
+            border-radius: 6px;
+            padding: 25px 5px 5px;
+            position: relative;
+            background-color: white;
+            flex: 1;
+        }
+        .bed-label {
+            position: absolute;
+            top: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 0 5px;
+            color: #007bff;
+            font-weight: bold;
         }
         .numbering {
             width: 30px;
-            padding: 5px;
-            background: #e0e0e0;
-            border-radius: 3px;
             text-align: right;
-        }
-        .input-group {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
+            padding-right: 5px;
+            font-size: 14px;
         }
         .input-numbers {
             width: 100%;
             height: 120px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
             padding: 5px;
-            border: 2px solid #007bff;
-            border-radius: 5px;
             resize: none;
             font-size: 14px;
         }
         .virtual-keyboard {
-            display: flex;
-            gap: 3px;
-            margin: 5px 0;
-            flex-wrap: wrap;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #fff;
+            padding: 10px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            display: none;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
         }
-        .virtual-keyboard button {
-            padding: 8px 12px;
-            background: #007bff;
-            color: white;
-            border: none;
+        .keyboard-btn {
+            padding: 10px;
+            border: 1px solid #007bff;
             border-radius: 4px;
+            background: #f0f6ff;
             cursor: pointer;
         }
+        .keyboard-btn.del {
+            background: #ffebee;
+            border-color: #ff5252;
+        }
+
         @media (orientation: portrait) {
-            .bed-row {
+            .group-wrapper {
                 flex-direction: column;
             }
-            .input-numbers {
-                height: 80px;
+            .input-group {
+                width: 100%;
             }
         }
     </style>
-    <script>
-        const presetValues = {
-            '25': {
-                1: [10, 10.5, 10, 10.5, 10.5, 10, 10.5, 10],
-                2: [10, 10, 10, 10, 10, 10, 10, 10],
-                3: [10, 10, 10, 10, 10, 10, 10, 10]
-            },
-            '50': {
-                1: [18, 18, 18.5, 18, 18, 18, 18.5, 18],
-                2: [18, 18, 18, 18, 18, 18, 18, 18],
-                3: [18, 18, 18, 18, 18, 18, 18, 18]
-            },
-            '75': {
-                1: [25, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25],
-                2: [25, 25, 25, 25, 25, 25, 25, 25],
-                3: [25, 25, 25, 25.5, 25, 25, 25, 25]
-            },
-            '100': {
-                1: [33, 33.5, 33.5, 33, 33, 33, 33.5, 33],
-                2: [33, 33, 33, 33, 33, 33, 33, 33],
-                3: [33.5, 33.5, 33.5, 33, 33.5, 33, 33.5, 33.5]
-            },
-            '110': {
-                1: [36, 36, 36.5, 36.5, 36.5, 36.5, 36.5, 36],
-                2: [36, 36, 36, 36, 36, 36.5, 36, 36],
-                3: [36, 36, 36, 36, 36, 36, 36, 36]
-            }
-        };
-
-        function setPercentage(pct) {
-            const base = parseFloat(document.getElementById(`base-${pct}`).value);
-            const adjustedValues = JSON.parse(JSON.stringify(presetValues[pct]));
-            
-            [1, 2, 3].forEach(bedNum => {
-                const textarea = document.getElementById(`bed${bedNum}`);
-                textarea.value = adjustedValues[bedNum].join('\n');
-            });
-        }
-
-        function adjustBase(pct, delta) {
-            const input = document.getElementById(`base-${pct}`);
-            input.value = (parseFloat(input.value) + delta).toFixed(1);
-            setPercentage(pct);
-        }
-
-        function copyToClipboard() {
-            const report = [1, 2, 3].map(bedNum => {
-                const values = document.getElementById(`bed${bedNum}`).value.split('\n');
-                return `${bedNum}번 베드:${values.join(',')}`;
-            }).join('\n');
-
-            navigator.clipboard.writeText(report).then(() => {
-                alert('클립보드에 복사되었습니다');
-            });
-        }
-
-        window.onload = () => {
-            [1, 2, 3].forEach(bedNum => {
-                document.getElementById(`bed${bedNum}`).addEventListener('focus', function(e) {
-                    window.currentBed = bedNum;
-                });
-            });
-        }
-    </script>
 </head>
 <body>
     <h2>FUEL RACK 입력</h2>
     
-    <div class="percentage-controls">
-        <div class="percentage-group">
-            <button onclick="setPercentage('25')">25%</button>
-            <input type="number" id="base-25" value="10" step="0.5">
-            <div class="virtual-keyboard">
-                <button onclick="adjustBase('25', -0.5)">-0.5</button>
-                <button onclick="adjustBase('25', 0.5)">+0.5</button>
-            </div>
-        </div>
-        <div class="percentage-group">
-            <button onclick="setPercentage('50')">50%</button>
-            <input type="number" id="base-50" value="18" step="0.5">
-            <div class="virtual-keyboard">
-                <button onclick="adjustBase('50', -0.5)">-0.5</button>
-                <button onclick="adjustBase('50', 0.5)">+0.5</button>
-            </div>
-        </div>
-        <!-- 75%, 100%, 110% 동일 방식으로 추가 -->
+    <div class="percentage-buttons">
+        <button data-percent="25">25%</button>
+        <button data-percent="50">50%</button>
+        <button data-percent="75">75%</button>
+        <button data-percent="100">100%</button>
+        <button data-percent="110">110%</button>
     </div>
 
     <div class="groups-container">
-        <div class="bed-row">
-            <div class="numbering">1-8</div>
-            <div class="input-group">
-                <textarea id="bed1" class="input-numbers"></textarea>
-            </div>
-            <div class="input-group">
-                <textarea id="bed2" class="input-numbers"></textarea>
-            </div>
-        </div>
-        <div class="bed-row">
-            <div class="numbering">1-8</div>
-            <div class="input-group">
-                <textarea id="bed3" class="input-numbers"></textarea>
-            </div>
-        </div>
+        <!-- Bed groups will be dynamically generated -->
     </div>
 
-    <button onclick="copyToClipboard()" style="margin-top:10px; padding:10px;">
-        클립보드 복사
-    </button>
+    <div class="virtual-keyboard">
+        <!-- Keyboard buttons will be dynamically generated -->
+    </div>
+
+<script>
+const presetValues = {
+    '25': {
+        1: [10,10.5,10,10.5,10.5,10,10.5,10],
+        2: [10,10,10,10,10,10,10,10],
+        3: [10,10,10,10,10,10,10,10],
+        4: [10,10,10,10,10,10,10,10]
+    },
+    '50': {
+        1: [18,18,18.5,18,18,18,18.5,18],
+        2: [18,18,18,18,18,18,18,18],
+        3: [18,18,18,18,18,18,18,18],
+        4: [18,18,18,18,18,18,18,18]
+    },
+    '75': {
+        1: [25,25.5,25.5,25.5,25.5,25.5,25.5,25],
+        2: [25,25,25,25,25,25,25,25],
+        3: [25,25,25,25.5,25,25,25,25],
+        4: []
+    },
+    '100': {
+        1: [33,33.5,33.5,33,33,33,33.5,33],
+        2: [33,33,33,33,33,33,33,33],
+        3: [33.5,33.5,33.5,33,33.5,33,33.5,33.5],
+        4: []
+    },
+    '110': {
+        1: [36,36,36.5,36.5,36.5,36.5,36.5,36],
+        2: [36,36,36,36,36,36.5,36,36],
+        3: [36,36,36,36,36,36,36,36],
+        4: []
+    }
+};
+
+let currentPercent = '25';
+let activeInput = null;
+
+function generateBedGroups() {
+    const container = document.querySelector('.groups-container');
+    container.innerHTML = '';
+    
+    for(let bedNum = 1; bedNum <= 4; bedNum++) {
+        const group = document.createElement('div');
+        group.className = 'group-wrapper';
+        
+        group.innerHTML = `
+            <div class="numbering">${Array.from({length:8}, (_,i)=>i+1).join('<br>')}</div>
+            <div class="input-group">
+                <div class="bed-label">#${bedNum}</div>
+                <textarea class="input-numbers" data-bed="${bedNum}"></textarea>
+            </div>
+        `;
+        
+        container.appendChild(group);
+    }
+    
+    document.querySelectorAll('.input-numbers').forEach(input => {
+        input.addEventListener('focus', handleInputFocus);
+    });
+}
+
+function handleInputFocus(e) {
+    activeInput = e.target;
+    updateKeyboard();
+    document.querySelector('.virtual-keyboard').style.display = 'grid';
+}
+
+function updateKeyboard() {
+    const bedNum = parseInt(activeInput.dataset.bed);
+    const values = presetValues[currentPercent][bedNum];
+    const currentIndex = Array.from(activeInput.parentNode.parentNode.children)
+        .indexOf(activeInput.parentNode) - 1; // Subtract numbering div
+    
+    const baseValue = values[currentIndex] || 0;
+    
+    const keyboard = document.querySelector('.virtual-keyboard');
+    keyboard.innerHTML = `
+        <button class="keyboard-btn" data-value="${baseValue - 0.5}">${baseValue - 0.5}</button>
+        <button class="keyboard-btn" data-value="${baseValue}">${baseValue}</button>
+        <button class="keyboard-btn" data-value="${baseValue + 0.5}">${baseValue + 0.5}</button>
+        <button class="keyboard-btn del">DEL</button>
+    `;
+    
+    keyboard.querySelectorAll('.keyboard-btn').forEach(btn => {
+        btn.addEventListener('click', handleKeyboardClick);
+    });
+}
+
+function handleKeyboardClick(e) {
+    if(e.target.classList.contains('del')) {
+        activeInput.value = '';
+        return;
+    }
+    
+    const value = parseFloat(e.target.dataset.value);
+    activeInput.value = value.toFixed(1).endsWith('.0') ? value.toFixed(0) : value.toFixed(1);
+}
+
+document.querySelectorAll('.percentage-buttons button').forEach(btn => {
+    btn.addEventListener('click', () => {
+        currentPercent = btn.dataset.percent;
+        applyPresetValues();
+    });
+});
+
+function applyPresetValues() {
+    document.querySelectorAll('.input-numbers').forEach(input => {
+        const bedNum = parseInt(input.dataset.bed);
+        const values = presetValues[currentPercent][bedNum];
+        input.value = values.map(v => v.toFixed(1).endsWith('.0') ? v.toFixed(0) : v.toFixed(1)).join('\n');
+    });
+}
+
+// Initialize
+generateBedGroups();
+applyPresetValues();
+</script>
 </body>
 </html>

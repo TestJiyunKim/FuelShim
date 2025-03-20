@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -9,246 +10,192 @@
             font-family: Arial, sans-serif;
             padding: 10px;
             margin: 0;
-            background-color: #f4f4f9;
+            background-color: #f0f0f0;
         }
         h2 {
             text-align: center;
-            color: #444;
-            margin-bottom: 20px;
+            color: #333;
+            margin: 10px 0;
         }
         .percentage-controls {
             display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-        .perc-group {
-            display: flex;
-            align-items: center;
             gap: 5px;
-            background: #fff;
-            padding: 8px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 10px 0;
+            flex-wrap: wrap;
         }
-        .perc-btn {
-            padding: 8px 15px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+        .percentage-group {
+            display: flex;
+            gap: 2px;
+            align-items: center;
         }
-        .base-input {
+        .percentage-group input {
             width: 60px;
             padding: 5px;
-            border: 2px solid #007bff;
-            border-radius: 4px;
             text-align: center;
         }
         .groups-container {
             display: flex;
             flex-direction: column;
-            gap: 15px;
-        }
-        .group-wrapper {
-            display: flex;
             gap: 10px;
+        }
+        .bed-row {
+            display: flex;
+            gap: 5px;
             align-items: flex-start;
         }
         .numbering {
-            width: 40px;
-            padding: 10px;
-            border: 2px solid #007bff;
-            border-radius: 6px;
-            background: #f0f0f0;
-            text-align: center;
-            font-weight: bold;
+            width: 30px;
+            padding: 5px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            text-align: right;
         }
-        .bed-group {
+        .input-group {
             flex: 1;
-            padding: 15px;
-            border: 2px solid #007bff;
-            border-radius: 8px;
-            background: white;
-            min-width: 200px;
-        }
-        .bed-label {
-            margin-bottom: 10px;
-            color: #007bff;
-            font-weight: bold;
-        }
-        .input-row {
             display: flex;
-            gap: 5px;
-            margin-bottom: 5px;
+            flex-direction: column;
+            gap: 2px;
         }
-        .num-input {
-            flex: 1;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            text-align: center;
-            max-width: 80px;
-        }
-        .virtual-keypad {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.2);
-            display: none;
-            z-index: 1000;
-        }
-        .keypad-btn {
-            padding: 10px 15px;
-            margin: 5px;
-            border: none;
+        .input-numbers {
+            width: 100%;
+            height: 120px;
+            padding: 5px;
+            border: 2px solid #007bff;
             border-radius: 5px;
+            resize: none;
+            font-size: 14px;
+        }
+        .virtual-keyboard {
+            display: flex;
+            gap: 3px;
+            margin: 5px 0;
+            flex-wrap: wrap;
+        }
+        .virtual-keyboard button {
+            padding: 8px 12px;
             background: #007bff;
             color: white;
+            border: none;
+            border-radius: 4px;
             cursor: pointer;
         }
-
-        @media (max-width: 768px) {
-            .group-wrapper {
+        @media (orientation: portrait) {
+            .bed-row {
                 flex-direction: column;
             }
-            .numbering {
-                width: 100%;
+            .input-numbers {
+                height: 80px;
             }
         }
     </style>
+    <script>
+        const presetValues = {
+            '25': {
+                1: [10, 10.5, 10, 10.5, 10.5, 10, 10.5, 10],
+                2: [10, 10, 10, 10, 10, 10, 10, 10],
+                3: [10, 10, 10, 10, 10, 10, 10, 10]
+            },
+            '50': {
+                1: [18, 18, 18.5, 18, 18, 18, 18.5, 18],
+                2: [18, 18, 18, 18, 18, 18, 18, 18],
+                3: [18, 18, 18, 18, 18, 18, 18, 18]
+            },
+            '75': {
+                1: [25, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25],
+                2: [25, 25, 25, 25, 25, 25, 25, 25],
+                3: [25, 25, 25, 25.5, 25, 25, 25, 25]
+            },
+            '100': {
+                1: [33, 33.5, 33.5, 33, 33, 33, 33.5, 33],
+                2: [33, 33, 33, 33, 33, 33, 33, 33],
+                3: [33.5, 33.5, 33.5, 33, 33.5, 33, 33.5, 33.5]
+            },
+            '110': {
+                1: [36, 36, 36.5, 36.5, 36.5, 36.5, 36.5, 36],
+                2: [36, 36, 36, 36, 36, 36.5, 36, 36],
+                3: [36, 36, 36, 36, 36, 36, 36, 36]
+            }
+        };
+
+        function setPercentage(pct) {
+            const base = parseFloat(document.getElementById(`base-${pct}`).value);
+            const adjustedValues = JSON.parse(JSON.stringify(presetValues[pct]));
+            
+            [1, 2, 3].forEach(bedNum => {
+                const textarea = document.getElementById(`bed${bedNum}`);
+                textarea.value = adjustedValues[bedNum].join('\n');
+            });
+        }
+
+        function adjustBase(pct, delta) {
+            const input = document.getElementById(`base-${pct}`);
+            input.value = (parseFloat(input.value) + delta).toFixed(1);
+            setPercentage(pct);
+        }
+
+        function copyToClipboard() {
+            const report = [1, 2, 3].map(bedNum => {
+                const values = document.getElementById(`bed${bedNum}`).value.split('\n');
+                return `${bedNum}번 베드:${values.join(',')}`;
+            }).join('\n');
+
+            navigator.clipboard.writeText(report).then(() => {
+                alert('클립보드에 복사되었습니다');
+            });
+        }
+
+        window.onload = () => {
+            [1, 2, 3].forEach(bedNum => {
+                document.getElementById(`bed${bedNum}`).addEventListener('focus', function(e) {
+                    window.currentBed = bedNum;
+                });
+            });
+        }
+    </script>
 </head>
 <body>
     <h2>FUEL RACK 입력</h2>
     
     <div class="percentage-controls">
-        <!-- Percentage Controls -->
-        <div class="perc-group">
-            <button class="perc-btn" data-perc="25">25%</button>
-            <input type="number" class="base-input" data-perc="25" value="10" step="0.5">
+        <div class="percentage-group">
+            <button onclick="setPercentage('25')">25%</button>
+            <input type="number" id="base-25" value="10" step="0.5">
+            <div class="virtual-keyboard">
+                <button onclick="adjustBase('25', -0.5)">-0.5</button>
+                <button onclick="adjustBase('25', 0.5)">+0.5</button>
+            </div>
         </div>
-        <div class="perc-group">
-            <button class="perc-btn" data-perc="50">50%</button>
-            <input type="number" class="base-input" data-perc="50" value="18" step="0.5">
+        <div class="percentage-group">
+            <button onclick="setPercentage('50')">50%</button>
+            <input type="number" id="base-50" value="18" step="0.5">
+            <div class="virtual-keyboard">
+                <button onclick="adjustBase('50', -0.5)">-0.5</button>
+                <button onclick="adjustBase('50', 0.5)">+0.5</button>
+            </div>
         </div>
-        <div class="perc-group">
-            <button class="perc-btn" data-perc="75">75%</button>
-            <input type="number" class="base-input" data-perc="75" value="25" step="0.5">
-        </div>
-        <div class="perc-group">
-            <button class="perc-btn" data-perc="100">100%</button>
-            <input type="number" class="base-input" data-perc="100" value="33" step="0.5">
-        </div>
-        <div class="perc-group">
-            <button class="perc-btn" data-perc="110">110%</button>
-            <input type="number" class="base-input" data-perc="110" value="36" step="0.5">
-        </div>
+        <!-- 75%, 100%, 110% 동일 방식으로 추가 -->
     </div>
 
     <div class="groups-container">
-        <!-- Bed Input Groups -->
-        <div class="group-wrapper">
-            <div class="numbering">1</div>
-            <div class="bed-group">
-                <div class="bed-label">#1 베드</div>
-                <div class="input-row">
-                    <input type="number" class="num-input" data-bed="1" data-pos="1">
-                    <input type="number" class="num-input" data-bed="1" data-pos="2">
-                    <input type="number" class="num-input" data-bed="1" data-pos="3">
-                    <input type="number" class="num-input" data-bed="1" data-pos="4">
-                </div>
-                <div class="input-row">
-                    <input type="number" class="num-input" data-bed="1" data-pos="5">
-                    <input type="number" class="num-input" data-bed="1" data-pos="6">
-                    <input type="number" class="num-input" data-bed="1" data-pos="7">
-                    <input type="number" class="num-input" data-bed="1" data-pos="8">
-                </div>
+        <div class="bed-row">
+            <div class="numbering">1-8</div>
+            <div class="input-group">
+                <textarea id="bed1" class="input-numbers"></textarea>
             </div>
-            <div class="bed-group">
-                <div class="bed-label">#2 베드</div>
-                <!-- Repeat same input structure for bed 2 -->
+            <div class="input-group">
+                <textarea id="bed2" class="input-numbers"></textarea>
             </div>
         </div>
-        
-        <div class="group-wrapper">
-            <div class="numbering">2</div>
-            <div class="bed-group">
-                <div class="bed-label">#3 베드</div>
-                <!-- Repeat same input structure for bed 3 -->
+        <div class="bed-row">
+            <div class="numbering">1-8</div>
+            <div class="input-group">
+                <textarea id="bed3" class="input-numbers"></textarea>
             </div>
         </div>
     </div>
 
-    <div class="virtual-keypad">
-        <button class="keypad-btn" data-change="-0.5">-0.5</button>
-        <span id="current-value" style="margin: 0 15px; font-size: 1.2em;">0</span>
-        <button class="keypad-btn" data-change="+0.5">+0.5</button>
-        <button class="keypad-btn" onclick="closeKeypad()">닫기</button>
-    </div>
-
-    <script>
-        const patterns = {
-            '25': { /* 패턴 데이터 */ },
-            '50': { /* 패턴 데이터 */ },
-            '75': { /* 패턴 데이터 */ },
-            '100': { /* 패턴 데이터 */ },
-            '110': { /* 패턴 데이터 */ }
-        };
-
-        let currentInput = null;
-
-        // 퍼센티지 버튼 핸들러
-        document.querySelectorAll('.perc-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const perc = btn.dataset.perc;
-                const baseValue = parseFloat(document.querySelector(`.base-input[data-perc="${perc}"]`).value);
-                applyPattern(perc, baseValue);
-            });
-        });
-
-        // 패턴 적용 함수
-        function applyPattern(perc, base) {
-            // 패턴 적용 로직
-        }
-
-        // 가상 키보드 핸들러
-        document.querySelectorAll('.num-input').forEach(input => {
-            input.addEventListener('focus', function() {
-                currentInput = this;
-                document.querySelector('.virtual-keypad').style.display = 'block';
-                document.getElementById('current-value').textContent = this.value;
-            });
-        });
-
-        document.querySelectorAll('.keypad-btn[data-change]').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const change = parseFloat(this.dataset.change);
-                const newValue = parseFloat(currentInput.value) + change;
-                currentInput.value = newValue.toFixed(1);
-                document.getElementById('current-value').textContent = newValue.toFixed(1);
-            });
-        });
-
-        function closeKeypad() {
-            document.querySelector('.virtual-keypad').style.display = 'none';
-        }
-
-        // 복사 기능
-        function copyToClipboard() {
-            let report = '';
-            for(let bed=1; bed<=3; bed++) {
-                const values = Array.from(document.querySelectorAll(`.num-input[data-bed="${bed}"]`))
-                                  .map(input => input.value);
-                report += `${bed}번 베드: ${values.join(', ')}\n`;
-            }
-            navigator.clipboard.writeText(report);
-        }
-    </script>
+    <button onclick="copyToClipboard()" style="margin-top:10px; padding:10px;">
+        클립보드 복사
+    </button>
 </body>
 </html>

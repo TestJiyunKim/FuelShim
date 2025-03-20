@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 22g -->
+    <!-- Revision: 22h -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -157,6 +157,7 @@
         button:hover {
             background-color: #0056b3;
         }
+
         @media (orientation: landscape) {
             .groups-container {
                 flex-direction: row;
@@ -191,10 +192,10 @@
         }
     </style>
     <script>
-        const revision = '22g';
+        const revision = '22h';
         let initialPrefix = '14';
         const MAX_LINES = 9;
-        
+
         function adjustTargetNumber(value) {
             const targetInput = document.getElementById('targetNumber');
             const newValue = parseInt(targetInput.value) + value;
@@ -206,12 +207,12 @@
             });
             updateAverage();
         }
-        
+
         function initializeInput(inputElement) {
             inputElement.value = initialPrefix;
             calculateResults(inputElement);
         }
-        
+
         function calculateResults(inputElement) {
             const wrapper = inputElement.closest('.group-wrapper');
             const target = parseInt(document.getElementById('targetNumber').value);
@@ -226,7 +227,7 @@
                 const formatted = result.toFixed(1).replace(/\.0$/, '');
                 return result < 0 ? `<span class="negative">${formatted}</span>` : formatted;
             });
-        
+
             wrapper.querySelector('.results').innerHTML = results
                 .map(r => r === '' ? '<div></div>' : `<div>${r}</div>`)
                 .join('');
@@ -234,7 +235,7 @@
                 .map((_, i) => `<div>${i + 1}.</div>`)
                 .join('');
         }
-        
+
         function updateAverage() {
             const inputs = Array.from(document.querySelectorAll('.input-numbers'))
                 .slice(0, 4)
@@ -244,14 +245,14 @@
                     .map(num => parseInt(num))
                 )
                 .filter(num => !isNaN(num));
-        
+
             const average = inputs.length > 0 
                 ? (inputs.reduce((a, b) => a + b, 0) / inputs.length).toFixed(1)
                 : '0.0';
-        
+
             document.getElementById('averageDisplay').textContent = `평균: ${average}`;
         }
-        
+
         function handleInput(event) {
             const input = event.target;
             const isBackspace = event.inputType?.startsWith('delete') || event.key === 'Backspace';
@@ -271,29 +272,30 @@
                 }
                 accumulatedLength += lineLength;
             }
-        
+
             let values = input.value.replace(/[^\d\n]/g, '').split('\n')
                 .map(line => line.slice(0, 3))
                 .slice(0, MAX_LINES);
-        
+
+            // 백스페이스 처리 (초기 버전 로직 복원)
             if (isBackspace && posInLine === 0 && currentLine > 0) {
                 values.splice(currentLine - 1, 2, 
                     values[currentLine - 1].slice(0, -1) + values[currentLine]
                 );
                 currentLine--;
             }
-        
+
             let newLineAdded = false;
             if (!isBackspace && values.length < MAX_LINES && values[values.length - 1].length === 3) {
                 values.push(values[values.length - 1].slice(0, 2));
                 newLineAdded = true;
             }
-        
+
             const newValue = values.join('\n');
             if (newValue !== prevValue) {
                 input.value = newValue;
                 calculateResults(input);
-        
+
                 let newCursorPos;
                 if (newLineAdded) {
                     newCursorPos = newValue.length;
@@ -305,7 +307,7 @@
                     }
                     newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
                 }
-        
+
                 requestAnimationFrame(() => {
                     input.setSelectionRange(newCursorPos, newCursorPos);
                 });
@@ -315,109 +317,80 @@
             
             updateAverage();
         }
-        
-        // --- ASCII 테이블 생성 함수 (헤더 변경 적용) ---
-        // 번호 칸: 폭 2, 각 베드 그룹(입력:3, 결과:4)을 합쳐 총 8칸으로 구성
+
         function formatCell(value, width) {
-            value = String(value);
-            return value === "" ? " ".repeat(width) : value.padEnd(width, ' ');
+            return (value === '⚠' ? '⚠ ' : value || '').padEnd(width, ' ');
         }
-        
-        // multi-header ASCII 테이블 생성
-        // bedGroup: 두 베드 데이터를 담은 배열, groupLabels: 예) ["1번", "2번"] 또는 ["3번", "4번"]
+
         function createAsciiTable(bedGroup, groupLabels) {
-            const wNum = 2; // 번호 칸
-            const wInput = 3, wResult = 4;
-            const groupWidth = wInput + wResult + 1; // 3+4+1 = 8
-            
-            // 상단 가로선
-            function horizontalLineTop() {
-                let line = "+" + "-".repeat(wNum) + "+";
-                for (let i = 0; i < 2; i++) {
-                    line += "-".repeat(groupWidth) + "+";
-                }
-                return line;
+            const TOTAL_WIDTH = 24;
+            const COL_NO = 4;    // "| No |"
+            const COL_BED = 10;  // "| 1번 베드 |"
+
+            // 헤더 생성
+            function headerRow() {
+                const bed1 = groupLabels[0].padStart(5, ' ').padEnd(9, ' ');
+                const bed2 = groupLabels[1].padStart(5, ' ').padEnd(9, ' ');
+                return `| No |${bed1}|${bed2}|`;
             }
-            // 첫 번째 헤더 행: 각 그룹명을 중앙 정렬
-            function headerRow1() {
-                let cell1 = groupLabels[0] + " 베드";
-                let cell2 = groupLabels[1] + " 베드";
-                cell1 = cell1.padStart(Math.floor((groupWidth + cell1.length) / 2), ' ').padEnd(groupWidth, ' ');
-                cell2 = cell2.padStart(Math.floor((groupWidth + cell2.length) / 2), ' ').padEnd(groupWidth, ' ');
-                return "|" + " ".repeat(wNum) + "|" + cell1 + "|" + cell2 + "|";
-            }
-            // 두 번째 헤더 행: 하위 헤더 ("입력", "결과")
-            function headerRow2() {
-                let col1_1 = "입력".padEnd(wInput, ' ');
-                let col1_2 = "결과".padEnd(wResult, ' ');
-                let col2_1 = "입력".padEnd(wInput, ' ');
-                let col2_2 = "결과".padEnd(wResult, ' ');
-                return "|" + " ".repeat(wNum) + "|" + col1_1 + " " + col1_2 + "|" + col2_1 + " " + col2_2 + "|";
-            }
-            // 헤더 구분선 (두 번째 헤더 아래)
-            function horizontalLineMid() {
-                let line = "+" + "-".repeat(wNum) + "+";
-                // 각 하위 열: wInput, wResult
-                for (let i = 0; i < 2; i++) {
-                    line += "-".repeat(wInput) + "+" + "-".repeat(wResult) + "+";
-                }
-                return line;
-            }
+
             // 데이터 행 생성
             let rows = [];
             for (let i = 0; i < MAX_LINES; i++) {
-                let numCell = String(i + 1).padStart(wNum, ' ');
-                let bed1Input = formatCell(bedGroup[0].inputs[i] || "", wInput);
-                let bed1Result = formatCell(bedGroup[0].results[i] || "", wResult);
-                let bed2Input = formatCell(bedGroup[1].inputs[i] || "", wInput);
-                let bed2Result = formatCell(bedGroup[1].results[i] || "", wResult);
-                rows.push("|" + numCell + "|" + bed1Input + "|" + bed1Result + "|" + bed2Input + "|" + bed2Result + "|");
+                const no = String(i+1).padStart(2, ' ');
+                const bed1Input = formatCell(bedGroup[0].inputs[i], 3).padStart(4, ' ');
+                const bed1Result = formatCell(bedGroup[0].results[i], 4).padEnd(5, ' ');
+                const bed2Input = formatCell(bedGroup[1].inputs[i], 3).padStart(4, ' ');
+                const bed2Result = formatCell(bedGroup[1].results[i], 4).padEnd(5, ' ');
+                
+                rows.push(`| ${no} |${bed1Input}${bed1Result}|${bed2Input}${bed2Result}|`);
             }
-            let tableLines = [];
-            tableLines.push(horizontalLineTop());
-            tableLines.push(headerRow1());
-            tableLines.push(headerRow2());
-            tableLines.push(horizontalLineMid());
-            tableLines = tableLines.concat(rows);
-            tableLines.push(horizontalLineMid());
-            return tableLines;
+
+            // 테이블 조립
+            return [
+                '+----+----------+----------+',
+                headerRow(),
+                '+----+----------+----------+',
+                ...rows,
+                '+----+----------+----------+'
+            ];
         }
-        
-        // 전체 보고서 생성: 각 베드 그룹별로 ASCII 테이블 생성
+
         function generateReport() {
             const target = document.getElementById('targetNumber').value;
             const average = document.getElementById('averageDisplay').textContent.replace('평균: ', '');
             const basicShim = '12mm';
-            
+
             // 각 베드의 데이터 수집
             const beds = Array.from(document.querySelectorAll('.group-wrapper')).map(wrapper => ({
                 inputs: wrapper.querySelector('.input-numbers').value.split('\n').slice(0, MAX_LINES),
                 results: Array.from(wrapper.querySelectorAll('.results div')).map(div => div.textContent.trim())
             }));
-        
+
             let reportLines = [];
             reportLines.push("=== FUEL SHIM 계산 데이터 ===");
             reportLines.push(`목표수: ${target}    평균: ${average}    기본심: ${basicShim}`);
             reportLines.push("");
-        
+
             // 1-2번 베드 ASCII 테이블 생성 (첫 번째 두 개)
             reportLines.push("[ 1-2번 베드 ]");
             let table1 = createAsciiTable(beds.slice(0, 2), ["1번", "2번"]);
             reportLines = reportLines.concat(table1);
             reportLines.push("");
+
             // 3-4번 베드 ASCII 테이블 생성 (나머지 두 개)
             reportLines.push("[ 3-4번 베드 ]");
             let table2 = createAsciiTable(beds.slice(2, 4), ["3번", "4번"]);
             reportLines = reportLines.concat(table2);
-        
+
             return reportLines.join('\n');
         }
-        
+
         window.onload = function () {
             document.getElementById('revisionDisplay').textContent = `Rev: ${revision}`;
             document.getElementById('targetNumber').value = 144;
             initialPrefix = document.getElementById('targetNumber').value.toString().slice(0, 2);
-        
+
             const bedContainer = document.getElementById('bedContainer');
             for (let i = 1; i <= 4; i++) {
                 const bed = `
@@ -432,13 +405,13 @@
                 `;
                 bedContainer.insertAdjacentHTML('beforeend', bed);
             }
-        
+
             document.querySelectorAll('.input-numbers').forEach(input => {
                 initializeInput(input);
                 input.addEventListener('input', handleInput);
                 input.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
             });
-        
+
             document.getElementById('copyReportButton').addEventListener('click', async () => {
                 try {
                     await navigator.clipboard.writeText(generateReport());
@@ -447,7 +420,7 @@
                     alert('보고서 복사 실패: ' + err.message);
                 }
             });
-        
+
             updateAverage();
         }
     </script>

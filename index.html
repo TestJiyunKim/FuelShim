@@ -318,14 +318,13 @@
             updateAverage();
         }
 
-        // 보고서 생성 시 열의 자리수를 계산해 공백으로 정렬
+        // 보고서 생성 시, 코드 블록(백틱 3개)으로 감싸 모노스페이스 폰트 효과를 주도록 함
         function generateReport() {
             const target = document.getElementById('targetNumber').value;
             const average = document.getElementById('averageDisplay').textContent.replace('평균: ', '');
             const basicShim = '12mm';
             const MAX_LINES = 9;
 
-            // 각 그룹(베드)별 데이터 수집
             const beds = Array.from(document.querySelectorAll('.group-wrapper')).map(wrapper => ({
                 inputs: wrapper.querySelector('.input-numbers').value.split('\n').slice(0, MAX_LINES),
                 results: Array.from(wrapper.querySelectorAll('.results div')).map(div => div.textContent.trim())
@@ -333,38 +332,34 @@
 
             const reportLines = [];
             reportLines.push("=== FUEL SHIM 계산 데이터 ===");
-            // 헤더: 탭 대신 공백으로 일정 자리수 맞춤
             reportLines.push(`목표수: ${target}    평균: ${average}    기본심: ${basicShim}`);
             reportLines.push('-----------------------------------------');
 
-            // 1-2번 베드 테이블 (공백 정렬)
+            // 1-2번 베드 테이블
             reportLines.push('\n[ 1-2번 베드 ]');
             reportLines.push(createHeaderLine("1번", "2번"));
             reportLines.push('-----------------------------------------');
             generateBedSection(reportLines, beds.slice(0, 2));
 
-            // 3-4번 베드 테이블 (공백 정렬)
+            // 3-4번 베드 테이블
             reportLines.push('\n[ 3-4번 베드 ]');
             reportLines.push(createHeaderLine("3번", "4번"));
             reportLines.push('-----------------------------------------');
             generateBedSection(reportLines, beds.slice(2, 4));
 
-            return reportLines.join('\n');
+            // 코드 블록(백틱 3개)으로 감싸서 모노스페이스 폰트 효과 적용
+            return "```\n" + reportLines.join('\n') + "\n```";
         }
 
-        // 헤더 라인 생성 (각 열의 제목에 대해 고정 너비 적용)
         function createHeaderLine(col1Label, col2Label) {
-            // 각 셀의 고정 너비: 입력 3자리, 결과 4자리 사이에 한 칸 공백 포함 (총 8자리)
             const cellWidth = 8;
             const header1 = col1Label.padEnd(cellWidth, ' ');
             const header2 = col2Label.padEnd(cellWidth, ' ');
             return `라인 | ${header1} | ${header2}`;
         }
 
-        // 각 행별 데이터를 고정 폭으로 맞춰서 생성 (탭 대신 공백 사용)
         function generateBedSection(reportLines, beds) {
             const MAX_LINES = 9;
-            // 입력: 3자리, 결과: 4자리 – 필요 시 숫자를 변경 가능
             const inputWidth = 3;
             const resultWidth = 4;
             for(let i = 0; i < MAX_LINES; i++) {

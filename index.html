@@ -318,58 +318,85 @@
             updateAverage();
         }
 
-        // 보고서 생성 시, 코드 블록(백틱 3개)으로 감싸 모노스페이스 폰트 효과를 주도록 함
+        // ASCII 테이블 형식의 보고서 생성
         function generateReport() {
             const target = document.getElementById('targetNumber').value;
             const average = document.getElementById('averageDisplay').textContent.replace('평균: ', '');
             const basicShim = '12mm';
             const MAX_LINES = 9;
 
+            // 각 베드 그룹별 데이터 수집
             const beds = Array.from(document.querySelectorAll('.group-wrapper')).map(wrapper => ({
                 inputs: wrapper.querySelector('.input-numbers').value.split('\n').slice(0, MAX_LINES),
                 results: Array.from(wrapper.querySelectorAll('.results div')).map(div => div.textContent.trim())
             }));
 
-            const reportLines = [];
+            let reportLines = [];
             reportLines.push("=== FUEL SHIM 계산 데이터 ===");
             reportLines.push(`목표수: ${target}    평균: ${average}    기본심: ${basicShim}`);
-            reportLines.push('-----------------------------------------');
+            reportLines.push("");
 
-            // 1-2번 베드 테이블
-            reportLines.push('\n[ 1-2번 베드 ]');
-            reportLines.push(createHeaderLine("1번", "2번"));
-            reportLines.push('-----------------------------------------');
-            generateBedSection(reportLines, beds.slice(0, 2));
+            // 1-2번 베드 ASCII 테이블 생성
+            reportLines.push("[ 1-2번 베드 ]");
+            reportLines = reportLines.concat(createAsciiTable(beds.slice(0,2), "1번", "2번"));
 
-            // 3-4번 베드 테이블
-            reportLines.push('\n[ 3-4번 베드 ]');
-            reportLines.push(createHeaderLine("3번", "4번"));
-            reportLines.push('-----------------------------------------');
-            generateBedSection(reportLines, beds.slice(2, 4));
+            reportLines.push("");
+            // 3-4번 베드 ASCII 테이블 생성
+            reportLines.push("[ 3-4번 베드 ]");
+            reportLines = reportLines.concat(createAsciiTable(beds.slice(2,4), "3번", "4번"));
 
-            // 코드 블록(백틱 3개)으로 감싸서 모노스페이스 폰트 효과 적용
-            return "```\n" + reportLines.join('\n') + "\n```";
+            return reportLines.join('\n');
         }
 
-        function createHeaderLine(col1Label, col2Label) {
-            const cellWidth = 8;
-            const header1 = col1Label.padEnd(cellWidth, ' ');
-            const header2 = col2Label.padEnd(cellWidth, ' ');
-            return `라인 | ${header1} | ${header2}`;
-        }
+        // ASCII 테이블 생성 함수  
+        // 각 테이블은 5개의 열로 구성됨: 라인, [베드1 입력, 베드1 결과, 베드2 입력, 베드2 결과]
+        function createAsciiTable(bedGroup, colLabel1, colLabel2) {
+            // 각 열의 폭 지정 (헤더 및 데이터 값에 따라 필요시 조정)
+            const colWidths = {
+                line: 4,
+                input: 5,
+                result: 7
+            };
 
-        function generateBedSection(reportLines, beds) {
-            const MAX_LINES = 9;
-            const inputWidth = 3;
-            const resultWidth = 4;
-            for(let i = 0; i < MAX_LINES; i++) {
-                let rowCells = beds.map(bed => {
-                    const inputVal = (bed.inputs[i] || '').trim().padEnd(inputWidth, ' ');
-                    const resultVal = (bed.results[i] || '').trim().padEnd(resultWidth, ' ');
-                    return `${inputVal} ${resultVal}`;
-                });
-                reportLines.push(`${(i+1).toString().padStart(2, ' ')} | ${rowCells.join(' | ')}`);
+            // 테이블 가로 선 생성
+            function horizontalLine() {
+                return '+' + '-'.repeat(colWidths.line + 2) + '+' +
+                    '-'.repeat(colWidths.input + 2) + '+' +
+                    '-'.repeat(colWidths.result + 2) + '+' +
+                    '-'.repeat(colWidths.input + 2) + '+' +
+                    '-'.repeat(colWidths.result + 2) + '+';
             }
+
+            // 헤더 행 생성
+            function headerRow() {
+                const lineCell = '라인'.padStart(colWidths.line, ' ');
+                const bed1Input = (colLabel1 + " 입력").padEnd(colWidths.input, ' ');
+                const bed1Result = (colLabel1 + " 결과").padEnd(colWidths.result, ' ');
+                const bed2Input = (colLabel2 + " 입력").padEnd(colWidths.input, ' ');
+                const bed2Result = (colLabel2 + " 결과").padEnd(colWidths.result, ' ');
+                return `| ${lineCell} | ${bed1Input} | ${bed1Result} | ${bed2Input} | ${bed2Result} |`;
+            }
+
+            // 데이터 행 생성 (각 행 번호별)
+            let rows = [];
+            for (let i = 0; i < MAX_LINES; i++) {
+                const lineNum = (i+1).toString().padStart(colWidths.line, ' ');
+                // 각 셀 데이터: 값이 없으면 공백 처리
+                const bed1InputVal = (bedGroup[0].inputs[i] || '').padEnd(colWidths.input, ' ');
+                const bed1ResultVal = (bedGroup[0].results[i] || '').padEnd(colWidths.result, ' ');
+                const bed2InputVal = (bedGroup[1].inputs[i] || '').padEnd(colWidths.input, ' ');
+                const bed2ResultVal = (bedGroup[1].results[i] || '').padEnd(colWidths.result, ' ');
+                rows.push(`| ${lineNum} | ${bed1InputVal} | ${bed1ResultVal} | ${bed2InputVal} | ${bed2ResultVal} |`);
+            }
+
+            // 최종 테이블 조립
+            let tableLines = [];
+            tableLines.push(horizontalLine());
+            tableLines.push(headerRow());
+            tableLines.push(horizontalLine());
+            tableLines = tableLines.concat(rows);
+            tableLines.push(horizontalLine());
+            return tableLines;
         }
 
         window.onload = function () {

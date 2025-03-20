@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 22k -->
+    <!-- Revision: 22m -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -109,7 +109,7 @@
             background-color: #f0f0f0;
         }
         .negative {
-            color: red;
+            color: red !important; /* 음수 값 적색 표시 */
         }
         .results div:empty {
             height: 42px;
@@ -192,7 +192,7 @@
         }
     </style>
     <script>
-        const revision = '22k';
+        const revision = '22m';
         let initialPrefix = '14';
         const MAX_LINES = 9;
         const staticNumbering = Array.from({length: MAX_LINES}, (_, i) => `${i+1}.`).join('\n');
@@ -241,15 +241,18 @@
             const numbers = inputElement.value.split('\n');
             
             const results = numbers.map(num => {
-                if (num.length !== 3) return num.length > 0 ? '⚠' : '';
+                if (num.length !== 3) return { value: num.length > 0 ? '⚠' : '', isNegative: false };
                 const n = parseInt(num);
                 const diff = target - n;
                 const result = Math.trunc(diff * 0.125 * 10) / 10;
-                return Math.abs(result) > 0.1 ? result.toFixed(1).replace(/\.0$/, '') : '';
+                return {
+                    value: Math.abs(result) > 0.1 ? result.toFixed(1).replace(/\.0$/, '') : '',
+                    isNegative: result < 0
+                };
             });
 
             wrapper.querySelector('.results').innerHTML = results
-                .map(r => r ? `<div>${r}</div>` : '<div></div>')
+                .map(r => r.value ? `<div class="${r.isNegative ? 'negative' : ''}">${r.value}</div>` : '<div></div>')
                 .join('');
         }
 
@@ -346,6 +349,29 @@
                     </div>
                 </div>
             `;
+        }
+
+        function generateReport() {
+            const target = document.getElementById('targetNumber').value;
+            const beds = Array.from(document.querySelectorAll('.input-group')).map(group => {
+                const bedNumber = group.querySelector('.bed-label').textContent;
+                const values = group.querySelector('.input-numbers').value.split('\n').filter(v => v);
+                const results = Array.from(group.querySelectorAll('.results div')).map(div => div.textContent);
+                return { bedNumber, values, results };
+            });
+
+            let report = `[FUEL SHIM 계산 보고서]\n`;
+            report += `목표값: ${target}\n`;
+            report += `계산일: ${new Date().toLocaleString()}\n\n`;
+
+            beds.forEach((bed, index) => {
+                report += `▣ ${bed.bedNumber}\n`;
+                report += `입력값: ${bed.values.join(', ')}\n`;
+                report += `결과값: ${bed.results.join(', ')}\n`;
+                if(index !== beds.length-1) report += '\n';
+            });
+
+            return report;
         }
 
         window.onload = function () {

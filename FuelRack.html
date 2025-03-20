@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FUEL RACK INPUT</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h2 {
+            text-align: center;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .perc-btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            flex: 1;
+        }
+        .config-group {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .bed-group {
+            border: 1px solid #ccc;
+            padding: 10px;
+            flex: 1;
+            min-width: 250px;
+        }
+        .num-input {
+            width: 60px;
+            margin: 0 5px 5px 0;
+        }
+        .virtual-keypad {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            padding: 20px;
+            border: 2px solid #000;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            display: none;
+        }
+        .keypad-btn {
+            padding: 10px 15px;
+            margin: 5px;
+            font-size: 16px;
+        }
+        @media (max-width: 768px) {
+            .bed-group {
+                flex: 1 1 100%;
+            }
+            .num-input {
+                width: 45px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h2>FUEL RACK INPUT</h2>
+
+    <!-- Percentage Buttons and Base Inputs -->
+    <div class="button-group">
+        <div class="config-group">
+            <button class="perc-btn" data-perc="25">25%</button>
+            <input type="number" class="base-input" data-perc="25" value="10" step="0.5">
+        </div>
+        <div class="config-group">
+            <button class="perc-btn" data-perc="50">50%</button>
+            <input type="number" class="base-input" data-perc="50" value="18" step="0.5">
+        </div>
+        <div class="config-group">
+            <button class="perc-btn" data-perc="75">75%</button>
+            <input type="number" class="base-input" data-perc="75" value="25" step="0.5">
+        </div>
+        <div class="config-group">
+            <button class="perc-btn" data-perc="100">100%</button>
+            <input type="number" class="base-input" data-perc="100" value="33" step="0.5">
+        </div>
+        <div class="config-group">
+            <button class="perc-btn" data-perc="110">110%</button>
+            <input type="number" class="base-input" data-perc="110" value="36" step="0.5">
+        </div>
+    </div>
+
+    <!-- Bed Input Groups -->
+    <div class="row">
+        <div class="bed-group">
+            <h3>#1</h3>
+            <div class="input-group">
+                <input type="number" class="num-input" data-bed="1" data-pos="1">
+                <input type="number" class="num-input" data-bed="1" data-pos="2">
+                <input type="number" class="num-input" data-bed="1" data-pos="3">
+                <input type="number" class="num-input" data-bed="1" data-pos="4">
+                <input type="number" class="num-input" data-bed="1" data-pos="5">
+                <input type="number" class="num-input" data-bed="1" data-pos="6">
+                <input type="number" class="num-input" data-bed="1" data-pos="7">
+                <input type="number" class="num-input" data-bed="1" data-pos="8">
+            </div>
+        </div>
+        <div class="bed-group">
+            <h3>#2</h3>
+            <div class="input-group">
+                <input type="number" class="num-input" data-bed="2" data-pos="1">
+                <input type="number" class="num-input" data-bed="2" data-pos="2">
+                <input type="number" class="num-input" data-bed="2" data-pos="3">
+                <input type="number" class="num-input" data-bed="2" data-pos="4">
+                <input type="number" class="num-input" data-bed="2" data-pos="5">
+                <input type="number" class="num-input" data-bed="2" data-pos="6">
+                <input type="number" class="num-input" data-bed="2" data-pos="7">
+                <input type="number" class="num-input" data-bed="2" data-pos="8">
+            </div>
+        </div>
+        <div class="bed-group">
+            <h3>#3</h3>
+            <div class="input-group">
+                <input type="number" class="num-input" data-bed="3" data-pos="1">
+                <input type="number" class="num-input" data-bed="3" data-pos="2">
+                <input type="number" class="num-input" data-bed="3" data-pos="3">
+                <input type="number" class="num-input" data-bed="3" data-pos="4">
+                <input type="number" class="num-input" data-bed="3" data-pos="5">
+                <input type="number" class="num-input" data-bed="3" data-pos="6">
+                <input type="number" class="num-input" data-bed="3" data-pos="7">
+                <input type="number" class="num-input" data-bed="3" data-pos="8">
+            </div>
+        </div>
+    </div>
+
+    <!-- Virtual Keypad -->
+    <div class="virtual-keypad">
+        <button class="keypad-btn" data-change="-0.5">-0.5</button>
+        <span id="current-val" style="font-size: 20px;">0</span>
+        <button class="keypad-btn" data-change="+0.5">+0.5</button>
+        <button class="keypad-btn" onclick="closeKeypad()">닫기</button>
+    </div>
+
+    <script>
+        // 패턴 데이터
+        const patterns = {
+            '25': {
+                '1': [10, 10.5, 10, 10.5, 10.5, 10, 10.5, 10],
+                '2': [10, 10, 10, 10, 10, 10, 10, 10],
+                '3': [10, 10, 10, 10, 10, 10, 10, 10]
+            },
+            '50': {
+                '1': [18, 18, 18.5, 18, 18, 18, 18.5, 18],
+                '2': [18, 18, 18, 18, 18, 18, 18, 18],
+                '3': [18, 18, 18, 18, 18, 18, 18, 18]
+            },
+            '75': {
+                '1': [25, 25.5, 25.5, 25.5, 25.5, 25.5, 25.5, 25],
+                '2': [25, 25, 25, 25, 25, 25, 25, 25],
+                '3': [25, 25, 25, 25.5, 25, 25, 25, 25]
+            },
+            '100': {
+                '1': [33, 33.5, 33.5, 33, 33, 33, 33.5, 33],
+                '2': [33, 33, 33, 33, 33, 33, 33, 33],
+                '3': [33.5, 33.5, 33.5, 33, 33.5, 33, 33.5, 33.5]
+            },
+            '110': {
+                '1': [36, 36, 36.5, 36.5, 36.5, 36.5, 36.5, 36],
+                '2': [36, 36, 36, 36, 36, 36.5, 36, 36],
+                '3': [36, 36, 36, 36, 36, 36, 36, 36]
+            }
+        };
+
+        let currentInput = null;
+
+        // 퍼센트 버튼 클릭 시 패턴 적용
+        document.querySelectorAll('.perc-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const perc = btn.dataset.perc;
+                const base = parseFloat(document.querySelector(`.base-input[data-perc="${perc}"]`).value);
+                applyPattern(perc, base);
+            });
+        });
+
+        // 패턴 적용 함수
+        function applyPattern(perc, base) {
+            const pattern = patterns[perc];
+            for (let bed = 1; bed <= 3; bed++) {
+                for (let pos = 1; pos <= 8; pos++) {
+                    const input = document.querySelector(`.num-input[data-bed="${bed}"][data-pos="${pos}"]`);
+                    input.value = pattern[bed][pos - 1];
+                }
+            }
+        }
+
+        // 가상 키보드 열기
+        document.querySelectorAll('.num-input').forEach(input => {
+            input.addEventListener('focus', function () {
+                currentInput = this;
+                document.querySelector('.virtual-keypad').style.display = 'block';
+                document.querySelector('#current-val').textContent = this.value;
+            });
+        });
+
+        // 가상 키보드 버튼 클릭 시 값 조정
+        document.querySelectorAll('.keypad-btn[data-change]').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const change = parseFloat(this.dataset.change);
+                const newVal = parseFloat(currentInput.value) + change;
+                currentInput.value = newVal.toFixed(1);
+                document.querySelector('#current-val').textContent = newVal.toFixed(1);
+            });
+        });
+
+        // 가상 키보드 닫기
+        function closeKeypad() {
+            document.querySelector('.virtual-keypad').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

@@ -16,28 +16,16 @@
             color: #444;
             margin: 10px 0;
         }
-        .percentage-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 5px;
-            margin: 10px 0;
-        }
-        .percentage-buttons button {
-            padding: 8px 12px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
         .groups-container {
             display: flex;
-            flex-direction: column;
+            flex-wrap: wrap;
             gap: 10px;
+            justify-content: center;
         }
         .group-wrapper {
             display: flex;
             gap: 5px;
+            width: calc(50% - 5px);
             margin-bottom: 10px;
         }
         .input-group {
@@ -47,6 +35,7 @@
             position: relative;
             background-color: white;
             flex: 1;
+            height: 200px;
         }
         .bed-label {
             position: absolute;
@@ -63,10 +52,11 @@
             text-align: right;
             padding-right: 5px;
             font-size: 14px;
+            line-height: 1.5;
         }
         .input-numbers {
             width: 100%;
-            height: 120px;
+            height: 160px;
             border: 1px solid #ccc;
             border-radius: 4px;
             padding: 5px;
@@ -91,18 +81,23 @@
             border-radius: 4px;
             background: #f0f6ff;
             cursor: pointer;
+            font-size: 14px;
         }
         .keyboard-btn.del {
             background: #ffebee;
             border-color: #ff5252;
         }
 
-        @media (orientation: portrait) {
+        @media (orientation: landscape) {
             .group-wrapper {
-                flex-direction: column;
+                width: calc(25% - 8px);
+                margin-bottom: 0;
             }
             .input-group {
-                width: 100%;
+                height: 250px;
+            }
+            .input-numbers {
+                height: 210px;
             }
         }
     </style>
@@ -110,14 +105,6 @@
 <body>
     <h2>FUEL RACK 입력</h2>
     
-    <div class="percentage-buttons">
-        <button data-percent="25">25%</button>
-        <button data-percent="50">50%</button>
-        <button data-percent="75">75%</button>
-        <button data-percent="100">100%</button>
-        <button data-percent="110">110%</button>
-    </div>
-
     <div class="groups-container">
         <!-- Bed groups will be dynamically generated -->
     </div>
@@ -127,46 +114,14 @@
     </div>
 
 <script>
-const presetValues = {
-    '25': {
-        1: [10,10.5,10,10.5,10.5,10,10.5,10],
-        2: [10,10,10,10,10,10,10,10],
-        3: [10,10,10,10,10,10,10,10],
-        4: [10,10,10,10,10,10,10,10]
-    },
-    '50': {
-        1: [18,18,18.5,18,18,18,18.5,18],
-        2: [18,18,18,18,18,18,18,18],
-        3: [18,18,18,18,18,18,18,18],
-        4: [18,18,18,18,18,18,18,18]
-    },
-    '75': {
-        1: [25,25.5,25.5,25.5,25.5,25.5,25.5,25],
-        2: [25,25,25,25,25,25,25,25],
-        3: [25,25,25,25.5,25,25,25,25],
-        4: []
-    },
-    '100': {
-        1: [33,33.5,33.5,33,33,33,33.5,33],
-        2: [33,33,33,33,33,33,33,33],
-        3: [33.5,33.5,33.5,33,33.5,33,33.5,33.5],
-        4: []
-    },
-    '110': {
-        1: [36,36,36.5,36.5,36.5,36.5,36.5,36],
-        2: [36,36,36,36,36,36.5,36,36],
-        3: [36,36,36,36,36,36,36,36],
-        4: []
-    }
-};
-
-let currentPercent = '25';
 let activeInput = null;
 
+// 그룹 생성 함수
 function generateBedGroups() {
     const container = document.querySelector('.groups-container');
     container.innerHTML = '';
     
+    // 4개의 베드 그룹 생성
     for(let bedNum = 1; bedNum <= 4; bedNum++) {
         const group = document.createElement('div');
         group.className = 'group-wrapper';
@@ -182,38 +137,37 @@ function generateBedGroups() {
         container.appendChild(group);
     }
     
+    // 입력 필드에 이벤트 리스너 추가
     document.querySelectorAll('.input-numbers').forEach(input => {
         input.addEventListener('focus', handleInputFocus);
     });
 }
 
+// 입력 필드 포커스 시 가상 키보드 표시
 function handleInputFocus(e) {
     activeInput = e.target;
     updateKeyboard();
     document.querySelector('.virtual-keyboard').style.display = 'grid';
 }
 
+// 가상 키보드 업데이트
 function updateKeyboard() {
-    const bedNum = parseInt(activeInput.dataset.bed);
-    const values = presetValues[currentPercent][bedNum];
-    const currentIndex = Array.from(activeInput.parentNode.parentNode.children)
-        .indexOf(activeInput.parentNode) - 1; // Subtract numbering div
-    
-    const baseValue = values[currentIndex] || 0;
-    
     const keyboard = document.querySelector('.virtual-keyboard');
     keyboard.innerHTML = `
-        <button class="keyboard-btn" data-value="${baseValue - 0.5}">${baseValue - 0.5}</button>
-        <button class="keyboard-btn" data-value="${baseValue}">${baseValue}</button>
-        <button class="keyboard-btn" data-value="${baseValue + 0.5}">${baseValue + 0.5}</button>
+        <button class="keyboard-btn" data-value="10">10</button>
+        <button class="keyboard-btn" data-value="10.5">10.5</button>
+        <button class="keyboard-btn" data-value="18">18</button>
+        <button class="keyboard-btn" data-value="18.5">18.5</button>
         <button class="keyboard-btn del">DEL</button>
     `;
     
+    // 키보드 버튼에 이벤트 리스너 추가
     keyboard.querySelectorAll('.keyboard-btn').forEach(btn => {
         btn.addEventListener('click', handleKeyboardClick);
     });
 }
 
+// 가상 키보드 버튼 클릭 처리
 function handleKeyboardClick(e) {
     if(e.target.classList.contains('del')) {
         activeInput.value = '';
@@ -224,24 +178,8 @@ function handleKeyboardClick(e) {
     activeInput.value = value.toFixed(1).endsWith('.0') ? value.toFixed(0) : value.toFixed(1);
 }
 
-document.querySelectorAll('.percentage-buttons button').forEach(btn => {
-    btn.addEventListener('click', () => {
-        currentPercent = btn.dataset.percent;
-        applyPresetValues();
-    });
-});
-
-function applyPresetValues() {
-    document.querySelectorAll('.input-numbers').forEach(input => {
-        const bedNum = parseInt(input.dataset.bed);
-        const values = presetValues[currentPercent][bedNum];
-        input.value = values.map(v => v.toFixed(1).endsWith('.0') ? v.toFixed(0) : v.toFixed(1)).join('\n');
-    });
-}
-
-// Initialize
+// 초기화
 generateBedGroups();
-applyPresetValues();
 </script>
 </body>
 </html>

@@ -28,7 +28,7 @@
             width: 100%;
         }
         .numbering {
-            width: 30px;
+            width: calc(33.33% - 5px);
             text-align: right;
             padding-right: 5px;
             font-size: 14px;
@@ -39,12 +39,12 @@
             padding-top: 5px;
         }
         .input-group {
+            width: calc(33.33% - 5px);
             border: 2px solid #007bff;
             border-radius: 6px;
             padding: 25px 5px 5px;
             position: relative;
             background-color: white;
-            flex: 1;
             height: 200px;
         }
         .bed-label {
@@ -66,6 +66,9 @@
             padding: 5px;
             resize: none;
             font-size: 14px;
+            background-color: white;
+            cursor: pointer;
+            caret-color: transparent; /* 커서 숨기기 */
         }
         .virtual-keyboard {
             position: fixed;
@@ -78,6 +81,7 @@
             display: none;
             grid-template-columns: repeat(5, 1fr);
             gap: 5px;
+            z-index: 1000; /* 가상 키보드를 최상위로 표시 */
         }
         .keyboard-btn {
             padding: 10px;
@@ -117,26 +121,26 @@
     <div class="groups-container">
         <!-- 첫 번째 줄: 번호창 1, 베드 1, 베드 2 -->
         <div class="group-row">
-            <div class="numbering">${Array.from({length:8}, (_,i)=>i+1).join('<br>')}</div>
+            <div class="numbering">1.<br>2.<br>3.<br>4.<br>5.<br>6.<br>7.<br>8.<br>9.</div>
             <div class="input-group">
                 <div class="bed-label">#1</div>
-                <textarea class="input-numbers" data-bed="1"></textarea>
+                <textarea class="input-numbers" data-bed="1" readonly></textarea>
             </div>
             <div class="input-group">
                 <div class="bed-label">#2</div>
-                <textarea class="input-numbers" data-bed="2"></textarea>
+                <textarea class="input-numbers" data-bed="2" readonly></textarea>
             </div>
         </div>
         <!-- 두 번째 줄: 번호창 2, 베드 3, 베드 4 -->
         <div class="group-row">
-            <div class="numbering">${Array.from({length:8}, (_,i)=>i+1).join('<br>')}</div>
+            <div class="numbering">1.<br>2.<br>3.<br>4.<br>5.<br>6.<br>7.<br>8.<br>9.</div>
             <div class="input-group">
                 <div class="bed-label">#3</div>
-                <textarea class="input-numbers" data-bed="3"></textarea>
+                <textarea class="input-numbers" data-bed="3" readonly></textarea>
             </div>
             <div class="input-group">
                 <div class="bed-label">#4</div>
-                <textarea class="input-numbers" data-bed="4"></textarea>
+                <textarea class="input-numbers" data-bed="4" readonly></textarea>
             </div>
         </div>
     </div>
@@ -176,13 +180,20 @@ function handleKeyboardClick(e) {
     activeInput.value = value.toFixed(1).endsWith('.0') ? value.toFixed(0) : value.toFixed(1);
 }
 
-// 입력 필드 포커스 시 가상 키보드 표시
+// 입력 필드 클릭 시 가상 키보드 표시
 document.querySelectorAll('.input-numbers').forEach(input => {
-    input.addEventListener('focus', (e) => {
+    input.addEventListener('click', (e) => {
         activeInput = e.target;
         updateKeyboard();
         document.querySelector('.virtual-keyboard').style.display = 'grid';
     });
+});
+
+// 화면 클릭 시 가상 키보드 숨기기
+document.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('input-numbers') && !e.target.classList.contains('keyboard-btn')) {
+        document.querySelector('.virtual-keyboard').style.display = 'none';
+    }
 });
 </script>
 </body>

@@ -27,8 +27,9 @@
             gap: 5px;
             width: 100%;
         }
+        /* 번호창 폭 50%로 수정 */
         .numbering {
-            width: 40px;
+            width: calc(50% - 5px);
             text-align: right;
             padding: 8px 5px 0 0;
             font-size: 14px;
@@ -36,17 +37,19 @@
             border: 1px solid #ccc;
             border-radius: 4px;
             background-color: #f0f0f0;
-            height: 160px;
-            margin-top: 20px;
+            height: 170px; /* 높이 10포인트 증가 */
+            margin-top: 10px; /* 상단 마진 10포인트 */
         }
+        /* 입력창 및 그룹창 폭 50%로 수정 */
         .input-group {
-            width: calc(50% - 30px);
+            width: calc(50% - 5px);
             border: 2px solid #007bff;
             border-radius: 6px;
-            padding: 30px 5px 5px;
+            padding: 20px 5px 5px; /* 상단 패딩 축소 */
             position: relative;
             background-color: white;
             height: 220px;
+            margin-top: -10px; /* 상단 위치 10포인트 상승 */
         }
         .bed-label {
             position: absolute;
@@ -70,7 +73,12 @@
             background-color: white;
             cursor: pointer;
             line-height: 1.5;
-            caret-color: transparent;
+            caret-color: #ff0000; /* 빨간색 커서 추가 */
+        }
+        /* 포커스 시 입력창 강조 */
+        .input-numbers:focus {
+            outline: 2px solid #007bff;
+            box-shadow: 0 0 5px rgba(0,123,255,0.5);
         }
         .virtual-keyboard {
             position: fixed;
@@ -97,23 +105,9 @@
             background: #ffebee;
             border-color: #ff5252;
         }
-
-        @media (orientation: landscape) {
-            .groups-container {
-                flex-direction: row;
-                flex-wrap: wrap;
-                gap: 10px;
-            }
-            .group-row {
-                width: 100%;
-                flex-direction: row;
-            }
-            .input-group {
-                height: 280px;
-            }
-            .input-numbers {
-                height: 240px;
-            }
+        /* 현재 입력 줄 표시기 */
+        .current-line {
+            background: rgba(0,123,255,0.1);
         }
     </style>
 </head>
@@ -121,28 +115,18 @@
     <h2>FUEL RACK 입력</h2>
     
     <div class="groups-container">
-        <!-- 첫 번째 줄: 번호창 1, 베드 1, 베드 2 -->
         <div class="group-row">
             <div class="numbering">1.<br>2.<br>3.<br>4.<br>5.<br>6.<br>7.<br>8.<br>9.</div>
             <div class="input-group">
                 <div class="bed-label">#1</div>
                 <textarea class="input-numbers" data-bed="1" readonly></textarea>
             </div>
-            <div class="input-group">
-                <div class="bed-label">#2</div>
-                <textarea class="input-numbers" data-bed="2" readonly></textarea>
-            </div>
         </div>
-        <!-- 두 번째 줄: 번호창 2, 베드 3, 베드 4 -->
         <div class="group-row">
             <div class="numbering">1.<br>2.<br>3.<br>4.<br>5.<br>6.<br>7.<br>8.<br>9.</div>
             <div class="input-group">
-                <div class="bed-label">#3</div>
-                <textarea class="input-numbers" data-bed="3" readonly></textarea>
-            </div>
-            <div class="input-group">
-                <div class="bed-label">#4</div>
-                <textarea class="input-numbers" data-bed="4" readonly></textarea>
+                <div class="bed-label">#2</div>
+                <textarea class="input-numbers" data-bed="2" readonly></textarea>
             </div>
         </div>
     </div>
@@ -155,7 +139,6 @@
 let activeInput = null;
 let currentLine = 0;
 
-// 가상 키보드 업데이트
 function updateKeyboard() {
     const keyboard = document.querySelector('.virtual-keyboard');
     keyboard.innerHTML = `
@@ -166,31 +149,32 @@ function updateKeyboard() {
         <button class="keyboard-btn del">DEL</button>
     `;
     
-    // 키보드 버튼에 이벤트 리스너 추가
     keyboard.querySelectorAll('.keyboard-btn').forEach(btn => {
         btn.addEventListener('click', handleKeyboardClick);
     });
 }
 
-// 가상 키보드 버튼 클릭 처리
 function handleKeyboardClick(e) {
+    const lines = activeInput.value.split('\n');
+    
     if(e.target.classList.contains('del')) {
-        const lines = activeInput.value.split('\n');
         lines[currentLine] = '';
-        activeInput.value = lines.join('\n');
-        return;
+    } else {
+        const value = parseFloat(e.target.dataset.value);
+        const formattedValue = value.toFixed(1).endsWith('.0') 
+            ? value.toFixed(0) 
+            : value.toFixed(1);
+        lines[currentLine] = formattedValue;
     }
     
-    const value = parseFloat(e.target.dataset.value);
-    const formattedValue = value.toFixed(1).endsWith('.0') ? value.toFixed(0) : value.toFixed(1);
-    
-    const lines = activeInput.value.split('\n');
-    lines[currentLine] = formattedValue;
     activeInput.value = lines.join('\n');
-    
-    // 다음 줄로 이동 (최대 8줄)
+    moveToNextLine();
+}
+
+function moveToNextLine() {
     if(currentLine < 8) {
         currentLine++;
+        highlightCurrentLine();
         setTimeout(() => {
             const text = activeInput.value;
             let pos = 0;
@@ -202,23 +186,32 @@ function handleKeyboardClick(e) {
     }
 }
 
-// 입력 필드 클릭 시 가상 키보드 표시
+function highlightCurrentLine() {
+    // 모든 하이라이트 제거
+    document.querySelectorAll('.input-numbers').forEach(input => {
+        input.classList.remove('current-line');
+    });
+    // 현재 줄 하이라이트
+    activeInput.classList.add('current-line');
+}
+
 document.querySelectorAll('.input-numbers').forEach(input => {
     input.addEventListener('click', (e) => {
         activeInput = e.target;
         const text = activeInput.value;
         const cursorPos = activeInput.selectionStart;
         currentLine = text.substr(0, cursorPos).split('\n').length - 1;
+        highlightCurrentLine();
         updateKeyboard();
         document.querySelector('.virtual-keyboard').style.display = 'grid';
     });
 });
 
-// 화면 클릭 시 가상 키보드 숨기기
 document.addEventListener('click', (e) => {
     if (!e.target.classList.contains('input-numbers') && 
         !e.target.classList.contains('keyboard-btn')) {
         document.querySelector('.virtual-keyboard').style.display = 'none';
+        highlightCurrentLine(false);
     }
 });
 </script>

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 22q -->
+    <!-- Revision: 22s -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -115,9 +115,6 @@
             color: red !important;
             font-weight: bold;
         }
-        .warning {
-            color: red !important;
-        }
         .results div:empty {
             height: 42px;
             visibility: hidden;
@@ -198,7 +195,7 @@
         }
     </style>
     <script>
-        const revision = '22q';
+        const revision = '22s';
         let initialPrefix = '14';
         const MAX_LINES = 9;
 
@@ -256,9 +253,11 @@
             const target = parseInt(document.getElementById('targetNumber').value);
             const numbers = inputElement.value.split('\n');
             
-            const results = numbers.map(num => {
-                // 1~2자리 숫자 오류 처리
-                if (num.length > 0 && num.length < 3 && /^\d+$/.test(num)) {
+            const results = numbers.map((num, index) => {
+                const isLastLine = index === numbers.length - 1; // 마지막 행 체크
+
+                // 마지막 행 제외 1~2자리 오류 처리
+                if (!isLastLine && num.length > 0 && num.length < 3 && /^\d+$/.test(num)) {
                     return { 
                         value: '오류!', 
                         style: 'invalid' 
@@ -269,21 +268,10 @@
                 const n = parseInt(num);
                 const diff = target - n;
                 const result = Math.trunc(diff * 0.125 * 10) / 10;
-                const absResult = Math.abs(result);
-                let displayValue = absResult > 0.1 ? result.toFixed(1).replace(/\.0$/, '') : '';
-
-                // 결과값 2.0 이상 확인요망 처리
-                if (absResult >= 2) {
-                    return {
-                        value: `${displayValue} 확인요망`,
-                        style: 'warning'
-                    };
-                } else {
-                    return {
-                        value: displayValue,
-                        isNegative: result < 0
-                    };
-                }
+                return {
+                    value: Math.abs(result) > 0.1 ? result.toFixed(1).replace(/\.0$/, '') : '',
+                    isNegative: result < 0
+                };
             });
 
             wrapper.querySelector('.results').innerHTML = results

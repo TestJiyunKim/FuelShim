@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 22n -->
+    <!-- Revision: 22o -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -192,7 +192,7 @@
         }
     </style>
     <script>
-        const revision = '22n';
+        const revision = '22o';
         let initialPrefix = '14';
         const MAX_LINES = 9;
         const staticNumbering = Array.from({length: MAX_LINES}, (_, i) => `${i+1}.`).join('\n');
@@ -360,31 +360,31 @@
                 return { bedNumber, values, results };
             });
 
-            let report = `╔══════════════════════════════╗\n`;
-            report += `║       FUEL SHIM REPORT       ║\n`;
-            report += `╠══════════════════════════════╣\n`;
-            report += `║ TARGET: ${target.padEnd(19)}║\n`;
-            report += `║ DATE  : ${new Date().toLocaleString().padEnd(19)}║\n`;
-            report += `╟──────────────────────────────╢\n`;
+            let report = `╔══════════════════╗\n`;
+            report += `║ FUEL SHIM REPORT ║\n`;
+            report += `╠══════════════════╣\n`;
+            report += `║ TARGET: ${target.padEnd(8)}║\n`;
+            report += `║ DATE  : ${new Date().toLocaleString().padEnd(8)}║\n`;
+            report += `╟──────────────────╢\n`;
 
             beds.forEach((bed, index) => {
-                report += `║ [ BED ${bed.bedNumber} ]`.padEnd(31) + `║\n`;
-                report += `╠───────┬─────────────────────╣\n`;
-                report += `║ INPUT │ RESULT             ║\n`;
-                report += `╠───────┼─────────────────────╣\n`;
+                report += `║ BED ${bed.bedNumber}      ║\n`;
+                report += `╠───────┬────────╣\n`;
+                report += `║ INPUT │ RESULT ║\n`;
+                report += `╠───────┼────────╣\n`;
                 
                 for(let i = 0; i < MAX_LINES; i++) {
                     const val = bed.values[i]?.padEnd(5) || ' '.repeat(5);
-                    const res = bed.results[i]?.padEnd(18) || ' '.repeat(18);
+                    const res = bed.results[i]?.padEnd(7) || ' '.repeat(7);
                     report += `║ ${val} │ ${res} ║\n`;
                 }
                 
                 if(index !== beds.length-1) {
-                    report += `╟───────┴─────────────────────╢\n`;
+                    report += `╟───────┴────────╢\n`;
                 }
             });
 
-            report += `╚══════════════════════════════╝\n`;
+            report += `╚══════════════════╝\n`;
             return report;
         }
 

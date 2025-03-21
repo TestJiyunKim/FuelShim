@@ -28,24 +28,25 @@
             width: 100%;
         }
         .numbering {
-            width: calc(33.33% - 5px);
+            width: 40px;
             text-align: right;
-            padding-right: 5px;
+            padding: 8px 5px 0 0;
             font-size: 14px;
-            line-height: 1.5;
+            line-height: 1.3;
             border: 1px solid #ccc;
             border-radius: 4px;
             background-color: #f0f0f0;
-            padding-top: 5px;
+            height: 160px;
+            margin-top: 20px;
         }
         .input-group {
-            width: calc(33.33% - 5px);
+            width: calc(50% - 30px);
             border: 2px solid #007bff;
             border-radius: 6px;
-            padding: 25px 5px 5px;
+            padding: 30px 5px 5px;
             position: relative;
             background-color: white;
-            height: 200px;
+            height: 220px;
         }
         .bed-label {
             position: absolute;
@@ -60,7 +61,7 @@
         }
         .input-numbers {
             width: 100%;
-            height: 160px;
+            height: 180px;
             border: 1px solid #ccc;
             border-radius: 4px;
             padding: 5px;
@@ -68,7 +69,8 @@
             font-size: 14px;
             background-color: white;
             cursor: pointer;
-            caret-color: transparent; /* 커서 숨기기 */
+            line-height: 1.5;
+            caret-color: transparent;
         }
         .virtual-keyboard {
             position: fixed;
@@ -81,7 +83,7 @@
             display: none;
             grid-template-columns: repeat(5, 1fr);
             gap: 5px;
-            z-index: 1000; /* 가상 키보드를 최상위로 표시 */
+            z-index: 1000;
         }
         .keyboard-btn {
             padding: 10px;
@@ -107,10 +109,10 @@
                 flex-direction: row;
             }
             .input-group {
-                height: 250px;
+                height: 280px;
             }
             .input-numbers {
-                height: 210px;
+                height: 240px;
             }
         }
     </style>
@@ -151,6 +153,7 @@
 
 <script>
 let activeInput = null;
+let currentLine = 0;
 
 // 가상 키보드 업데이트
 function updateKeyboard() {
@@ -172,18 +175,40 @@ function updateKeyboard() {
 // 가상 키보드 버튼 클릭 처리
 function handleKeyboardClick(e) {
     if(e.target.classList.contains('del')) {
-        activeInput.value = '';
+        const lines = activeInput.value.split('\n');
+        lines[currentLine] = '';
+        activeInput.value = lines.join('\n');
         return;
     }
     
     const value = parseFloat(e.target.dataset.value);
-    activeInput.value = value.toFixed(1).endsWith('.0') ? value.toFixed(0) : value.toFixed(1);
+    const formattedValue = value.toFixed(1).endsWith('.0') ? value.toFixed(0) : value.toFixed(1);
+    
+    const lines = activeInput.value.split('\n');
+    lines[currentLine] = formattedValue;
+    activeInput.value = lines.join('\n');
+    
+    // 다음 줄로 이동 (최대 8줄)
+    if(currentLine < 8) {
+        currentLine++;
+        setTimeout(() => {
+            const text = activeInput.value;
+            let pos = 0;
+            for(let i=0; i<currentLine; i++) {
+                pos = text.indexOf('\n', pos) + 1;
+            }
+            activeInput.setSelectionRange(pos, pos);
+        }, 0);
+    }
 }
 
 // 입력 필드 클릭 시 가상 키보드 표시
 document.querySelectorAll('.input-numbers').forEach(input => {
     input.addEventListener('click', (e) => {
         activeInput = e.target;
+        const text = activeInput.value;
+        const cursorPos = activeInput.selectionStart;
+        currentLine = text.substr(0, cursorPos).split('\n').length - 1;
         updateKeyboard();
         document.querySelector('.virtual-keyboard').style.display = 'grid';
     });
@@ -191,7 +216,8 @@ document.querySelectorAll('.input-numbers').forEach(input => {
 
 // 화면 클릭 시 가상 키보드 숨기기
 document.addEventListener('click', (e) => {
-    if (!e.target.classList.contains('input-numbers') && !e.target.classList.contains('keyboard-btn')) {
+    if (!e.target.classList.contains('input-numbers') && 
+        !e.target.classList.contains('keyboard-btn')) {
         document.querySelector('.virtual-keyboard').style.display = 'none';
     }
 });

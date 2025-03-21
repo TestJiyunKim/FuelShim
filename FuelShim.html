@@ -157,7 +157,6 @@
         button:hover {
             background-color: #0056b3;
         }
-
         @media (orientation: landscape) {
             .groups-container {
                 flex-direction: row;
@@ -350,9 +349,10 @@
             `;
         }
 
-        // 수정된 generateReport 함수: 각 열의 최대 너비를 계산하고 코드 블록으로 감싸 정렬된 보고서 생성
+        // 수정된 generateReport 함수: Markdown 표 형식으로 보고서를 생성
         function generateReport() {
             const target = document.getElementById('targetNumber').value;
+            const dateStr = new Date().toLocaleString();
             const beds = Array.from(document.querySelectorAll('.input-group')).map(group => {
                 const bedNumber = group.querySelector('.bed-label').textContent.replace('번 베드', '');
                 const values = group.querySelector('.input-numbers').value.split('\n').filter(v => v);
@@ -361,52 +361,25 @@
             });
     
             let reportLines = [];
-            reportLines.push("╔════════════════════════════════╗");
-            reportLines.push("║         FUEL SHIM REPORT         ║");
-            reportLines.push("╠════════════════════════════════╣");
-            reportLines.push(`║ TARGET: ${target.padEnd(15)}║`);
-            reportLines.push(`║ DATE  : ${new Date().toLocaleString().padEnd(15)}║`);
-            reportLines.push("╟────────────────────────────────╢");
+            reportLines.push(`# FUEL SHIM REPORT`);
+            reportLines.push(`**TARGET:** ${target}`);
+            reportLines.push(`**DATE:** ${dateStr}`);
+            reportLines.push(``);
     
-            beds.forEach((bed, index) => {
-                reportLines.push(`║ BED ${bed.bedNumber.padEnd(21)}║`);
-                // 열 제목과 데이터의 최대 길이 계산 (여백 2칸 추가)
-                const inputHeader = "INPUT";
-                const resultHeader = "RESULT";
-                let inputWidth = inputHeader.length;
-                let resultWidth = resultHeader.length;
+            beds.forEach((bed) => {
+                reportLines.push(`## BED ${bed.bedNumber}`);
+                reportLines.push(``);
+                reportLines.push(`| INPUT | RESULT |`);
+                reportLines.push(`|-------|--------|`);
                 for (let i = 0; i < MAX_LINES; i++) {
-                    const val = bed.values[i] || "";
-                    const res = bed.results[i] || "";
-                    inputWidth = Math.max(inputWidth, val.length);
-                    resultWidth = Math.max(resultWidth, res.length);
+                    const inputVal = bed.values[i] || "";
+                    const resultVal = bed.results[i] || "";
+                    reportLines.push(`| ${inputVal.padEnd(5, ' ')} | ${resultVal.padEnd(7, ' ')} |`);
                 }
-                inputWidth += 2;
-                resultWidth += 2;
-    
-                let separatorLine = `╠${"─".repeat(inputWidth)}┬${"─".repeat(resultWidth)}╣`;
-                let headerLine = `║ ${inputHeader.padEnd(inputWidth-1)}│ ${resultHeader.padEnd(resultWidth-1)}║`;
-                let subSeparatorLine = `╠${"─".repeat(inputWidth)}┼${"─".repeat(resultWidth)}╣`;
-                reportLines.push(separatorLine);
-                reportLines.push(headerLine);
-                reportLines.push(subSeparatorLine);
-    
-                for (let i = 0; i < MAX_LINES; i++) {
-                    const val = bed.values[i] || "";
-                    const res = bed.results[i] || "";
-                    let rowLine = `║ ${val.padEnd(inputWidth-1)}│ ${res.padEnd(resultWidth-1)}║`;
-                    reportLines.push(rowLine);
-                }
-    
-                if (index !== beds.length - 1) {
-                    let bedFooter = `╟${"─".repeat(inputWidth)}┴${"─".repeat(resultWidth)}╢`;
-                    reportLines.push(bedFooter);
-                }
+                reportLines.push(``);
             });
-            reportLines.push("╚════════════════════════════════╝");
     
-            // 카카오톡 등에서 서식이 유지되도록 코드 블록 형식(백틱 3개)으로 감싸기
-            return "```" + "\n" + reportLines.join("\n") + "\n" + "```";
+            return reportLines.join("\n");
         }
     
         window.onload = function () {

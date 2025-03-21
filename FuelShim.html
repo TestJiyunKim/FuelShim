@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 22s -->
+    <!-- Revision: 23s -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -132,70 +132,41 @@
             color: #666;
             font-size: 12px;
         }
+
+        /* 변경된 보고서 버튼 스타일 */
         #copyReportButton {
-            position: absolute;
-            top: 10px;
-            right: 100px;
-            padding: 2px 6px;
+            position: fixed;
+            bottom: 70px; /* 모바일 브라우저 UI 충돌 방지 */
+            right: 20px;
+            padding: 12px 24px;
             background-color: #007bff;
             color: white;
             border: none;
-            border-radius: 4px;
-            font-size: 12px;
+            border-radius: 25px;
             cursor: pointer;
-            z-index: 1000;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.16);
+            font-size: 16px;
+            z-index: 10000; /* 더 높은 z-index 설정 */
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-        button {
-            padding: 0;
-            width: 28px;
-            height: 18px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 13px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            flex-shrink: 0;
+
+        #copyReportButton:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 8px rgba(0,0,0,0.2);
         }
-        button:hover {
-            background-color: #0056b3;
-        }
-        @media (orientation: landscape) {
-            .groups-container {
-                flex-direction: row;
-                gap: 4px;
-            }
-            .group-wrapper {
-                width: auto;
-            }
-            .group-wrapper:not(:first-child) .numbering {
-                display: none !important;
-            }
-            .input-group {
-                height: 373px;
-                padding: 7px 3px 8px;
-            }
-            .input-numbers,
-            .results {
-                height: 358px;
-                width: 63px !important;
-                font-size: 26px;
-                line-height: 36px;
-            }
-            .numbering {
-                height: 358px;
-                margin-top: 9px;
-                font-size: 26px;
-                line-height: 36px;
-            }
-            .results div:empty {
-                height: 36px;
+
+        /* 모바일 반응형 추가 */
+        @media (max-width: 768px) {
+            #copyReportButton {
+                bottom: 60px; /* 모바일에서 더 높은 위치 */
+                right: 15px;
+                padding: 10px 20px;
+                font-size: 14px;
             }
         }
     </style>
     <script>
-        const revision = '22s';
+        const revision = '23s'; // 리비전 업데이트
         let initialPrefix = '14';
         const MAX_LINES = 9;
 
@@ -484,18 +455,18 @@
             document.getElementById('revisionDisplay').textContent = `Rev: ${revision}`;
             document.getElementById('targetNumber').value = 144;
             initialPrefix = document.getElementById('targetNumber').value.toString().slice(0, 2);
-    
+
             const bedContainer = document.getElementById('bedContainer');
             for (let i = 1; i <= 4; i++) {
                 bedContainer.insertAdjacentHTML('beforeend', createBedGroup(i));
             }
-    
+
             document.querySelectorAll('.input-numbers').forEach(input => {
                 initializeInput(input);
                 input.addEventListener('input', handleInput);
                 input.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
             });
-    
+
             document.getElementById('copyReportButton').addEventListener('click', async () => {
                 try {
                     await navigator.clipboard.writeText(generateReport());
@@ -504,14 +475,13 @@
                     alert('보고서 복사 실패: ' + err.message);
                 }
             });
-    
+
             updateAverage();
         }
     </script>
 </head>
 <body>
     <div id="revisionDisplay"></div>
-    <button id="copyReportButton">보고서 복사</button>
     <h2>FUEL SHIM 계산</h2>
     <div class="number-control">
         <button onclick="adjustTargetNumber(-1)">-</button>
@@ -520,5 +490,6 @@
         <span id="averageDisplay">평균: 0.0</span>
     </div>
     <div class="groups-container" id="bedContainer"></div>
+    <button id="copyReportButton">보고서 생성</button>
 </body>
 </html>

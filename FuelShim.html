@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 22o -->
+    <!-- Revision: 22p -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -111,6 +111,10 @@
         .negative {
             color: red !important;
         }
+        .invalid {
+            color: red !important;
+            font-weight: bold;
+        }
         .results div:empty {
             height: 42px;
             visibility: hidden;
@@ -191,7 +195,7 @@
         }
     </style>
     <script>
-        const revision = '22o';
+        const revision = '22p';
         let initialPrefix = '14';
         const MAX_LINES = 9;
 
@@ -226,11 +230,22 @@
         function cleanEmptyLines(event) {
             const input = event.target;
             let values = input.value.split('\n')
-                .filter(line => line.trim() !== '' && line !== initialPrefix)
+                .map((line, index, arr) => {
+                    // 마지막 라인에서만 접두어 제거
+                    if (index === arr.length - 1 && line === getCurrentPrefix(arr[index - 1])) {
+                        return null;
+                    }
+                    return line.trim() !== '' ? line : null;
+                })
+                .filter(line => line !== null)
                 .slice(0, MAX_LINES);
             
             input.value = values.join('\n');
             calculateResults(input);
+        }
+
+        function getCurrentPrefix(prevLine) {
+            return prevLine?.slice(0, 2) || initialPrefix;
         }
 
         function calculateResults(inputElement) {
@@ -239,6 +254,13 @@
             const numbers = inputElement.value.split('\n');
             
             const results = numbers.map(num => {
+                // 1~2자리 숫자 적색 표시
+                if (num.length > 0 && num.length < 3 && /^\d+$/.test(num)) {
+                    return { 
+                        value: num, 
+                        style: 'invalid' 
+                    };
+                }
                 if (num.length !== 3) return { value: num.length > 0 ? '⚠' : '', isNegative: false };
                 const n = parseInt(num);
                 const diff = target - n;
@@ -250,7 +272,7 @@
             });
 
             wrapper.querySelector('.results').innerHTML = results
-                .map(r => r.value ? `<div class="${r.isNegative ? 'negative' : ''}">${r.value}</div>` : '<div></div>')
+                .map(r => r.value ? `<div class="${r.style || (r.isNegative ? 'negative' : '')}">${r.value}</div>` : '<div></div>')
                 .join('');
         }
 
@@ -281,11 +303,17 @@
                 )
                 .slice(0, MAX_LINES);
 
+            // 동적 접두어 생성
+            let dynamicPrefix = initialPrefix;
+            if (values.length > 0 && values[values.length - 1].length === 3) {
+                dynamicPrefix = values[values.length - 1].slice(0, 2);
+            }
+
             let newLineAdded = false;
             if (!isBackspace && values.length < MAX_LINES && 
                 values[values.length - 1].length === 3 && 
-                values[values.length - 1] !== initialPrefix) {
-                values.push(initialPrefix);
+                values[values.length - 1] !== dynamicPrefix) {
+                values.push(dynamicPrefix);
                 newLineAdded = true;
             }
 
@@ -349,11 +377,9 @@
             `;
         }
 
-        // 개선된 generateReport 함수: 셀 값 정렬, 불필요한 공백 제거, 동적 열 너비 계산 및 추가 통계 정보(평균, 경고 개수) 제공
         function generateReport() {
             const target = document.getElementById('targetNumber').value;
             const now = new Date();
-            // ISO 8601 형식: "YYYY-MM-DD HH:MM:SS"
             const isoDate = now.toISOString().replace('T', ' ').substring(0, 19);
             const beds = Array.from(document.querySelectorAll('.input-group')).map(group => {
                 const bedNumber = group.querySelector('.bed-label').textContent.replace('번 베드', '').trim();
@@ -371,11 +397,9 @@
             beds.forEach((bed) => {
                 reportLines.push(`## BED ${bed.bedNumber}`);
                 reportLines.push(``);
-                // 테이블 데이터 준비: MAX_LINES 행 구성
                 let inputCells = [];
                 let resultCells = [];
                 for (let i = 0; i < MAX_LINES; i++) {
-                    // 입력: 값이 없으면 "-" 처리, 숫자이면 3자리 형식(필요시 앞에 0)
                     let rawInput = bed.values[i] || "";
                     let inputCell = "";
                     if(rawInput === "") {
@@ -387,7 +411,6 @@
                     }
                     inputCells.push(inputCell.trim());
     
-                    // 결과: 값이 없으면 "-", 음수이면 굵게 처리하고 불필요한 공백 제거
                     let rawResult = bed.results[i] || "";
                     let resultCell = "";
                     if(rawResult === "") {
@@ -400,7 +423,6 @@
                     resultCells.push(resultCell);
                 }
     
-                // 각 BED의 추가 정보: 유효 숫자 입력의 평균과 경고(⚠) 개수 계산
                 let sum = 0, count = 0, warningCount = 0;
                 bed.values.forEach(val => {
                     if (/^\d+$/.test(val)) {
@@ -412,7 +434,6 @@
                 });
                 let bedAverage = count > 0 ? (sum / count).toFixed(1) : "-";
     
-                // 각 열의 최대 너비 계산 (Markdown 태그 제외)
                 const inputHeader = "INPUT";
                 const resultHeader = "RESULT";
                 let inputMaxWidth = inputHeader.length;
@@ -425,16 +446,13 @@
                     if(plain.length > resultMaxWidth) resultMaxWidth = plain.length;
                 });
     
-                // 테이블 헤더와 구분선 생성
                 let headerLine = `| ${inputHeader.padEnd(inputMaxWidth)} | ${resultHeader.padEnd(resultMaxWidth)} |`;
                 let separatorLine = `| ${"-".repeat(inputMaxWidth)} | ${"-".repeat(resultMaxWidth)} |`;
                 reportLines.push(headerLine);
                 reportLines.push(separatorLine);
     
-                // 테이블 각 행 생성
                 for (let i = 0; i < MAX_LINES; i++) {
                     const inputCell = inputCells[i];
-                    // 결과 셀: Markdown 태그 제거 후 패딩 적용
                     let plainResult = resultCells[i].replace(/\*\*/g, '');
                     let paddedResult = "";
                     if(resultCells[i].includes("**")) {

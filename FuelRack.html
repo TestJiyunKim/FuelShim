@@ -2,55 +2,28 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FUEL RACK 입력</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 10px;
-            margin: 0;
-            background-color: #f4f4f9;
-        }
-        h2 {
-            text-align: center;
-            color: #444;
-            margin: 10px 0;
-            font-size: 18px;
-        }
+        body { font-family: Arial, sans-serif; margin: 10px; }
+        h2 { text-align: center; color: #444; }
+        
         .groups-container {
             display: flex;
-            flex-direction: column;
+            flex-wrap: wrap;
             gap: 10px;
+            margin: 20px 0;
         }
-        .group-row {
-            display: flex;
-            gap: 5px;
-            width: 100%;
-        }
-        /* 번호창 폭 50%로 수정 */
-        .numbering {
-            width: calc(50% - 5px);
-            text-align: right;
-            padding: 8px 5px 0 0;
-            font-size: 14px;
-            line-height: 1.3;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background-color: #f0f0f0;
-            height: 170px; /* 높이 10포인트 증가 */
-            margin-top: 10px; /* 상단 마진 10포인트 */
-        }
-        /* 입력창 및 그룹창 폭 50%로 수정 */
+        
         .input-group {
-            width: calc(50% - 5px);
             border: 2px solid #007bff;
             border-radius: 6px;
-            padding: 20px 5px 5px; /* 상단 패딩 축소 */
+            padding: 25px 5px 5px;
             position: relative;
-            background-color: white;
-            height: 220px;
-            margin-top: -10px; /* 상단 위치 10포인트 상승 */
+            flex: 1;
+            min-width: 250px;
         }
+        
         .bed-label {
             position: absolute;
             top: -2px;
@@ -60,26 +33,18 @@
             padding: 0 5px;
             color: #007bff;
             font-weight: bold;
-            font-size: 13px;
         }
+        
         .input-numbers {
             width: 100%;
-            height: 180px;
+            height: 120px;
             border: 1px solid #ccc;
             border-radius: 4px;
             padding: 5px;
             resize: none;
             font-size: 14px;
-            background-color: white;
-            cursor: pointer;
-            line-height: 1.5;
-            caret-color: #ff0000; /* 빨간색 커서 추가 */
         }
-        /* 포커스 시 입력창 강조 */
-        .input-numbers:focus {
-            outline: 2px solid #007bff;
-            box-shadow: 0 0 5px rgba(0,123,255,0.5);
-        }
+        
         .virtual-keyboard {
             position: fixed;
             bottom: 0;
@@ -88,26 +53,32 @@
             background: #fff;
             padding: 10px;
             box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-            display: none;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 5px;
-            z-index: 1000;
         }
+        
+        .keyboard-row {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+            margin-bottom: 5px;
+        }
+        
         .keyboard-btn {
-            padding: 10px;
+            padding: 8px 12px;
             border: 1px solid #007bff;
             border-radius: 4px;
             background: #f0f6ff;
             cursor: pointer;
-            font-size: 14px;
+            min-width: 60px;
         }
+        
+        .keyboard-btn.active {
+            background: #007bff;
+            color: white;
+        }
+        
         .keyboard-btn.del {
             background: #ffebee;
             border-color: #ff5252;
-        }
-        /* 현재 입력 줄 표시기 */
-        .current-line {
-            background: rgba(0,123,255,0.1);
         }
     </style>
 </head>
@@ -115,103 +86,96 @@
     <h2>FUEL RACK 입력</h2>
     
     <div class="groups-container">
-        <div class="group-row">
-            <div class="numbering">1.<br>2.<br>3.<br>4.<br>5.<br>6.<br>7.<br>8.<br>9.</div>
-            <div class="input-group">
-                <div class="bed-label">#1</div>
-                <textarea class="input-numbers" data-bed="1" readonly></textarea>
-            </div>
+        <div class="input-group">
+            <div class="bed-label">#1</div>
+            <textarea class="input-numbers" readonly></textarea>
         </div>
-        <div class="group-row">
-            <div class="numbering">1.<br>2.<br>3.<br>4.<br>5.<br>6.<br>7.<br>8.<br>9.</div>
-            <div class="input-group">
-                <div class="bed-label">#2</div>
-                <textarea class="input-numbers" data-bed="2" readonly></textarea>
-            </div>
+        <div class="input-group">
+            <div class="bed-label">#2</div>
+            <textarea class="input-numbers" readonly></textarea>
+        </div>
+        <div class="input-group">
+            <div class="bed-label">#3</div>
+            <textarea class="input-numbers" readonly></textarea>
+        </div>
+        <div class="input-group">
+            <div class="bed-label">#4</div>
+            <textarea class="input-numbers" readonly></textarea>
         </div>
     </div>
 
     <div class="virtual-keyboard">
-        <!-- Keyboard buttons will be dynamically generated -->
+        <div class="keyboard-row">
+            <button class="keyboard-btn" data-percent="25">25%</button>
+            <button class="keyboard-btn" data-percent="50">50%</button>
+            <button class="keyboard-btn" data-percent="75">75%</button>
+            <button class="keyboard-btn" data-percent="100">100%</button>
+            <button class="keyboard-btn" data-percent="110">110%</button>
+        </div>
+        <div class="keyboard-row" id="number-buttons"></div>
     </div>
 
 <script>
+const presets = {
+    '25': [9.5, 10, 10.5],
+    '50': [17.5, 18, 18.5],
+    '75': [24.5, 25, 25.5],
+    '100': [32.5, 33, 33.5],
+    '110': [35.5, 36, 36.5]
+};
+
+let currentPercent = null;
 let activeInput = null;
-let currentLine = 0;
+let currentValues = [...presets['25']];
 
-function updateKeyboard() {
-    const keyboard = document.querySelector('.virtual-keyboard');
-    keyboard.innerHTML = `
-        <button class="keyboard-btn" data-value="10">10</button>
-        <button class="keyboard-btn" data-value="10.5">10.5</button>
-        <button class="keyboard-btn" data-value="18">18</button>
-        <button class="keyboard-btn" data-value="18.5">18.5</button>
-        <button class="keyboard-btn del">DEL</button>
+function updateNumberButtons() {
+    const container = document.getElementById('number-buttons');
+    container.innerHTML = `
+        <button class="keyboard-btn" data-action="decr">-</button>
+        <button class="keyboard-btn">${currentValues[0]}</button>
+        <button class="keyboard-btn">${currentValues[1]}</button>
+        <button class="keyboard-btn">${currentValues[2]}</button>
+        <button class="keyboard-btn" data-action="incr">+</button>
+        <button class="keyboard-btn del" data-action="del">Del</button>
     `;
-    
-    keyboard.querySelectorAll('.keyboard-btn').forEach(btn => {
-        btn.addEventListener('click', handleKeyboardClick);
-    });
 }
 
-function handleKeyboardClick(e) {
-    const lines = activeInput.value.split('\n');
-    
-    if(e.target.classList.contains('del')) {
-        lines[currentLine] = '';
-    } else {
-        const value = parseFloat(e.target.dataset.value);
-        const formattedValue = value.toFixed(1).endsWith('.0') 
-            ? value.toFixed(0) 
-            : value.toFixed(1);
-        lines[currentLine] = formattedValue;
-    }
-    
-    activeInput.value = lines.join('\n');
-    moveToNextLine();
-}
-
-function moveToNextLine() {
-    if(currentLine < 8) {
-        currentLine++;
-        highlightCurrentLine();
-        setTimeout(() => {
-            const text = activeInput.value;
-            let pos = 0;
-            for(let i=0; i<currentLine; i++) {
-                pos = text.indexOf('\n', pos) + 1;
-            }
-            activeInput.setSelectionRange(pos, pos);
-        }, 0);
-    }
-}
-
-function highlightCurrentLine() {
-    // 모든 하이라이트 제거
-    document.querySelectorAll('.input-numbers').forEach(input => {
-        input.classList.remove('current-line');
-    });
-    // 현재 줄 하이라이트
-    activeInput.classList.add('current-line');
-}
-
-document.querySelectorAll('.input-numbers').forEach(input => {
-    input.addEventListener('click', (e) => {
-        activeInput = e.target;
-        const text = activeInput.value;
-        const cursorPos = activeInput.selectionStart;
-        currentLine = text.substr(0, cursorPos).split('\n').length - 1;
-        highlightCurrentLine();
-        updateKeyboard();
-        document.querySelector('.virtual-keyboard').style.display = 'grid';
+document.querySelectorAll('.keyboard-btn[data-percent]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        currentPercent = e.target.dataset.percent;
+        currentValues = [...presets[currentPercent]];
+        document.querySelectorAll('.keyboard-btn[data-percent]').forEach(b => 
+            b.classList.remove('active'));
+        e.target.classList.add('active');
+        updateNumberButtons();
     });
 });
 
 document.addEventListener('click', (e) => {
-    if (!e.target.classList.contains('input-numbers') && 
-        !e.target.classList.contains('keyboard-btn')) {
-        document.querySelector('.virtual-keyboard').style.display = 'none';
-        highlightCurrentLine(false);
+    if(e.target.closest('.input-numbers')) {
+        activeInput = e.target;
+        if(currentPercent) updateNumberButtons();
+    }
+    
+    const action = e.target.dataset.action;
+    if(action === 'decr') {
+        currentValues = currentValues.map(v => v - 0.5);
+        updateNumberButtons();
+    }
+    else if(action === 'incr') {
+        currentValues = currentValues.map(v => v + 0.5);
+        updateNumberButtons();
+    }
+    else if(action === 'del') {
+        activeInput.value = '';
+    }
+    else if(e.target.classList.contains('keyboard-btn') && 
+           !e.target.dataset.action &&
+           activeInput) {
+        const value = parseFloat(e.target.textContent);
+        const lines = activeInput.value.split('\n');
+        lines.push(value);
+        activeInput.value = lines.slice(-9).join('\n');
     }
 });
 </script>

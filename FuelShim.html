@@ -195,7 +195,6 @@
         const revision = '22o';
         let initialPrefix = '14';
         const MAX_LINES = 9;
-        const staticNumbering = Array.from({length: MAX_LINES}, (_, i) => `${i+1}.`).join('\n');
 
         function adjustTargetNumber(value) {
             const targetInput = document.getElementById('targetNumber');
@@ -338,7 +337,7 @@
         function createBedGroup(i) {
             return `
                 <div class="group-wrapper">
-                    <div class="numbering">${staticNumbering}</div>
+                    <div class="numbering">${Array.from({length: MAX_LINES}, (_, i) => `${i+1}.`).join('\n')}</div>
                     <div class="input-group">
                         <div class="bed-label">${i}번 베드</div>
                         <textarea class="input-numbers" 
@@ -351,6 +350,7 @@
             `;
         }
 
+        // 수정된 generateReport 함수: 각 열의 최대 너비를 계산하고 코드 블록으로 감싸 정렬된 보고서 생성
         function generateReport() {
             const target = document.getElementById('targetNumber').value;
             const beds = Array.from(document.querySelectorAll('.input-group')).map(group => {
@@ -359,51 +359,72 @@
                 const results = Array.from(group.querySelectorAll('.results div')).map(div => div.textContent);
                 return { bedNumber, values, results };
             });
-
-            let report = `╔══════════════════╗\n`;
-            report += `║ FUEL SHIM REPORT ║\n`;
-            report += `╠══════════════════╣\n`;
-            report += `║ TARGET: ${target.padEnd(8)}║\n`;
-            report += `║ DATE  : ${new Date().toLocaleString().padEnd(8)}║\n`;
-            report += `╟──────────────────╢\n`;
-
+    
+            let reportLines = [];
+            reportLines.push("╔════════════════════════════════╗");
+            reportLines.push("║         FUEL SHIM REPORT         ║");
+            reportLines.push("╠════════════════════════════════╣");
+            reportLines.push(`║ TARGET: ${target.padEnd(15)}║`);
+            reportLines.push(`║ DATE  : ${new Date().toLocaleString().padEnd(15)}║`);
+            reportLines.push("╟────────────────────────────────╢");
+    
             beds.forEach((bed, index) => {
-                report += `║ BED ${bed.bedNumber}      ║\n`;
-                report += `╠───────┬────────╣\n`;
-                report += `║ INPUT │ RESULT ║\n`;
-                report += `╠───────┼────────╣\n`;
-                
-                for(let i = 0; i < MAX_LINES; i++) {
-                    const val = bed.values[i]?.padEnd(5) || ' '.repeat(5);
-                    const res = bed.results[i]?.padEnd(7) || ' '.repeat(7);
-                    report += `║ ${val} │ ${res} ║\n`;
+                reportLines.push(`║ BED ${bed.bedNumber.padEnd(21)}║`);
+                // 열 제목과 데이터의 최대 길이 계산 (여백 2칸 추가)
+                const inputHeader = "INPUT";
+                const resultHeader = "RESULT";
+                let inputWidth = inputHeader.length;
+                let resultWidth = resultHeader.length;
+                for (let i = 0; i < MAX_LINES; i++) {
+                    const val = bed.values[i] || "";
+                    const res = bed.results[i] || "";
+                    inputWidth = Math.max(inputWidth, val.length);
+                    resultWidth = Math.max(resultWidth, res.length);
                 }
-                
-                if(index !== beds.length-1) {
-                    report += `╟───────┴────────╢\n`;
+                inputWidth += 2;
+                resultWidth += 2;
+    
+                let separatorLine = `╠${"─".repeat(inputWidth)}┬${"─".repeat(resultWidth)}╣`;
+                let headerLine = `║ ${inputHeader.padEnd(inputWidth-1)}│ ${resultHeader.padEnd(resultWidth-1)}║`;
+                let subSeparatorLine = `╠${"─".repeat(inputWidth)}┼${"─".repeat(resultWidth)}╣`;
+                reportLines.push(separatorLine);
+                reportLines.push(headerLine);
+                reportLines.push(subSeparatorLine);
+    
+                for (let i = 0; i < MAX_LINES; i++) {
+                    const val = bed.values[i] || "";
+                    const res = bed.results[i] || "";
+                    let rowLine = `║ ${val.padEnd(inputWidth-1)}│ ${res.padEnd(resultWidth-1)}║`;
+                    reportLines.push(rowLine);
+                }
+    
+                if (index !== beds.length - 1) {
+                    let bedFooter = `╟${"─".repeat(inputWidth)}┴${"─".repeat(resultWidth)}╢`;
+                    reportLines.push(bedFooter);
                 }
             });
-
-            report += `╚══════════════════╝\n`;
-            return report;
+            reportLines.push("╚════════════════════════════════╝");
+    
+            // 카카오톡 등에서 서식이 유지되도록 코드 블록 형식(백틱 3개)으로 감싸기
+            return "```" + "\n" + reportLines.join("\n") + "\n" + "```";
         }
-
+    
         window.onload = function () {
             document.getElementById('revisionDisplay').textContent = `Rev: ${revision}`;
             document.getElementById('targetNumber').value = 144;
             initialPrefix = document.getElementById('targetNumber').value.toString().slice(0, 2);
-
+    
             const bedContainer = document.getElementById('bedContainer');
             for (let i = 1; i <= 4; i++) {
                 bedContainer.insertAdjacentHTML('beforeend', createBedGroup(i));
             }
-
+    
             document.querySelectorAll('.input-numbers').forEach(input => {
                 initializeInput(input);
                 input.addEventListener('input', handleInput);
                 input.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
             });
-
+    
             document.getElementById('copyReportButton').addEventListener('click', async () => {
                 try {
                     await navigator.clipboard.writeText(generateReport());
@@ -412,7 +433,7 @@
                     alert('보고서 복사 실패: ' + err.message);
                 }
             });
-
+    
             updateAverage();
         }
     </script>

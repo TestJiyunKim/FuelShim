@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FUEL RACK 입력</title>
     <style>
-        /* 원본 CSS 유지 + 폭 조정 */
         body {
             font-family: Arial, sans-serif;
             padding: 10px;
@@ -15,62 +14,96 @@
         h2 {
             text-align: center;
             color: #444;
-            margin-bottom: 8px;
+            margin-bottom: 20px;
         }
         .groups-container {
             display: flex;
-            flex-direction: column;
-            gap: 4px;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: space-between;
         }
         .group-wrapper {
             display: flex;
-            gap: 2px;
-            width: 25% !important; /* 그룹창 폭 25% */
-            margin-bottom: 12px;
-        }
-        .input-group {
-            width: 45% !important; /* 입력창 폭 45% */
-            border: 2px solid #007bff;
-            border-radius: 6px;
-            padding: 7px 3px 8px;
-            position: relative;
-            background-color: white;
-            height: 438px;
-            flex: 1;
+            gap: 5px;
+            width: 48%; /* 그룹창 폭 조정 */
+            margin-bottom: 15px;
         }
         .numbering {
-            /* 원본 번호창 스타일 유지 */
-            width: 29px !important;
+            width: 40px;
             height: 416px;
-            padding: 3px;
+            padding: 5px;
             border: 1px solid #ccc;
-            border-radius: 3px;
+            border-radius: 4px;
             background-color: #f0f0f0;
-            font-size: 30px;
+            font-size: 24px;
             line-height: 42px;
             text-align: right;
         }
+        .input-group {
+            width: 45%; /* 입력창 폭 조정 */
+            border: 2px solid #007bff;
+            border-radius: 6px;
+            padding: 25px 5px 5px;
+            position: relative;
+            background-color: white;
+            height: 438px;
+        }
+        .bed-label {
+            position: absolute;
+            top: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 0 8px;
+            color: #007bff;
+            font-weight: bold;
+            font-size: 16px;
+        }
         .input-numbers {
-            /* 원본 입력창 스타일 유지 */
-            width: 144px !important;
-            height: 416px;
-            padding: 3px;
+            width: 100%;
+            height: 400px;
             border: 1px solid #ccc;
             border-radius: 4px;
-            font-size: 30px;
+            padding: 5px;
+            resize: none;
+            font-size: 28px;
             line-height: 42px;
+            box-sizing: border-box;
         }
 
-        /* 모바일 대응 */
-        @media (orientation: portrait) {
+        /* 모바일 반응형 스타일 */
+        @media (max-width: 768px) {
             .group-wrapper {
                 width: 100% !important;
                 flex-direction: column;
             }
             .input-group {
                 width: 100% !important;
-                height: 200px;
+                height: 250px;
             }
+            .input-numbers {
+                height: 220px;
+                font-size: 24px;
+            }
+            .numbering {
+                height: auto;
+                font-size: 20px;
+                line-height: 36px;
+            }
+        }
+
+        /* 보고서 버튼 스타일 */
+        #reportBtn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.16);
         }
     </style>
 </head>
@@ -78,7 +111,7 @@
     <h2>FUEL RACK 입력</h2>
     
     <div class="groups-container">
-        <!-- 1번 줄 -->
+        <!-- 1번 그룹 -->
         <div class="group-wrapper">
             <div class="numbering">1.<br>2.<br>3.<br>4.<br>5.<br>6.<br>7.<br>8.<br>9.</div>
             <div class="input-group">
@@ -91,7 +124,7 @@
             </div>
         </div>
         
-        <!-- 2번 줄 -->
+        <!-- 2번 그룹 -->
         <div class="group-wrapper">
             <div class="numbering">1.<br>2.<br>3.<br>4.<br>5.<br>6.<br>7.<br>8.<br>9.</div>
             <div class="input-group">
@@ -105,27 +138,24 @@
         </div>
     </div>
 
-    <script>
-    // 보고서 생성 함수 (원본 기능 유지)
-    function generateReport() {
-        const report = [];
-        document.querySelectorAll('.input-group').forEach((group, index) => {
-            const values = Array.from(group.querySelectorAll('.input-numbers'))
-                .map(input => input.value.replace(/\n/g, ', '));
-            report.push(`${index+1}번 베드: ${values}`);
-        });
-        return report.join('\n');
-    }
+    <button id="reportBtn">보고서 생성</button>
 
-    // 클립보드 복사 기능
-    async function copyToClipboard() {
-        try {
-            await navigator.clipboard.writeText(generateReport());
-            alert('보고서가 복사되었습니다.');
-        } catch (err) {
-            alert('복사 실패: ' + err.message);
-        }
-    }
+    <script>
+        // 보고서 생성 기능
+        document.getElementById('reportBtn').addEventListener('click', async () => {
+            const beds = Array.from(document.querySelectorAll('.input-group')).map((group, index) => {
+                const values = Array.from(group.querySelectorAll('.input-numbers'))
+                    .map(input => input.value.split('\n').join(', '));
+                return `${index + 1}번 베드: ${values.join(' | ')}`;
+            });
+
+            try {
+                await navigator.clipboard.writeText(beds.join('\n'));
+                alert('보고서가 클립보드에 복사되었습니다!');
+            } catch (err) {
+                alert('복사 실패: ' + err.message);
+            }
+        });
     </script>
 </body>
 </html>

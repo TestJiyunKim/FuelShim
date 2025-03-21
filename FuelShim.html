@@ -349,7 +349,7 @@
             `;
         }
 
-        // 개선된 generateReport 함수: 개선사항 반영
+        // 개선된 generateReport 함수: 셀 값 정렬, 불필요한 공백 제거, 동적 열 너비 계산 및 추가 통계 정보(평균, 경고 개수) 제공
         function generateReport() {
             const target = document.getElementById('targetNumber').value;
             const now = new Date();
@@ -357,8 +357,8 @@
             const isoDate = now.toISOString().replace('T', ' ').substring(0, 19);
             const beds = Array.from(document.querySelectorAll('.input-group')).map(group => {
                 const bedNumber = group.querySelector('.bed-label').textContent.replace('번 베드', '').trim();
-                const values = group.querySelector('.input-numbers').value.split('\n').filter(v => v);
-                const results = Array.from(group.querySelectorAll('.results div')).map(div => div.textContent);
+                const values = group.querySelector('.input-numbers').value.split('\n').map(v => v.trim()).filter(v => v !== '');
+                const results = Array.from(group.querySelectorAll('.results div')).map(div => div.textContent.trim());
                 return { bedNumber, values, results };
             });
     
@@ -371,71 +371,82 @@
             beds.forEach((bed) => {
                 reportLines.push(`## BED ${bed.bedNumber}`);
                 reportLines.push(``);
-                // 테이블 헤더: INPUT, RESULT
-                const inputHeader = "INPUT";
-                const resultHeader = "RESULT";
-    
+                // 테이블 데이터 준비: MAX_LINES 행 구성
                 let inputCells = [];
                 let resultCells = [];
                 for (let i = 0; i < MAX_LINES; i++) {
-                    // 입력값: 숫자이면 항상 3자리(앞에 0 붙임), 없으면 "-"
+                    // 입력: 값이 없으면 "-" 처리, 숫자이면 3자리 형식(필요시 앞에 0)
                     let rawInput = bed.values[i] || "";
                     let inputCell = "";
-                    if(rawInput.trim() === "") {
+                    if(rawInput === "") {
                         inputCell = "-";
                     } else if (/^\d+$/.test(rawInput)) {
                         inputCell = rawInput.padStart(3, '0');
                     } else {
                         inputCell = rawInput;
                     }
-                    inputCells.push(inputCell);
+                    inputCells.push(inputCell.trim());
     
-                    // 결과값: 없으면 "-", 음수이면 굵게 처리
+                    // 결과: 값이 없으면 "-", 음수이면 굵게 처리하고 불필요한 공백 제거
                     let rawResult = bed.results[i] || "";
                     let resultCell = "";
-                    if(rawResult.trim() === "") {
+                    if(rawResult === "") {
                         resultCell = "-";
                     } else if(rawResult.startsWith("-")) {
-                        // 굵은 글씨로 처리 (Markdown **)
-                        resultCell = `**${rawResult}**`;
+                        resultCell = `**${rawResult.trim()}**`;
                     } else {
-                        resultCell = rawResult;
+                        resultCell = rawResult.trim();
                     }
                     resultCells.push(resultCell);
                 }
     
-                // 각 열의 최대 너비 계산 (Markdown 포맷 태그는 제외)
+                // 각 BED의 추가 정보: 유효 숫자 입력의 평균과 경고(⚠) 개수 계산
+                let sum = 0, count = 0, warningCount = 0;
+                bed.values.forEach(val => {
+                    if (/^\d+$/.test(val)) {
+                        sum += parseInt(val, 10);
+                        count++;
+                    } else if(val === "⚠") {
+                        warningCount++;
+                    }
+                });
+                let bedAverage = count > 0 ? (sum / count).toFixed(1) : "-";
+    
+                // 각 열의 최대 너비 계산 (Markdown 태그 제외)
+                const inputHeader = "INPUT";
+                const resultHeader = "RESULT";
                 let inputMaxWidth = inputHeader.length;
                 let resultMaxWidth = resultHeader.length;
                 inputCells.forEach(cell => {
                     if(cell.length > inputMaxWidth) inputMaxWidth = cell.length;
                 });
                 resultCells.forEach(cell => {
-                    // Markdown 태그 제거 후 길이 계산
                     const plain = cell.replace(/\*\*/g, '');
                     if(plain.length > resultMaxWidth) resultMaxWidth = plain.length;
                 });
     
                 // 테이블 헤더와 구분선 생성
                 let headerLine = `| ${inputHeader.padEnd(inputMaxWidth)} | ${resultHeader.padEnd(resultMaxWidth)} |`;
-                let separatorLine = `|-${"-".repeat(inputMaxWidth)}-|-${"-".repeat(resultMaxWidth)}-|`;
+                let separatorLine = `| ${"-".repeat(inputMaxWidth)} | ${"-".repeat(resultMaxWidth)} |`;
                 reportLines.push(headerLine);
                 reportLines.push(separatorLine);
     
-                // 각 행 생성
+                // 테이블 각 행 생성
                 for (let i = 0; i < MAX_LINES; i++) {
                     const inputCell = inputCells[i];
-                    const plainResult = resultCells[i].replace(/\*\*/g, '');
-                    let formattedResult = plainResult;
+                    // 결과 셀: Markdown 태그 제거 후 패딩 적용
+                    let plainResult = resultCells[i].replace(/\*\*/g, '');
+                    let paddedResult = "";
                     if(resultCells[i].includes("**")) {
-                        // 음수 값은 다시 굵게 처리
-                        formattedResult = `**${plainResult.padEnd(resultMaxWidth)}**`;
+                        paddedResult = `**${plainResult.padEnd(resultMaxWidth)}**`;
                     } else {
-                        formattedResult = plainResult.padEnd(resultMaxWidth);
+                        paddedResult = plainResult.padEnd(resultMaxWidth);
                     }
-                    let rowLine = `| ${inputCell.padEnd(inputMaxWidth)} | ${formattedResult} |`;
+                    let rowLine = `| ${inputCell.padEnd(inputMaxWidth)} | ${paddedResult} |`;
                     reportLines.push(rowLine);
                 }
+                reportLines.push(``);
+                reportLines.push(`*Average: ${bedAverage}, Warnings: ${warningCount}*`);
                 reportLines.push(``);
             });
     

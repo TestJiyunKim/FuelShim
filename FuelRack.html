@@ -5,16 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FUEL RACK 입력</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 10px; }
-        h2 { text-align: center; color: #444; }
-        
+        body {
+            font-family: Arial, sans-serif;
+            margin: 10px;
+            background-color: #f4f4f9;
+        }
+        h2 {
+            text-align: center;
+            color: #444;
+            margin-bottom: 20px;
+        }
         .groups-container {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
             margin: 20px 0;
         }
-        
         .input-group {
             border: 2px solid #007bff;
             border-radius: 6px;
@@ -22,8 +28,8 @@
             position: relative;
             flex: 1;
             min-width: 250px;
+            background-color: white;
         }
-        
         .bed-label {
             position: absolute;
             top: -2px;
@@ -34,7 +40,6 @@
             color: #007bff;
             font-weight: bold;
         }
-        
         .input-numbers {
             width: 100%;
             height: 120px;
@@ -43,8 +48,12 @@
             padding: 5px;
             resize: none;
             font-size: 14px;
+            caret-color: #007bff; /* 커서 색상 */
         }
-        
+        .input-numbers:focus {
+            outline: 2px solid #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
         .virtual-keyboard {
             position: fixed;
             bottom: 0;
@@ -52,16 +61,15 @@
             right: 0;
             background: #fff;
             padding: 10px;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
         }
-        
         .keyboard-row {
             display: flex;
             gap: 5px;
             justify-content: center;
             margin-bottom: 5px;
         }
-        
         .keyboard-btn {
             padding: 8px 12px;
             border: 1px solid #007bff;
@@ -69,16 +77,20 @@
             background: #f0f6ff;
             cursor: pointer;
             min-width: 60px;
+            font-size: 14px;
+            transition: background 0.3s, color 0.3s;
         }
-        
         .keyboard-btn.active {
             background: #007bff;
             color: white;
         }
-        
         .keyboard-btn.del {
             background: #ffebee;
             border-color: #ff5252;
+        }
+        .keyboard-btn:hover {
+            background: #007bff;
+            color: white;
         }
     </style>
 </head>
@@ -124,10 +136,11 @@ const presets = {
     '110': [35.5, 36, 36.5]
 };
 
-let currentPercent = null;
+let currentPercent = '25'; // 기본값 25%
 let activeInput = null;
-let currentValues = [...presets['25']];
+let currentValues = [...presets[currentPercent]];
 
+// 숫자 버튼 업데이트
 function updateNumberButtons() {
     const container = document.getElementById('number-buttons');
     container.innerHTML = `
@@ -140,44 +153,52 @@ function updateNumberButtons() {
     `;
 }
 
+// % 버튼 클릭 이벤트
 document.querySelectorAll('.keyboard-btn[data-percent]').forEach(btn => {
     btn.addEventListener('click', (e) => {
         currentPercent = e.target.dataset.percent;
         currentValues = [...presets[currentPercent]];
+        // 모든 % 버튼의 활성화 상태 초기화
         document.querySelectorAll('.keyboard-btn[data-percent]').forEach(b => 
             b.classList.remove('active'));
+        // 현재 선택된 % 버튼 활성화
         e.target.classList.add('active');
         updateNumberButtons();
     });
 });
 
-document.addEventListener('click', (e) => {
-    if(e.target.closest('.input-numbers')) {
+// 입력창 클릭 이벤트
+document.querySelectorAll('.input-numbers').forEach(input => {
+    input.addEventListener('click', (e) => {
         activeInput = e.target;
-        if(currentPercent) updateNumberButtons();
-    }
-    
+        if (currentPercent) updateNumberButtons();
+    });
+});
+
+// 키보드 버튼 클릭 이벤트
+document.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('keyboard-btn')) return;
+
     const action = e.target.dataset.action;
-    if(action === 'decr') {
+    if (action === 'decr') {
         currentValues = currentValues.map(v => v - 0.5);
         updateNumberButtons();
-    }
-    else if(action === 'incr') {
+    } else if (action === 'incr') {
         currentValues = currentValues.map(v => v + 0.5);
         updateNumberButtons();
-    }
-    else if(action === 'del') {
+    } else if (action === 'del') {
         activeInput.value = '';
-    }
-    else if(e.target.classList.contains('keyboard-btn') && 
-           !e.target.dataset.action &&
-           activeInput) {
+    } else if (!action && activeInput) {
         const value = parseFloat(e.target.textContent);
         const lines = activeInput.value.split('\n');
         lines.push(value);
         activeInput.value = lines.slice(-9).join('\n');
     }
 });
+
+// 초기화: 25% 버튼 활성화
+document.querySelector('.keyboard-btn[data-percent="25"]').classList.add('active');
+updateNumberButtons();
 </script>
 </body>
 </html>

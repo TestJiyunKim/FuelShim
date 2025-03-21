@@ -109,7 +109,7 @@
             background-color: #f0f0f0;
         }
         .negative {
-            color: red !important; /* 음수 값 적색 표시 */
+            color: red !important;
         }
         .results div:empty {
             height: 42px;
@@ -349,12 +349,14 @@
             `;
         }
 
-        // 수정된 generateReport 함수: Markdown 표 형식으로 보고서를 생성
+        // 개선된 generateReport 함수: 개선사항 반영
         function generateReport() {
             const target = document.getElementById('targetNumber').value;
-            const dateStr = new Date().toLocaleString();
+            const now = new Date();
+            // ISO 8601 형식: "YYYY-MM-DD HH:MM:SS"
+            const isoDate = now.toISOString().replace('T', ' ').substring(0, 19);
             const beds = Array.from(document.querySelectorAll('.input-group')).map(group => {
-                const bedNumber = group.querySelector('.bed-label').textContent.replace('번 베드', '');
+                const bedNumber = group.querySelector('.bed-label').textContent.replace('번 베드', '').trim();
                 const values = group.querySelector('.input-numbers').value.split('\n').filter(v => v);
                 const results = Array.from(group.querySelectorAll('.results div')).map(div => div.textContent);
                 return { bedNumber, values, results };
@@ -363,18 +365,76 @@
             let reportLines = [];
             reportLines.push(`# FUEL SHIM REPORT`);
             reportLines.push(`**TARGET:** ${target}`);
-            reportLines.push(`**DATE:** ${dateStr}`);
+            reportLines.push(`**DATE:** ${isoDate}`);
             reportLines.push(``);
     
             beds.forEach((bed) => {
                 reportLines.push(`## BED ${bed.bedNumber}`);
                 reportLines.push(``);
-                reportLines.push(`| INPUT | RESULT |`);
-                reportLines.push(`|-------|--------|`);
+                // 테이블 헤더: INPUT, RESULT
+                const inputHeader = "INPUT";
+                const resultHeader = "RESULT";
+    
+                let inputCells = [];
+                let resultCells = [];
                 for (let i = 0; i < MAX_LINES; i++) {
-                    const inputVal = bed.values[i] || "";
-                    const resultVal = bed.results[i] || "";
-                    reportLines.push(`| ${inputVal.padEnd(5, ' ')} | ${resultVal.padEnd(7, ' ')} |`);
+                    // 입력값: 숫자이면 항상 3자리(앞에 0 붙임), 없으면 "-"
+                    let rawInput = bed.values[i] || "";
+                    let inputCell = "";
+                    if(rawInput.trim() === "") {
+                        inputCell = "-";
+                    } else if (/^\d+$/.test(rawInput)) {
+                        inputCell = rawInput.padStart(3, '0');
+                    } else {
+                        inputCell = rawInput;
+                    }
+                    inputCells.push(inputCell);
+    
+                    // 결과값: 없으면 "-", 음수이면 굵게 처리
+                    let rawResult = bed.results[i] || "";
+                    let resultCell = "";
+                    if(rawResult.trim() === "") {
+                        resultCell = "-";
+                    } else if(rawResult.startsWith("-")) {
+                        // 굵은 글씨로 처리 (Markdown **)
+                        resultCell = `**${rawResult}**`;
+                    } else {
+                        resultCell = rawResult;
+                    }
+                    resultCells.push(resultCell);
+                }
+    
+                // 각 열의 최대 너비 계산 (Markdown 포맷 태그는 제외)
+                let inputMaxWidth = inputHeader.length;
+                let resultMaxWidth = resultHeader.length;
+                inputCells.forEach(cell => {
+                    if(cell.length > inputMaxWidth) inputMaxWidth = cell.length;
+                });
+                resultCells.forEach(cell => {
+                    // Markdown 태그 제거 후 길이 계산
+                    const plain = cell.replace(/\*\*/g, '');
+                    if(plain.length > resultMaxWidth) resultMaxWidth = plain.length;
+                });
+    
+                // 테이블 헤더와 구분선 생성
+                let headerLine = `| ${inputHeader.padEnd(inputMaxWidth)} | ${resultHeader.padEnd(resultMaxWidth)} |`;
+                let separatorLine = `|-${"-".repeat(inputMaxWidth)}-|-${"-".repeat(resultMaxWidth)}-|`;
+                reportLines.push(headerLine);
+                reportLines.push(separatorLine);
+    
+                // 각 행 생성
+                for (let i = 0; i < MAX_LINES; i++) {
+                    const inputCell = inputCells[i];
+                    const plainResult = resultCells[i].replace(/\*\*/g, '');
+                    let formattedResult = plainResult;
+                    if(resultCells[i].includes("**")) {
+                        // 음수 값은 다시 굵게 처리
+                        formattedResult = `**${plainResult.padEnd(resultMaxWidth)}**`;
+                    } else {
+                        formattedResult = plainResult.padEnd(resultMaxWidth);
+                    }
+                    let rowLine = `| ${inputCell.padEnd(inputMaxWidth)} | ${formattedResult} |`;
+                    reportLines.push(rowLine);
                 }
                 reportLines.push(``);
             });

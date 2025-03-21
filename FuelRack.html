@@ -15,18 +15,28 @@
             text-align: center;
             color: #444;
             margin: 10px 0;
+            font-size: 18px;
         }
         .groups-container {
             display: flex;
-            flex-wrap: wrap;
+            flex-direction: column;
             gap: 10px;
-            justify-content: center;
         }
-        .group-wrapper {
+        .group-row {
             display: flex;
             gap: 5px;
-            width: calc(50% - 5px);
-            margin-bottom: 10px;
+            width: 100%;
+        }
+        .numbering {
+            width: 30px;
+            text-align: right;
+            padding-right: 5px;
+            font-size: 14px;
+            line-height: 1.5;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #f0f0f0;
+            padding-top: 5px;
         }
         .input-group {
             border: 2px solid #007bff;
@@ -46,13 +56,7 @@
             padding: 0 5px;
             color: #007bff;
             font-weight: bold;
-        }
-        .numbering {
-            width: 30px;
-            text-align: right;
-            padding-right: 5px;
-            font-size: 14px;
-            line-height: 1.5;
+            font-size: 13px;
         }
         .input-numbers {
             width: 100%;
@@ -89,9 +93,14 @@
         }
 
         @media (orientation: landscape) {
-            .group-wrapper {
-                width: calc(25% - 8px);
-                margin-bottom: 0;
+            .groups-container {
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .group-row {
+                width: 100%;
+                flex-direction: row;
             }
             .input-group {
                 height: 250px;
@@ -106,7 +115,30 @@
     <h2>FUEL RACK 입력</h2>
     
     <div class="groups-container">
-        <!-- Bed groups will be dynamically generated -->
+        <!-- 첫 번째 줄: 번호창 1, 베드 1, 베드 2 -->
+        <div class="group-row">
+            <div class="numbering">${Array.from({length:8}, (_,i)=>i+1).join('<br>')}</div>
+            <div class="input-group">
+                <div class="bed-label">#1</div>
+                <textarea class="input-numbers" data-bed="1"></textarea>
+            </div>
+            <div class="input-group">
+                <div class="bed-label">#2</div>
+                <textarea class="input-numbers" data-bed="2"></textarea>
+            </div>
+        </div>
+        <!-- 두 번째 줄: 번호창 2, 베드 3, 베드 4 -->
+        <div class="group-row">
+            <div class="numbering">${Array.from({length:8}, (_,i)=>i+1).join('<br>')}</div>
+            <div class="input-group">
+                <div class="bed-label">#3</div>
+                <textarea class="input-numbers" data-bed="3"></textarea>
+            </div>
+            <div class="input-group">
+                <div class="bed-label">#4</div>
+                <textarea class="input-numbers" data-bed="4"></textarea>
+            </div>
+        </div>
     </div>
 
     <div class="virtual-keyboard">
@@ -115,40 +147,6 @@
 
 <script>
 let activeInput = null;
-
-// 그룹 생성 함수
-function generateBedGroups() {
-    const container = document.querySelector('.groups-container');
-    container.innerHTML = '';
-    
-    // 4개의 베드 그룹 생성
-    for(let bedNum = 1; bedNum <= 4; bedNum++) {
-        const group = document.createElement('div');
-        group.className = 'group-wrapper';
-        
-        group.innerHTML = `
-            <div class="numbering">${Array.from({length:8}, (_,i)=>i+1).join('<br>')}</div>
-            <div class="input-group">
-                <div class="bed-label">#${bedNum}</div>
-                <textarea class="input-numbers" data-bed="${bedNum}"></textarea>
-            </div>
-        `;
-        
-        container.appendChild(group);
-    }
-    
-    // 입력 필드에 이벤트 리스너 추가
-    document.querySelectorAll('.input-numbers').forEach(input => {
-        input.addEventListener('focus', handleInputFocus);
-    });
-}
-
-// 입력 필드 포커스 시 가상 키보드 표시
-function handleInputFocus(e) {
-    activeInput = e.target;
-    updateKeyboard();
-    document.querySelector('.virtual-keyboard').style.display = 'grid';
-}
 
 // 가상 키보드 업데이트
 function updateKeyboard() {
@@ -178,8 +176,14 @@ function handleKeyboardClick(e) {
     activeInput.value = value.toFixed(1).endsWith('.0') ? value.toFixed(0) : value.toFixed(1);
 }
 
-// 초기화
-generateBedGroups();
+// 입력 필드 포커스 시 가상 키보드 표시
+document.querySelectorAll('.input-numbers').forEach(input => {
+    input.addEventListener('focus', (e) => {
+        activeInput = e.target;
+        updateKeyboard();
+        document.querySelector('.virtual-keyboard').style.display = 'grid';
+    });
+});
 </script>
 </body>
 </html>

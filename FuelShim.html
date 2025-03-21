@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 23s -->
+    <!-- Revision: 24s -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -132,11 +132,9 @@
             color: #666;
             font-size: 12px;
         }
-
-        /* 변경된 보고서 버튼 스타일 */
         #copyReportButton {
             position: fixed;
-            bottom: 70px; /* 모바일 브라우저 UI 충돌 방지 */
+            bottom: 70px;
             right: 20px;
             padding: 12px 24px;
             background-color: #007bff;
@@ -146,19 +144,16 @@
             cursor: pointer;
             box-shadow: 0 3px 6px rgba(0,0,0,0.16);
             font-size: 16px;
-            z-index: 10000; /* 더 높은 z-index 설정 */
+            z-index: 10000;
             transition: transform 0.2s, box-shadow 0.2s;
         }
-
         #copyReportButton:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 8px rgba(0,0,0,0.2);
         }
-
-        /* 모바일 반응형 추가 */
         @media (max-width: 768px) {
             #copyReportButton {
-                bottom: 60px; /* 모바일에서 더 높은 위치 */
+                bottom: 60px;
                 right: 15px;
                 padding: 10px 20px;
                 font-size: 14px;
@@ -166,7 +161,7 @@
         }
     </style>
     <script>
-        const revision = '23s'; // 리비전 업데이트
+        const revision = '24s';
         let initialPrefix = '14';
         const MAX_LINES = 9;
 
@@ -202,7 +197,6 @@
             const input = event.target;
             let values = input.value.split('\n')
                 .map((line, index, arr) => {
-                    // 마지막 라인에서만 접두어 제거
                     if (index === arr.length - 1 && line === getCurrentPrefix(arr[index - 1])) {
                         return null;
                     }
@@ -225,9 +219,7 @@
             const numbers = inputElement.value.split('\n');
             
             const results = numbers.map((num, index) => {
-                const isLastLine = index === numbers.length - 1; // 마지막 행 체크
-
-                // 마지막 행 제외 1~2자리 오류 처리
+                const isLastLine = index === numbers.length - 1;
                 if (!isLastLine && num.length > 0 && num.length < 3 && /^\d+$/.test(num)) {
                     return { 
                         value: '오류!', 
@@ -283,7 +275,6 @@
                 )
                 .slice(0, MAX_LINES);
 
-            // 동적 접두어 생성
             let dynamicPrefix = initialPrefix;
             if (values.length > 0 && values[values.length - 1].length === 3) {
                 dynamicPrefix = values[values.length - 1].slice(0, 2);
@@ -361,96 +352,62 @@
             const target = document.getElementById('targetNumber').value;
             const now = new Date();
             const isoDate = now.toISOString().replace('T', ' ').substring(0, 19);
-            const beds = Array.from(document.querySelectorAll('.input-group')).map(group => {
-                const bedNumber = group.querySelector('.bed-label').textContent.replace('번 베드', '').trim();
-                const values = group.querySelector('.input-numbers').value.split('\n').map(v => v.trim()).filter(v => v !== '');
-                const results = Array.from(group.querySelectorAll('.results div')).map(div => div.textContent.trim());
-                return { bedNumber, values, results };
-            });
-    
+            
+            // 입력이 있는 베드만 필터링
+            const beds = Array.from(document.querySelectorAll('.input-group'))
+                .map(group => {
+                    const bedNumber = group.querySelector('.bed-label').textContent.replace('번 베드', '').trim();
+                    const values = group.querySelector('.input-numbers').value.split('\n').map(v => v.trim()).filter(v => v !== '');
+                    const results = Array.from(group.querySelectorAll('.results div')).map(div => div.textContent.trim());
+                    return { bedNumber, values, results };
+                })
+                .filter(bed => bed.values.length > 0); // 입력이 있는 베드만 포함
+
             let reportLines = [];
             reportLines.push(`# FUEL SHIM REPORT`);
             reportLines.push(`**TARGET:** ${target}`);
             reportLines.push(`**DATE:** ${isoDate}`);
             reportLines.push(``);
-    
+
             beds.forEach((bed) => {
                 reportLines.push(`## BED ${bed.bedNumber}`);
                 reportLines.push(``);
+                
                 let inputCells = [];
                 let resultCells = [];
                 for (let i = 0; i < MAX_LINES; i++) {
+                    // 입력값 처리
                     let rawInput = bed.values[i] || "";
-                    let inputCell = "";
-                    if(rawInput === "") {
-                        inputCell = "-";
-                    } else if (/^\d+$/.test(rawInput)) {
-                        inputCell = rawInput.padStart(3, '0');
-                    } else {
-                        inputCell = rawInput;
-                    }
-                    inputCells.push(inputCell.trim());
-    
+                    let inputCell = rawInput.padStart(3, '0').substring(0,3);
+                    inputCell = inputCell || '-';
+                    inputCells.push(inputCell);
+
+                    // 결과값 처리 (음수 **표시 제거)
                     let rawResult = bed.results[i] || "";
-                    let resultCell = "";
-                    if(rawResult === "") {
-                        resultCell = "-";
-                    } else if(rawResult.startsWith("-")) {
-                        resultCell = `**${rawResult.trim()}**`;
-                    } else {
-                        resultCell = rawResult.trim();
-                    }
-                    resultCells.push(resultCell);
+                    resultCells.push(rawResult || '-');
                 }
-    
-                let sum = 0, count = 0, warningCount = 0;
-                bed.values.forEach(val => {
-                    if (/^\d+$/.test(val)) {
-                        sum += parseInt(val, 10);
-                        count++;
-                    } else if(val === "⚠") {
-                        warningCount++;
-                    }
-                });
-                let bedAverage = count > 0 ? (sum / count).toFixed(1) : "-";
-    
+
+                // 테이블 헤더 생성
                 const inputHeader = "INPUT";
                 const resultHeader = "RESULT";
-                let inputMaxWidth = inputHeader.length;
-                let resultMaxWidth = resultHeader.length;
-                inputCells.forEach(cell => {
-                    if(cell.length > inputMaxWidth) inputMaxWidth = cell.length;
-                });
-                resultCells.forEach(cell => {
-                    const plain = cell.replace(/\*\*/g, '');
-                    if(plain.length > resultMaxWidth) resultMaxWidth = plain.length;
-                });
-    
-                let headerLine = `| ${inputHeader.padEnd(inputMaxWidth)} | ${resultHeader.padEnd(resultMaxWidth)} |`;
-                let separatorLine = `| ${"-".repeat(inputMaxWidth)} | ${"-".repeat(resultMaxWidth)} |`;
-                reportLines.push(headerLine);
-                reportLines.push(separatorLine);
-    
+                let inputMaxWidth = Math.max(...inputCells.map(c => c.length), inputHeader.length);
+                let resultMaxWidth = Math.max(...resultCells.map(c => c.replace(/[^0-9.-]/g,'').length), resultHeader.length);
+
+                // 테이블 생성
+                reportLines.push(`| ${inputHeader.padEnd(inputMaxWidth)} | ${resultHeader.padEnd(resultMaxWidth)} |`);
+                reportLines.push(`| ${'-'.repeat(inputMaxWidth)} | ${'-'.repeat(resultMaxWidth)} |`);
+                
                 for (let i = 0; i < MAX_LINES; i++) {
-                    const inputCell = inputCells[i];
-                    let plainResult = resultCells[i].replace(/\*\*/g, '');
-                    let paddedResult = "";
-                    if(resultCells[i].includes("**")) {
-                        paddedResult = `**${plainResult.padEnd(resultMaxWidth)}**`;
-                    } else {
-                        paddedResult = plainResult.padEnd(resultMaxWidth);
-                    }
-                    let rowLine = `| ${inputCell.padEnd(inputMaxWidth)} | ${paddedResult} |`;
-                    reportLines.push(rowLine);
+                    const input = inputCells[i].padEnd(inputMaxWidth);
+                    const result = resultCells[i].padEnd(resultMaxWidth);
+                    reportLines.push(`| ${input} | ${result} |`);
                 }
                 reportLines.push(``);
-                reportLines.push(`*Average: ${bedAverage}, Warnings: ${warningCount}*`);
-                reportLines.push(``);
             });
-    
+            
             return reportLines.join("\n");
         }
-    
+
         window.onload = function () {
             document.getElementById('revisionDisplay').textContent = `Rev: ${revision}`;
             document.getElementById('targetNumber').value = 144;

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 22p -->
+    <!-- Revision: 22q -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -115,6 +115,9 @@
             color: red !important;
             font-weight: bold;
         }
+        .warning {
+            color: red !important;
+        }
         .results div:empty {
             height: 42px;
             visibility: hidden;
@@ -195,7 +198,7 @@
         }
     </style>
     <script>
-        const revision = '22p';
+        const revision = '22q';
         let initialPrefix = '14';
         const MAX_LINES = 9;
 
@@ -254,25 +257,43 @@
             const numbers = inputElement.value.split('\n');
             
             const results = numbers.map(num => {
-                // 1~2자리 숫자 적색 표시
+                // 1~2자리 숫자 오류 처리
                 if (num.length > 0 && num.length < 3 && /^\d+$/.test(num)) {
                     return { 
-                        value: num, 
+                        value: '오류!', 
                         style: 'invalid' 
                     };
                 }
                 if (num.length !== 3) return { value: num.length > 0 ? '⚠' : '', isNegative: false };
+                
                 const n = parseInt(num);
                 const diff = target - n;
                 const result = Math.trunc(diff * 0.125 * 10) / 10;
-                return {
-                    value: Math.abs(result) > 0.1 ? result.toFixed(1).replace(/\.0$/, '') : '',
-                    isNegative: result < 0
-                };
+                const absResult = Math.abs(result);
+                let displayValue = absResult > 0.1 ? result.toFixed(1).replace(/\.0$/, '') : '';
+
+                // 결과값 2.0 이상 확인요망 처리
+                if (absResult >= 2) {
+                    return {
+                        value: `${displayValue} 확인요망`,
+                        style: 'warning'
+                    };
+                } else {
+                    return {
+                        value: displayValue,
+                        isNegative: result < 0
+                    };
+                }
             });
 
             wrapper.querySelector('.results').innerHTML = results
-                .map(r => r.value ? `<div class="${r.style || (r.isNegative ? 'negative' : '')}">${r.value}</div>` : '<div></div>')
+                .map(r => {
+                    if (!r.value) return '<div></div>';
+                    let classes = [];
+                    if (r.style) classes.push(r.style);
+                    if (r.isNegative) classes.push('negative');
+                    return `<div class="${classes.join(' ')}">${r.value}</div>`;
+                })
                 .join('');
         }
 

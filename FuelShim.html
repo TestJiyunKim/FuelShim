@@ -1,29 +1,24 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 28s -->
+    <!-- Revision: 29s -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>FUEL SHIM 계산</title>
     <style>
-        /* 초기화 및 기본 스타일 */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: Arial, sans-serif;
             padding: 10px;
             background-color: #f4f4f9;
             color: #333;
+            margin: 0;
         }
-
-        /* 헤더 영역 */
-        h2 { 
+        h2 {
             color: #444;
             margin-bottom: 8px;
             text-align: center;
         }
-
-        /* 타겟 컨트롤 */
         .number-control {
             display: flex;
             align-items: center;
@@ -43,15 +38,11 @@
             -webkit-appearance: none;
             -moz-appearance: textfield;
         }
-
-        /* 베드 컨테이너 */
         .groups-container {
             display: flex;
             flex-direction: column;
             gap: 4px;
         }
-
-        /* 베드 그룹 */
         .group-wrapper {
             display: flex;
             gap: 2px;
@@ -81,8 +72,6 @@
             color: #007bff;
             font-size: 13px;
         }
-
-        /* 입력 영역 */
         .numbering {
             margin-top: 9px;
             width: 29px !important;
@@ -96,7 +85,8 @@
             text-align: right;
             overflow-y: hidden;
         }
-        .input-numbers, .results {
+        .input-numbers,
+        .results {
             height: 416px;
             padding: 3px;
             border: 1px solid #ccc;
@@ -118,22 +108,31 @@
             width: 144px !important;
             background-color: #f0f0f0;
         }
-
-        /* 결과 스타일 */
-        .negative { color: red !important; }
-        .invalid { color: red !important; font-weight: bold; }
-        .results div:empty { height: 42px; visibility: hidden; }
-
-        /* 평균 표시 */
+        .negative {
+            color: red !important;
+        }
+        .invalid {
+            color: red !important;
+            font-weight: bold;
+        }
+        .results div:empty {
+            height: 42px;
+            visibility: hidden;
+        }
         #averageDisplay {
             margin-left: 10px;
             color: #007bff;
             font-weight: bold;
             font-size: 13px;
         }
-
-        /* 액션 버튼 */
-        #copyReportButton, #shareButton {
+        #revisionDisplay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #666;
+            font-size: 12px;
+        }
+        #copyReportButton {
             position: fixed;
             bottom: 20px;
             right: 20px;
@@ -145,11 +144,31 @@
             cursor: pointer;
             box-shadow: 0 3px 6px rgba(0,0,0,0.16);
             font-size: 16px;
-            z-index: 10000;
+            z-index: 1000;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        #copyReportButton:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 8px rgba(0,0,0,0.2);
+        }
+        #shareButton {
+            position: fixed;
+            bottom: 20px;
+            right: 140px;
+            padding: 12px 24px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.16);
+            font-size: 16px;
+            z-index: 1000;
             transition: transform 0.2s;
         }
-        #shareButton { right: 140px; background-color: #28a745; }
-        #copyReportButton:hover, #shareButton:hover { transform: translateY(-2px); }
+        #shareButton:hover {
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body>
@@ -166,18 +185,22 @@
     <button id="copyReportButton">보고서 생성</button>
 
     <script>
-        const revision = '28s';
+        const revision = '29s';
         let initialPrefix = '14';
         const MAX_LINES = 9;
 
         // 초기화 함수
         function init() {
+            document.getElementById('revisionDisplay').textContent = `Rev: ${revision}`;
+            document.getElementById('targetNumber').value = 144;
+            initialPrefix = document.getElementById('targetNumber').value.toString().slice(0, 2);
+
             // 베드 생성
             const bedContainer = document.getElementById('bedContainer');
             for (let i = 1; i <= 4; i++) {
                 bedContainer.insertAdjacentHTML('beforeend', `
                     <div class="group-wrapper">
-                        <div class="numbering">${Array.from({length:9},(_,i)=>i+1+'.').join('<br>')}</div>
+                        <div class="numbering">${Array.from({length: MAX_LINES}, (_, i) => `${i+1}.`).join('\n')}</div>
                         <div class="input-group">
                             <div class="bed-label">${i}번 베드</div>
                             <textarea class="input-numbers"></textarea>

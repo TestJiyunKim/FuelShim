@@ -28,9 +28,10 @@
         .groups-container {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 30px; /* 그룹 간 여백 2배로 증가 (기존 12px → 30px) */
             margin-top: 15px;
-            height: 78vh; /* 그룹창 높이 5포인트 추가 */
+            height: auto; /* 고정 높이 제거 */
+            padding: 10px 0; /* 상하 패딩 추가 */
         }
         .group-row {
             display: flex;
@@ -39,10 +40,11 @@
             padding: 0 2%;
             align-items: flex-start;
             height: 49%; /* 그룹창 높이 조정 */
+            margin-bottom: 25px; /* 그룹 하단 여백 추가 */
         }
         .numbering {
             width: 10%;
-            height: 60vh; /* 높이 조정 (+15-20포인트) */
+            height: 55vh; /* 높이 조정 (+15-20포인트) */
             margin-top: 27px; /* 2포인트 위로 올림 (29px → 27px) */
             padding: 15px 1%;
             font-size: 28px;
@@ -58,7 +60,7 @@
             padding: 25px 1% 5px;
             position: relative;
             background-color: white;
-            height: 65vh; /* 입력창 높이 15포인트 추가 */
+            height: 60vh; /* 입력창 높이 15포인트 추가 */
             box-sizing: border-box;
         }
         .input-group:focus-within {

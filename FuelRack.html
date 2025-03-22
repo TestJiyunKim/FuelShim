@@ -1,266 +1,268 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+    <!-- Revision: 27s -->
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FUEL RACK 입력</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=1.0, user-scalable=yes">
+    <title>FUEL SHIM 계산</title>
     <style>
+        /* CSS 초기화 */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
+            padding: 20px 10px 120px; /* 하단 버튼 공간 확보 */
             background-color: #f4f4f9;
-            position: relative;
-            overflow-x: hidden;
+            min-height: 100vh;
         }
-        h2 {
+
+        /* 헤더 영역 */
+        .header {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        h1 {
             text-align: center;
-            color: #444;
-            margin: 8px 0;
+            color: #2c3e50;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
         }
-        #revision {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            color: #666;
-            font-size: 12px;
-        }
-        .groups-container {
+
+        /* 숫자 입력 컨트롤 */
+        .target-control {
             display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 15px;
-        }
-        .group-row {
-            display: flex;
-            gap: 2%;
-            width: 96%;
-            padding: 0 2%;
-            align-items: flex-start;
-        }
-        .numbering {
-            width: 10%;
-            height: 36vh; /* 20pt 축소 */
-            margin-top: 25px; /* 10pt 추가 */
-            padding: 15px 1%;
-            font-size: 28px;
-            line-height: 1.4;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background-color: #f0f0f0;
-        }
-        .input-group {
-            width: 37.4%; /* 1.1배 확대 */
-            border: 2px solid #007bff;
-            border-radius: 6px;
-            padding: 25px 1% 5px;
-            position: relative;
-            background-color: white;
-            height: 63vh; /* 0.9배 축소 */
-        }
-        .input-group:focus-within {
-            border-color: #00f;
-            box-shadow: 0 0 8px rgba(0,123,255,0.3);
-        }
-        .bed-label {
-            position: absolute;
-            top: -8px; /* 상단 위치 조정 */
-            left: 50%;
-            transform: translateX(-50%);
-            background: white;
-            padding: 0 5px;
-            color: #007bff;
-            font-weight: bold;
-            font-size: 26px;
-        }
-        .input-numbers {
-            width: 100%;
-            height: calc(100% - 40px);
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            padding: 5px;
-            resize: none;
-            font-size: 28px;
-            line-height: 1.5;
-            caret-color: transparent;
-        }
-        .virtual-keyboard {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #fff;
-            padding: 10px;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-            z-index: 1000;
-        }
-        .keyboard-row {
-            display: flex;
-            gap: 2%;
             justify-content: center;
-            margin-bottom: 6px;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 25px;
         }
-        .keyboard-btn {
-            padding: 10px 3%;
-            border: 1px solid #007bff;
-            border-radius: 4px;
-            background: #f0f6ff;
+        .target-control button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #3498db;
+            background: white;
+            font-size: 1.2rem;
             cursor: pointer;
-            flex: 1;
-            max-width: 18%;
-            font-size: 14px;
-            transition: all 0.2s;
         }
-        .keyboard-btn.active {
-            background: #007bff;
-            color: white;
+        .target-control input {
+            width: 80px;
+            height: 40px;
+            text-align: center;
+            font-size: 1.1rem;
+            border: 2px solid #3498db;
+            border-radius: 8px;
         }
-        .keyboard-btn.del {
-            background: #ffebee;
-            border-color: #ff5252;
-            max-width: 24%;
+
+        /* 베드 컨테이너 */
+        .bed-container {
+            display: grid;
+            gap: 15px;
+            max-width: 800px;
+            margin: 0 auto;
         }
-        #copyReport {
+
+        /* 베드 그룹 */
+        .bed-group {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .bed-header {
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        .input-wrapper {
+            display: grid;
+            grid-template-columns: 40px 1fr 1fr;
+            gap: 10px;
+        }
+        .line-numbers {
+            font-size: 1.2rem;
+            color: #7f8c8d;
+            text-align: right;
+        }
+        .input-area, .result-area {
+            height: 300px;
+            padding: 10px;
+            border: 1px solid #bdc3c7;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            resize: none;
+        }
+        .result-area {
+            background: #ecf0f1;
+            overflow-y: auto;
+        }
+
+        /* 액션 버튼 */
+        .action-buttons {
             position: fixed;
-            top: 10px;
-            left: 10px;
-            padding: 6px 12px;
-            background: #28a745;
-            color: white;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .action-btn {
+            padding: 12px 24px;
             border: none;
-            border-radius: 4px;
+            border-radius: 25px;
             cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        .action-btn.primary {
+            background: #3498db;
+            color: white;
+        }
+        .action-btn.success {
+            background: #2ecc71;
+            color: white;
+        }
+        .action-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* 오류 메시지 */
+        .error-toast {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            padding: 12px 24px;
+            background: #e74c3c;
+            color: white;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            display: none;
+            z-index: 1000;
         }
     </style>
 </head>
 <body>
-    <div id="revision">Rev: 23R2</div>
-    <button id="copyReport">보고서 복사</button>
-    <h2>FUEL RACK 입력</h2>
-    
-    <div class="groups-container">
-        <div class="group-row">
-            <div class="numbering">1.<br>2.<br>3.<br>4.<br>5.<br>6.<br>7.<br>8.<br>9.</div>
-            <div class="input-group">
-                <div class="bed-label">#1</div>
-                <textarea class="input-numbers" data-bed="1" readonly></textarea>
-            </div>
-            <div class="input-group">
-                <div class="bed-label">#2</div>
-                <textarea class="input-numbers" data-bed="2" readonly></textarea>
-            </div>
-        </div>
-        <div class="group-row">
-            <div class="numbering">1.<br>2.<br>3.<br>4.<br>5.<br>6.<br>7.<br>8.<br>9.</div>
-            <div class="input-group">
-                <div class="bed-label">#3</div>
-                <textarea class="input-numbers" data-bed="3" readonly></textarea>
-            </div>
-            <div class="input-group">
-                <div class="bed-label">#4</div>
-                <textarea class="input-numbers" data-bed="4" readonly></textarea>
-            </div>
+    <div class="header">
+        <h1>FUEL SHIM 계산</h1>
+        <div class="target-control">
+            <button onclick="adjustTarget(-1)">-</button>
+            <input type="number" id="targetValue" value="144">
+            <button onclick="adjustTarget(1)">+</button>
         </div>
     </div>
 
-    <div class="virtual-keyboard">
-        <div class="keyboard-row">
-            <button class="keyboard-btn" data-percent="25">25%</button>
-            <button class="keyboard-btn" data-percent="50">50%</button>
-            <button class="keyboard-btn" data-percent="75">75%</button>
-            <button class="keyboard-btn" data-percent="100">100%</button>
-            <button class="keyboard-btn" data-percent="110">110%</button>
-        </div>
-        <div class="keyboard-row" id="number-buttons"></div>
+    <div class="bed-container" id="bedContainer">
+        <!-- 베드 그룹이 동적으로 생성됩니다 -->
     </div>
 
-<script>
-const presets = {
-    '25': [9.5, 10, 10.5],
-    '50': [17.5, 18, 18.5],
-    '75': [24.5, 25, 25.5],
-    '100': [32.5, 33, 33.5],
-    '110': [35.5, 36, 36.5]
-};
+    <div class="action-buttons">
+        <button class="action-btn success" id="shareBtn">📤 공유</button>
+        <button class="action-btn primary" id="reportBtn">📄 보고서</button>
+    </div>
 
-let currentPercent = '25';
-let activeInput = null;
-let currentValues = [...presets[currentPercent]];
-let currentLine = 0;
+    <div class="error-toast" id="errorToast"></div>
 
-function updateNumberButtons() {
-    const container = document.getElementById('number-buttons');
-    container.innerHTML = `
-        <button class="keyboard-btn" data-action="decr">-</button>
-        <button class="keyboard-btn">${currentValues[0].toFixed(1)}</button>
-        <button class="keyboard-btn">${currentValues[1].toFixed(1)}</button>
-        <button class="keyboard-btn">${currentValues[2].toFixed(1)}</button>
-        <button class="keyboard-btn" data-action="incr">+</button>
-        <button class="keyboard-btn del" data-action="del">Del</button>
-    `;
-}
+    <script>
+        const revision = '27s';
+        const MAX_LINES = 9;
 
-document.querySelectorAll('.keyboard-btn[data-percent]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        currentPercent = e.target.dataset.percent;
-        currentValues = [...presets[currentPercent]];
-        document.querySelectorAll('.keyboard-btn[data-percent]').forEach(b => 
-            b.classList.remove('active'));
-        e.target.classList.add('active');
-        updateNumberButtons();
-    });
-});
+        // 초기화 함수
+        function initApp() {
+            // 베드 그룹 생성
+            const container = document.getElementById('bedContainer');
+            for (let i = 1; i <= 4; i++) {
+                container.innerHTML += `
+                    <div class="bed-group">
+                        <div class="bed-header">${i}번 베드</div>
+                        <div class="input-wrapper">
+                            <div class="line-numbers">${Array.from({length: MAX_LINES}, (_, i) => `${i+1}.`).join('<br>')}</div>
+                            <textarea class="input-area" data-bed="${i}"></textarea>
+                            <div class="result-area" data-results="${i}"></div>
+                        </div>
+                    </div>
+                `;
+            }
 
-document.addEventListener('click', (e) => {
-    if (e.target.closest('.input-numbers')) {
-        activeInput = e.target;
-        currentLine = activeInput.value.split('\n').length;
-        activeInput.focus();
-        return;
-    }
-    
-    const action = e.target.dataset.action;
-    if (!action && e.target.closest('[data-percent]')) return;
+            // 이벤트 바인딩
+            document.querySelectorAll('.input-area').forEach(input => {
+                input.addEventListener('input', handleCalculation);
+            });
 
-    if (action === 'decr') {
-        currentValues = currentValues.map(v => v - 0.5);
-        updateNumberButtons();
-    } else if (action === 'incr') {
-        currentValues = currentValues.map(v => v + 0.5);
-        updateNumberButtons();
-    } else if (action === 'del') {
-        const lines = activeInput.value.split('\n');
-        lines.pop();
-        activeInput.value = lines.join('\n');
-        currentLine = Math.max(0, lines.length - 1);
-    } else if (e.target.classList.contains('keyboard-btn') && activeInput) {
-        const value = parseFloat(e.target.textContent);
-        const lines = activeInput.value.split('\n');
-        lines[currentLine] = value.toFixed(1);
-        activeInput.value = lines.filter(v => v).join('\n');
-        if (currentLine < 8) currentLine++;
-    }
+            // URL 데이터 로드
+            loadFromURL();
+        }
 
-    if(activeInput) activeInput.focus();
-});
+        // 타겟 값 조정
+        function adjustTarget(value) {
+            const targetInput = document.getElementById('targetValue');
+            targetInput.value = parseInt(targetInput.value) + value;
+            updateCalculations();
+        }
 
-document.getElementById('copyReport').addEventListener('click', async () => {
-    try {
-        const report = Array.from(document.querySelectorAll('.input-group')).map(group => {
-            const bedNumber = group.querySelector('.bed-label').textContent;
-            const values = group.querySelector('.input-numbers').value.split('\n').filter(v => v);
-            return `${bedNumber}: ${values.join(', ')}`;
-        }).join('\n');
-        
-        await navigator.clipboard.writeText(report);
-        alert('보고서가 클립보드에 복사되었습니다.');
-    } catch (err) {
-        alert('복사 실패: ' + err.message);
-    }
-});
+        // 계산 처리
+        function handleCalculation(event) {
+            const input = event.target;
+            const bedNumber = input.getAttribute('data-bed');
+            const results = document.querySelector(`[data-results="${bedNumber}"]`);
+            const target = parseInt(document.getElementById('targetValue').value);
 
-document.querySelector('.keyboard-btn[data-percent="25"]').classList.add('active');
-updateNumberButtons();
-</script>
+            const values = input.value.split('\n');
+            const output = values.map(line => {
+                if (line.length !== 3) return '';
+                const diff = target - parseInt(line);
+                return (diff * 0.125).toFixed(1);
+            });
+
+            results.innerHTML = output.map(val => `<div>${val}</div>`).join('');
+        }
+
+        // URL 데이터 로드
+        function loadFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            if (!params.has('target')) return;
+
+            // 타겟 값 설정
+            document.getElementById('targetValue').value = params.get('target');
+
+            // 베드 데이터 로드
+            Array.from(document.querySelectorAll('.input-area')).forEach((input, idx) => {
+                const bedData = params.get(`bed${idx+1}`)?.split(',') || [];
+                input.value = bedData.join('\n');
+                handleCalculation({ target: input });
+            });
+        }
+
+        // 공유 기능
+        document.getElementById('shareBtn').addEventListener('click', () => {
+            const target = document.getElementById('targetValue').value;
+            const beds = Array.from(document.querySelectorAll('.input-area'))
+                .map(input => input.value.split('\n').join(','));
+
+            const params = new URLSearchParams({
+                ver: revision,
+                target: target,
+                ...beds.reduce((acc, val, idx) => {
+                    acc[`bed${idx+1}`] = val;
+                    return acc;
+                }, {})
+            });
+
+            const link = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+            navigator.clipboard.writeText(link)
+                .then(() => alert('링크가 복사되었습니다!'))
+                .catch(() => showError('링크 복사 실패'));
+        });
+
+        // 오류 메시지 표시
+        function showError(message) {
+            const toast = document.getElementById('errorToast');
+            toast.textContent = message;
+            toast.style.display = 'block';
+            setTimeout(() => toast.style.display = 'none', 5000);
+        }
+
+        // 앱 초기화
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
 </body>
 </html>

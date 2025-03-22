@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 32s (25s + 29s 데이터 공유 통합) -->
+    <!-- Revision: 33s (최종 버전) -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>FUEL SHIM 계산</title>
     <style>
-        /* 25s 원본 스타일 유지 */
+        /* 기본 스타일 */
         body {
             font-family: Arial, sans-serif;
             padding: 10px;
@@ -73,19 +73,7 @@
             color: #007bff;
             font-size: 13px;
         }
-        .numbering {
-            margin-top: 9px;
-            width: 29px !important;
-            height: 416px;
-            padding: 3px;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-            background-color: #f0f0f0;
-            font-size: 30px;
-            line-height: 42px;
-            text-align: right;
-            overflow-y: hidden;
-        }
+        .numbering,
         .input-numbers,
         .results {
             height: 416px;
@@ -99,6 +87,12 @@
             min-width: 44px;
             min-height: 44px;
             touch-action: manipulation;
+        }
+        .numbering {
+            width: 29px !important;
+            background-color: #f0f0f0;
+            text-align: right;
+            overflow-y: hidden;
         }
         .input-numbers {
             width: 144px !important;
@@ -133,43 +127,50 @@
             color: #666;
             font-size: 12px;
         }
-        #copyReportButton {
+        /* 버튼 스타일 */
+        #buttonContainer {
             position: fixed;
-            bottom: 70px;
+            bottom: 20px;
+            left: 20px;
             right: 20px;
-            padding: 12px 24px;
-            background-color: #007bff;
-            color: white;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        #buttonContainer button {
+            flex: 1;
+            min-width: 120px;
+            max-width: 200px;
+            padding: 12px 20px;
             border: none;
             border-radius: 25px;
+            font-size: 14px;
             cursor: pointer;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.16);
-            font-size: 16px;
-            z-index: 10000;
             transition: transform 0.2s, box-shadow 0.2s;
         }
-        #copyReportButton:hover {
+        #buttonContainer button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 8px rgba(0,0,0,0.2);
         }
-        /* 29s 데이터 공유 버튼 스타일 추가 */
         #shareButton {
-            position: fixed;
-            bottom: 70px;
-            right: 160px;
-            padding: 12px 24px;
             background-color: #28a745;
             color: white;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.16);
-            font-size: 16px;
-            z-index: 10000;
-            transition: transform 0.2s;
         }
-        #shareButton:hover {
-            transform: translateY(-2px);
+        #copyReportButton {
+            background-color: #007bff;
+            color: white;
+        }
+        #resetButton {
+            background-color: #dc3545;
+            color: white;
+        }
+        #saveButton {
+            background-color: #ffc107;
+            color: black;
+        }
+        #loadButton {
+            background-color: #17a2b8;
+            color: white;
         }
     </style>
 </head>
@@ -183,16 +184,71 @@
         <span id="averageDisplay">평균: 0.0</span>
     </div>
     <div class="groups-container" id="bedContainer"></div>
-    <!-- 29s 데이터 공유 기능 추가 -->
-    <button id="shareButton">데이터 공유</button>
-    <button id="copyReportButton">보고서 생성</button>
+    
+    <!-- 버튼 컨테이너 -->
+    <div id="buttonContainer">
+        <button id="shareButton">데이터 공유</button>
+        <button id="copyReportButton">보고서 생성</button>
+        <button id="resetButton">초기화</button>
+        <button id="saveButton">데이터 저장</button>
+        <button id="loadButton">데이터 불러오기</button>
+    </div>
 
     <script>
-        const revision = '32s';
+        const revision = '33s';
         let initialPrefix = '14';
         const MAX_LINES = 9;
+        const STORAGE_KEY = 'fuelShimData';
 
-        // 25s 원본 함수들 유지
+        // 숫자 키보드 강제 활성화
+        function forceNumericKeyboard() {
+            document.querySelectorAll('.input-numbers').forEach(input => {
+                input.setAttribute('inputmode', 'numeric');
+            });
+        }
+
+        // 초기화 함수
+        function resetInputs() {
+            document.querySelectorAll('.input-numbers').forEach(input => {
+                input.value = '';
+                calculateResults(input);
+            });
+            document.getElementById('targetNumber').value = 144;
+            initialPrefix = '14';
+            updateAverage();
+            alert('입력창이 초기화되었습니다.');
+        }
+
+        // 데이터 저장
+        function saveData() {
+            const data = {
+                target: document.getElementById('targetNumber').value,
+                beds: Array.from(document.querySelectorAll('.input-numbers')).map(input => input.value)
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            alert('데이터가 저장되었습니다.');
+        }
+
+        // 데이터 불러오기
+        function loadData() {
+            const savedData = localStorage.getItem(STORAGE_KEY);
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                document.getElementById('targetNumber').value = data.target;
+                initialPrefix = data.target.toString().slice(0, 2);
+                
+                Array.from(document.querySelectorAll('.input-numbers')).forEach((input, index) => {
+                    input.value = data.beds[index] || '';
+                    calculateResults(input);
+                });
+                updateAverage();
+                alert('데이터가 불러와졌습니다.');
+            } else {
+                alert('저장된 데이터가 없습니다.');
+            }
+        }
+
+        // 기존 기능들 (25s + 29s 통합)
         function adjustTargetNumber(value) {
             const targetInput = document.getElementById('targetNumber');
             const newValue = parseInt(targetInput.value) + value;
@@ -360,38 +416,11 @@
             document.getElementById('averageDisplay').textContent = `평균: ${average}`;
         }
 
-        // 29s 데이터 공유 기능 통합
-        function generateShareURL() {
-            const target = document.getElementById('targetNumber').value;
-            const beds = Array.from(document.querySelectorAll('.input-numbers'))
-                .map(input => input.value.split('\n').join(','));
-
-            const params = new URLSearchParams();
-            params.set('target', target);
-            beds.forEach((bed, index) => params.set(`bed${index+1}`, bed));
-
-            return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
-        }
-
-        function loadFromURL() {
-            const params = new URLSearchParams(window.location.search);
-            if (params.has('target')) {
-                document.getElementById('targetNumber').value = params.get('target');
-                initialPrefix = document.getElementById('targetNumber').value.toString().slice(0, 2);
-                
-                Array.from(document.querySelectorAll('.input-numbers')).forEach((input, index) => {
-                    const bedData = params.get(`bed${index+1}`)?.split(',') || [];
-                    input.value = bedData.join('\n');
-                    calculateResults(input);
-                });
-                updateAverage();
-            }
-        }
-
+        // 초기화
         window.onload = function () {
             document.getElementById('revisionDisplay').textContent = `Rev: ${revision}`;
             document.getElementById('targetNumber').value = 144;
-            initialPrefix = document.getElementById('targetNumber').value.toString().slice(0, 2);
+            initialPrefix = '14';
 
             const bedContainer = document.getElementById('bedContainer');
             for (let i = 1; i <= 4; i++) {
@@ -413,15 +442,14 @@
                 input.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
             });
 
-            // 데이터 공유 버튼 이벤트 추가
-            document.getElementById('shareButton').addEventListener('click', () => {
-                const url = generateShareURL();
-                navigator.clipboard.writeText(url).then(() => {
-                    alert('공유 URL이 클립보드에 복사되었습니다:\n' + url);
-                });
-            });
+            // 숫자 키보드 강제 활성화
+            forceNumericKeyboard();
 
-            loadFromURL();
+            // 버튼 이벤트 바인딩
+            document.getElementById('resetButton').addEventListener('click', resetInputs);
+            document.getElementById('saveButton').addEventListener('click', saveData);
+            document.getElementById('loadButton').addEventListener('click', loadData);
+
             updateAverage();
         }
     </script>

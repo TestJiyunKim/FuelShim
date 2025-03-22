@@ -15,7 +15,7 @@
         h2 {
             text-align: center;
             color: #444;
-            margin: 10px 0; /* 상하 여백 축소 */
+            margin: 8px 0;
         }
         #revision {
             position: fixed;
@@ -27,8 +27,8 @@
         .groups-container {
             display: flex;
             flex-direction: column;
-            gap: 15px; /* 줄 간격 축소 */
-            margin-top: 20px;
+            gap: 12px;
+            margin-top: 15px;
         }
         .group-row {
             display: flex;
@@ -39,23 +39,23 @@
         }
         .numbering {
             width: 10%;
-            height: 45vh; /* 높이 25pt 축소 */
-            margin-top: 15px; /* 15pt 아래로 이동 */
+            height: 36vh; /* 20pt 축소 */
+            margin-top: 25px; /* 10pt 추가 */
             padding: 15px 1%;
-            font-size: 28px; /* 폰트 2배 확대 */
+            font-size: 28px;
             line-height: 1.4;
             border: 1px solid #ccc;
             border-radius: 4px;
             background-color: #f0f0f0;
         }
         .input-group {
-            width: 34%; /* 폭 10% 축소 */
+            width: 37.4%; /* 1.1배 확대 */
             border: 2px solid #007bff;
             border-radius: 6px;
             padding: 25px 1% 5px;
             position: relative;
             background-color: white;
-            height: 70vh;
+            height: 63vh; /* 0.9배 축소 */
         }
         .input-group:focus-within {
             border-color: #00f;
@@ -63,14 +63,14 @@
         }
         .bed-label {
             position: absolute;
-            top: -2px;
+            top: -8px; /* 상단 위치 조정 */
             left: 50%;
             transform: translateX(-50%);
             background: white;
             padding: 0 5px;
             color: #007bff;
             font-weight: bold;
-            font-size: 26px; /* 폰트 2배 확대 */
+            font-size: 26px;
         }
         .input-numbers {
             width: 100%;
@@ -79,7 +79,7 @@
             border-radius: 4px;
             padding: 5px;
             resize: none;
-            font-size: 28px; /* 폰트 2배 확대 */
+            font-size: 28px;
             line-height: 1.5;
             caret-color: transparent;
         }
@@ -215,7 +215,7 @@ document.addEventListener('click', (e) => {
     if (e.target.closest('.input-numbers')) {
         activeInput = e.target;
         currentLine = activeInput.value.split('\n').length;
-        activeInput.focus(); // 포커스 유지
+        activeInput.focus();
         return;
     }
     
@@ -241,7 +241,7 @@ document.addEventListener('click', (e) => {
         if (currentLine < 8) currentLine++;
     }
 
-    if(activeInput) activeInput.focus(); // 포커스 재설정
+    if(activeInput) activeInput.focus();
 });
 
 document.getElementById('copyReport').addEventListener('click', async () => {

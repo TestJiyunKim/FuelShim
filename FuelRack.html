@@ -1,462 +1,304 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 25s -->
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>FUEL SHIM 계산</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FUEL RACK 입력</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            padding: 10px;
+            margin: 10px;
             background-color: #f4f4f9;
-            color: #333;
-            margin: 0;
+            position: relative;
         }
         h2 {
+            text-align: center;
             color: #444;
-            margin-bottom: 8px;
-            text-align: center;
+            margin-bottom: 20px;
         }
-        .number-control {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            margin-bottom: 12px;
-            padding: 0 10px;
-            justify-content: center;
-        }
-        .number-control input {
-            width: 50px;
-            height: 18px;
-            text-align: center;
-            padding: 3px;
-            border: 2px solid #007bff;
-            border-radius: 4px;
-            font-size: 13px;
-            -webkit-appearance: none;
-            -moz-appearance: textfield;
-        }
-        .groups-container {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        .group-wrapper {
-            display: flex;
-            gap: 2px;
-            width: 100%;
-            align-items: flex-start;
-        }
-        .input-group {
-            display: flex;
-            gap: 2px;
-            padding: 7px 3px 8px;
-            border: 2px solid #007bff;
-            border-radius: 6px;
-            background-color: white;
-            position: relative;
-            height: 438px;
-            box-sizing: border-box;
-            flex: 1;
-        }
-        .bed-label {
-            position: absolute;
-            top: -11px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: white;
-            padding: 0 6px;
-            font-weight: bold;
-            color: #007bff;
-            font-size: 13px;
-        }
-        .numbering {
-            margin-top: 9px;
-            width: 29px !important;
-            height: 416px;
-            padding: 3px;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-            background-color: #f0f0f0;
-            font-size: 30px;
-            line-height: 42px;
-            text-align: right;
-            overflow-y: hidden;
-        }
-        .input-numbers,
-        .results {
-            height: 416px;
-            padding: 3px;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-            font-size: 30px;
-            line-height: 42px;
-            flex-shrink: 0;
-            box-sizing: border-box;
-            min-width: 44px;
-            min-height: 44px;
-            touch-action: manipulation;
-        }
-        .input-numbers {
-            width: 144px !important;
-            resize: none;
-            background-color: white;
-        }
-        .results {
-            width: 144px !important;
-            background-color: #f0f0f0;
-        }
-        .negative {
-            color: red !important;
-        }
-        .invalid {
-            color: red !important;
-            font-weight: bold;
-        }
-        .results div:empty {
-            height: 42px;
-            visibility: hidden;
-        }
-        #averageDisplay {
-            margin-left: 10px;
-            color: #007bff;
-            font-weight: bold;
-            font-size: 13px;
-        }
-        #revisionDisplay {
+        #revision {
             position: absolute;
             top: 10px;
             right: 10px;
             color: #666;
             font-size: 12px;
         }
-        #copyReportButton {
+        .groups-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 40px;
+        }
+        .group-row {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            align-items: flex-start;
+            height: 220px; /* 높이 20pt 증가 */
+        }
+        .numbering {
+            width: 45px;
+            height: 200px; /* 높이 20pt 증가 */
+            text-align: right;
+            padding: 8px 5px 0 0; /* 상하 패딩 15pt 감소 */
+            font-size: 14px;
+            line-height: 1.4;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #f0f0f0;
+        }
+        .input-group {
+            width: calc(50% - 30px);
+            border: 2px solid #007bff;
+            border-radius: 6px;
+            padding: 25px 5px 5px;
+            position: relative;
+            background-color: white;
+            height: 200px; /* 높이 20pt 증가 */
+        }
+        .bed-label {
+            position: absolute;
+            top: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 0 5px;
+            color: #007bff;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .input-numbers {
+            width: 100%;
+            height: 180px; /* 높이 20pt 증가 */
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 5px;
+            resize: none;
+            font-size: 14px;
+            line-height: 1.5;
+            caret-color: transparent;
+        }
+        .virtual-keyboard {
             position: fixed;
-            bottom: 70px;
-            right: 20px;
-            padding: 12px 24px;
-            background-color: #007bff;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #fff;
+            padding: 10px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        .keyboard-row {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            margin-bottom: 6px;
+        }
+        .keyboard-btn {
+            padding: 8px 12px;
+            border: 1px solid #007bff;
+            border-radius: 4px;
+            background: #f0f6ff;
+            cursor: pointer;
+            min-width: 55px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .keyboard-btn.active {
+            background: #007bff;
+            color: white;
+        }
+        .keyboard-btn.del {
+            background: #ffebee;
+            border-color: #ff5252;
+        }
+        #copyReport {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            padding: 6px 12px;
+            background: #28a745;
             color: white;
             border: none;
-            border-radius: 25px;
+            border-radius: 4px;
             cursor: pointer;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.16);
-            font-size: 16px;
-            z-index: 10000;
-            transition: transform 0.2s, box-shadow 0.2s;
         }
-        #copyReportButton:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 8px rgba(0,0,0,0.2);
-        }
-        @media (max-width: 768px) {
-            #copyReportButton {
-                bottom: 60px;
-                right: 15px;
-                padding: 10px 20px;
-                font-size: 14px;
+
+        /* 모바일 세로 모드 전용 스타일 */
+        @media (max-width: 768px) and (orientation: portrait) {
+            .groups-container {
+                gap: 10px;
+                margin-top: 15px;
+            }
+            
+            .group-row {
+                flex-direction: row;
+                width: 100vw !important;
+                margin-left: -10px;
+                padding: 0 10px;
+                height: 190px; /* 높이 20pt 증가 */
+            }
+
+            .numbering {
+                width: 30% !important;
+                height: 190px;
+                padding: 8px 5px;
+                margin: 0 2px;
+                font-size: 13px;
+                line-height: 1.3;
+                flex-shrink: 0;
+            }
+
+            .input-group {
+                width: 35% !important; /* 폭 50% 축소 */
+                height: 190px;
+                margin: 0 2px;
+                flex-shrink: 0;
+            }
+
+            .input-numbers {
+                height: 160px; /* 높이 20pt 증가 */
+                padding: 3px;
+                font-size: 13px;
+            }
+
+            .bed-label {
+                top: -12px;
+                font-size: 12px;
+                padding: 0 3px;
+            }
+
+            .virtual-keyboard {
+                bottom: 50px;
             }
         }
     </style>
-    <script>
-        const revision = '25s';
-        let initialPrefix = '14';
-        const MAX_LINES = 9;
-
-        function adjustTargetNumber(value) {
-            const targetInput = document.getElementById('targetNumber');
-            const newValue = parseInt(targetInput.value) + value;
-            targetInput.value = newValue;
-            initialPrefix = targetInput.value.toString().slice(0, 2);
-            
-            document.querySelectorAll('.input-numbers').forEach(input => {
-                calculateResults(input);
-            });
-            updateAverage();
-        }
-
-        function initializeInput(inputElement) {
-            inputElement.value = '';
-            inputElement.addEventListener('focus', handleFirstFocus);
-            inputElement.addEventListener('blur', cleanEmptyLines);
-        }
-
-        function handleFirstFocus(event) {
-            const input = event.target;
-            if (input.value === '') {
-                input.value = initialPrefix;
-                calculateResults(input);
-                input.setSelectionRange(initialPrefix.length, initialPrefix.length);
-            }
-            input.removeEventListener('focus', handleFirstFocus);
-        }
-
-        function cleanEmptyLines(event) {
-            const input = event.target;
-            let values = input.value.split('\n')
-                .map((line, index, arr) => {
-                    if (index === arr.length - 1 && line === getCurrentPrefix(arr[index - 1])) {
-                        return null;
-                    }
-                    return line.trim() !== '' ? line : null;
-                })
-                .filter(line => line !== null)
-                .slice(0, MAX_LINES);
-            
-            input.value = values.join('\n');
-            calculateResults(input);
-        }
-
-        function getCurrentPrefix(prevLine) {
-            return prevLine?.slice(0, 2) || initialPrefix;
-        }
-
-        function calculateResults(inputElement) {
-            const wrapper = inputElement.closest('.group-wrapper');
-            const target = parseInt(document.getElementById('targetNumber').value);
-            const numbers = inputElement.value.split('\n');
-            
-            const results = numbers.map((num, index) => {
-                const isLastLine = index === numbers.length - 1;
-                if (!isLastLine && num.length > 0 && num.length < 3 && /^\d+$/.test(num)) {
-                    return { 
-                        value: '오류!', 
-                        style: 'invalid' 
-                    };
-                }
-                if (num.length !== 3) return { value: num.length > 0 ? '⚠' : '', isNegative: false };
-                
-                const n = parseInt(num);
-                const diff = target - n;
-                const result = Math.trunc(diff * 0.125 * 10) / 10;
-                return {
-                    value: Math.abs(result) > 0.1 ? result.toFixed(1).replace(/\.0$/, '') : '',
-                    isNegative: result < 0
-                };
-            });
-
-            wrapper.querySelector('.results').innerHTML = results
-                .map(r => {
-                    if (!r.value) return '<div></div>';
-                    let classes = [];
-                    if (r.style) classes.push(r.style);
-                    if (r.isNegative) classes.push('negative');
-                    return `<div class="${classes.join(' ')}">${r.value}</div>`;
-                })
-                .join('');
-        }
-
-        function handleInput(event) {
-            const input = event.target;
-            const isBackspace = event.inputType?.startsWith('delete') || event.key === 'Backspace';
-            
-            const cursorPos = input.selectionStart;
-            const prevValue = input.value;
-            const prevLines = prevValue.split('\n');
-            
-            let currentLine = 0;
-            let posInLine = cursorPos;
-            let accumulatedLength = 0;
-            for (; currentLine < prevLines.length; currentLine++) {
-                const lineLength = prevLines[currentLine].length + 1;
-                if (posInLine <= accumulatedLength + lineLength) {
-                    posInLine -= accumulatedLength;
-                    break;
-                }
-                accumulatedLength += lineLength;
-            }
-
-            let values = input.value.replace(/[^\d\n]/g, '').split('\n')
-                .map(line => line.slice(0, 3))
-                .filter((line, index, arr) => 
-                    index === arr.length - 1 || line.trim() !== ''
-                )
-                .slice(0, MAX_LINES);
-
-            let dynamicPrefix = initialPrefix;
-            if (values.length > 0 && values[values.length - 1].length === 3) {
-                dynamicPrefix = values[values.length - 1].slice(0, 2);
-            }
-
-            let newLineAdded = false;
-            if (!isBackspace && values.length < MAX_LINES && 
-                values[values.length - 1].length === 3 && 
-                values[values.length - 1] !== dynamicPrefix) {
-                values.push(dynamicPrefix);
-                newLineAdded = true;
-            }
-
-            const newValue = values.join('\n');
-            if (newValue !== prevValue) {
-                input.value = newValue;
-                calculateResults(input);
-
-                let newCursorPos;
-                if (newLineAdded) {
-                    newCursorPos = newValue.length;
-                } else {
-                    const newLines = newValue.split('\n');
-                    newCursorPos = 0;
-                    for (let i = 0; i < currentLine; i++) {
-                        newCursorPos += (newLines[i]?.length || 0) + 1;
-                    }
-                    newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
-                }
-
-                requestAnimationFrame(() => {
-                    input.setSelectionRange(newCursorPos, newCursorPos);
-                });
-            } else {
-                calculateResults(input);
-            }
-            
-            updateAverage();
-        }
-
-        function updateAverage() {
-            const inputs = Array.from(document.querySelectorAll('.input-numbers'))
-                .slice(0, 4)
-                .flatMap(input => 
-                    input.value.split('\n')
-                    .filter(num => num.length === 3)
-                    .map(num => parseInt(num))
-                )
-                .filter(num => !isNaN(num));
-
-            const average = inputs.length > 0 
-                ? (inputs.reduce((a, b) => a + b, 0) / inputs.length).toFixed(1)
-                : '0.0';
-
-            document.getElementById('averageDisplay').textContent = `평균: ${average}`;
-        }
-
-        function createBedGroup(i) {
-            return `
-                <div class="group-wrapper">
-                    <div class="numbering">${Array.from({length: MAX_LINES}, (_, i) => `${i+1}.`).join('\n')}</div>
-                    <div class="input-group">
-                        <div class="bed-label">${i}번 베드</div>
-                        <textarea class="input-numbers" 
-                            rows="9" 
-                            inputmode="numeric"
-                            data-initialized="false"></textarea>
-                        <div class="results"></div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function generateReport() {
-            const target = document.getElementById('targetNumber').value;
-            const now = new Date();
-            const isoDate = now.toISOString().replace('T', ' ').substring(0, 19);
-            
-            // 입력이 있는 베드만 필터링 (9라인 전체 확인)
-            const beds = Array.from(document.querySelectorAll('.input-group'))
-                .map(group => {
-                    const bedNumber = group.querySelector('.bed-label').textContent.replace('번 베드', '').trim();
-                    const lines = group.querySelector('.input-numbers').value.split('\n');
-                    const values = lines.map(v => v.trim());
-                    const results = Array.from(group.querySelectorAll('.results div')).map(div => div.textContent.trim());
-                    return { bedNumber, values, results };
-                })
-                .filter(bed => bed.values.some(v => v !== ''));
-
-            let reportLines = [];
-            reportLines.push(`# FUEL SHIM REPORT`);
-            reportLines.push(`**TARGET:** ${target}`);
-            reportLines.push(`**DATE:** ${isoDate}\n`);
-
-            // 폭 계산 함수 (공백 2/3 가중치)
-            const calcWidth = str => Math.ceil(
-                str.replace(/ /g,'').length + 
-                (str.match(/ /g)?.length || 0) * 0.666
-            );
-
-            beds.forEach(bed => {
-                const rows = [];
-                
-                // 유효한 행만 추출
-                for(let i=0; i<MAX_LINES; i++) {
-                    const input = bed.values[i]?.replace(/[^0-9]/g,'') || '';
-                    const result = bed.results[i] || '';
-                    
-                    if(input.length !== 3 && result === '') continue;
-                    
-                    rows.push({
-                        no: i+1,
-                        input: input.padStart(3,'0'),
-                        result: result.replace(/\*\*/g,'')
-                    });
-                }
-
-                // 컬럼 폭 계산
-                let noWidth = 3, inputWidth = 5, resultWidth = 6;
-                rows.forEach(row => {
-                    noWidth = Math.max(noWidth, calcWidth(row.no.toString()));
-                    inputWidth = Math.max(inputWidth, calcWidth(row.input));
-                    resultWidth = Math.max(resultWidth, calcWidth(row.result));
-                });
-
-                // 테이블 생성
-                reportLines.push(`## BED ${bed.bedNumber}\n`);
-                reportLines.push(`| NO.${' '.repeat(noWidth-3)} | INPUT${' '.repeat(inputWidth-5)} | RESULT${' '.repeat(resultWidth-6)} |`);
-                reportLines.push(`|${'-'.repeat(noWidth+2)}|${'-'.repeat(inputWidth+2)}|${'-'.repeat(resultWidth+2)}|`);
-                
-                rows.forEach(row => {
-                    reportLines.push(
-                        `| ${row.no.toString().padEnd(noWidth)} ` +
-                        `| ${row.input.padEnd(inputWidth)} ` +
-                        `| ${row.result.padEnd(resultWidth)} |`
-                    );
-                });
-                reportLines.push('');
-            });
-
-            return reportLines.join('\n');
-        }
-
-        window.onload = function () {
-            document.getElementById('revisionDisplay').textContent = `Rev: ${revision}`;
-            document.getElementById('targetNumber').value = 144;
-            initialPrefix = document.getElementById('targetNumber').value.toString().slice(0, 2);
-
-            const bedContainer = document.getElementById('bedContainer');
-            for (let i = 1; i <= 4; i++) {
-                bedContainer.insertAdjacentHTML('beforeend', createBedGroup(i));
-            }
-
-            document.querySelectorAll('.input-numbers').forEach(input => {
-                initializeInput(input);
-                input.addEventListener('input', handleInput);
-                input.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
-            });
-
-            document.getElementById('copyReportButton').addEventListener('click', async () => {
-                try {
-                    await navigator.clipboard.writeText(generateReport());
-                    alert('보고서가 클립보드에 복사되었습니다.');
-                } catch(err) {
-                    alert('보고서 복사 실패: ' + err.message);
-                }
-            });
-
-            updateAverage();
-        }
-    </script>
 </head>
 <body>
-    <div id="revisionDisplay"></div>
-    <h2>FUEL SHIM 계산</h2>
-    <div class="number-control">
-        <button onclick="adjustTargetNumber(-1)">-</button>
-        <input type="number" id="targetNumber" value="144" pattern="[0-9]*" inputmode="numeric">
-        <button onclick="adjustTargetNumber(1)">+</button>
-        <span id="averageDisplay">평균: 0.0</span>
+    <div id="revision">Rev: 23R2</div>
+    <button id="copyReport">보고서 복사</button>
+    <h2>FUEL RACK 입력</h2>
+    
+    <div class="groups-container">
+        <!-- 1번 줄: 번호1 + 베드1 + 베드2 -->
+        <div class="group-row">
+            <div class="numbering">1.<br>2.<br>3.<br>4.<br>5.<br>6.<br>7.<br>8.<br>9.</div>
+            <div class="input-group">
+                <div class="bed-label">#1</div>
+                <textarea class="input-numbers" data-bed="1" readonly></textarea>
+            </div>
+            <div class="input-group">
+                <div class="bed-label">#2</div>
+                <textarea class="input-numbers" data-bed="2" readonly></textarea>
+            </div>
+        </div>
+
+        <!-- 2번 줄: 번호2 + 베드3 + 베드4 -->
+        <div class="group-row">
+            <div class="numbering">1.<br>2.<br>3.<br>4.<br>5.<br>6.<br>7.<br>8.<br>9.</div>
+            <div class="input-group">
+                <div class="bed-label">#3</div>
+                <textarea class="input-numbers" data-bed="3" readonly></textarea>
+            </div>
+            <div class="input-group">
+                <div class="bed-label">#4</div>
+                <textarea class="input-numbers" data-bed="4" readonly></textarea>
+            </div>
+        </div>
     </div>
-    <div class="groups-container" id="bedContainer"></div>
-    <button id="copyReportButton">보고서 생성</button>
+
+    <div class="virtual-keyboard">
+        <div class="keyboard-row">
+            <button class="keyboard-btn" data-percent="25">25%</button>
+            <button class="keyboard-btn" data-percent="50">50%</button>
+            <button class="keyboard-btn" data-percent="75">75%</button>
+            <button class="keyboard-btn" data-percent="100">100%</button>
+            <button class="keyboard-btn" data-percent="110">110%</button>
+        </div>
+        <div class="keyboard-row" id="number-buttons"></div>
+    </div>
+
+<script>
+const presets = {
+    '25': [9.5, 10, 10.5],
+    '50': [17.5, 18, 18.5],
+    '75': [24.5, 25, 25.5],
+    '100': [32.5, 33, 33.5],
+    '110': [35.5, 36, 36.5]
+};
+
+let currentPercent = '25';
+let activeInput = null;
+let currentValues = [...presets[currentPercent]];
+let currentLine = 0;
+
+function updateNumberButtons() {
+    const container = document.getElementById('number-buttons');
+    container.innerHTML = `
+        <button class="keyboard-btn" data-action="decr">-</button>
+        <button class="keyboard-btn">${currentValues[0].toFixed(1)}</button>
+        <button class="keyboard-btn">${currentValues[1].toFixed(1)}</button>
+        <button class="keyboard-btn">${currentValues[2].toFixed(1)}</button>
+        <button class="keyboard-btn" data-action="incr">+</button>
+        <button class="keyboard-btn del" data-action="del">Del</button>
+    `;
+}
+
+document.querySelectorAll('.keyboard-btn[data-percent]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        currentPercent = e.target.dataset.percent;
+        currentValues = [...presets[currentPercent]];
+        document.querySelectorAll('.keyboard-btn[data-percent]').forEach(b => 
+            b.classList.remove('active'));
+        e.target.classList.add('active');
+        updateNumberButtons();
+    });
+});
+
+document.addEventListener('click', (e) => {
+    if (e.target.closest('.input-numbers')) {
+        activeInput = e.target;
+        currentLine = activeInput.value.split('\n').length;
+    }
+    
+    const action = e.target.dataset.action;
+    if (action === 'decr') {
+        currentValues = currentValues.map(v => v - 0.5);
+        updateNumberButtons();
+    } else if (action === 'incr') {
+        currentValues = currentValues.map(v => v + 0.5);
+        updateNumberButtons();
+    } else if (action === 'del') {
+        const lines = activeInput.value.split('\n');
+        lines.pop();
+        activeInput.value = lines.join('\n');
+        currentLine = Math.max(0, lines.length - 1);
+    } else if (e.target.classList.contains('keyboard-btn') && activeInput) {
+        const value = parseFloat(e.target.textContent);
+        const lines = activeInput.value.split('\n');
+        lines[currentLine] = value.toFixed(1);
+        activeInput.value = lines.filter(v => v).join('\n');
+        if (currentLine < 8) currentLine++;
+    }
+});
+
+document.getElementById('copyReport').addEventListener('click', async () => {
+    try {
+        const report = Array.from(document.querySelectorAll('.input-group')).map(group => {
+            const bedNumber = group.querySelector('.bed-label').textContent;
+            const values = group.querySelector('.input-numbers').value.split('\n').filter(v => v);
+            return `${bedNumber}: ${values.join(', ')}`;
+        }).join('\n');
+        
+        await navigator.clipboard.writeText(report);
+        alert('보고서가 클립보드에 복사되었습니다.');
+    } catch (err) {
+        alert('복사 실패: ' + err.message);
+    }
+});
+
+document.querySelector('.keyboard-btn[data-percent="25"]').classList.add('active');
+updateNumberButtons();
+</script>
 </body>
 </html>

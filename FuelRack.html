@@ -15,7 +15,7 @@
         h2 {
             text-align: center;
             color: #444;
-            margin: 20px 0;
+            margin: 10px 0; /* 상하 여백 축소 */
         }
         #revision {
             position: fixed;
@@ -27,36 +27,39 @@
         .groups-container {
             display: flex;
             flex-direction: column;
-            gap: 100vh; /* 한 화면에 하나의 줄만 표시 */
-            margin-top: 40px;
+            gap: 15px; /* 줄 간격 축소 */
+            margin-top: 20px;
         }
         .group-row {
             display: flex;
             gap: 2%;
             width: 96%;
-            min-height: 100vh;
             padding: 0 2%;
-            align-items: center;
+            align-items: flex-start;
         }
         .numbering {
-            width: 10%; /* 폭 1/10 조정 */
-            height: 70vh;
-            text-align: right;
+            width: 10%;
+            height: 45vh; /* 높이 25pt 축소 */
+            margin-top: 15px; /* 15pt 아래로 이동 */
             padding: 15px 1%;
-            font-size: 14px;
+            font-size: 28px; /* 폰트 2배 확대 */
             line-height: 1.4;
             border: 1px solid #ccc;
             border-radius: 4px;
             background-color: #f0f0f0;
         }
         .input-group {
-            width: 44%; /* 남은 공간 할당 */
+            width: 34%; /* 폭 10% 축소 */
             border: 2px solid #007bff;
             border-radius: 6px;
             padding: 25px 1% 5px;
             position: relative;
             background-color: white;
             height: 70vh;
+        }
+        .input-group:focus-within {
+            border-color: #00f;
+            box-shadow: 0 0 8px rgba(0,123,255,0.3);
         }
         .bed-label {
             position: absolute;
@@ -67,16 +70,16 @@
             padding: 0 5px;
             color: #007bff;
             font-weight: bold;
-            font-size: 13px;
+            font-size: 26px; /* 폰트 2배 확대 */
         }
         .input-numbers {
             width: 100%;
-            height: calc(100% - 30px);
+            height: calc(100% - 40px);
             border: 1px solid #ccc;
             border-radius: 4px;
             padding: 5px;
             resize: none;
-            font-size: 14px;
+            font-size: 28px; /* 폰트 2배 확대 */
             line-height: 1.5;
             caret-color: transparent;
         }
@@ -212,11 +215,12 @@ document.addEventListener('click', (e) => {
     if (e.target.closest('.input-numbers')) {
         activeInput = e.target;
         currentLine = activeInput.value.split('\n').length;
+        activeInput.focus(); // 포커스 유지
         return;
     }
     
     const action = e.target.dataset.action;
-    if (!action && e.target.closest('[data-percent]')) return; // 퍼센트 버튼 입력 방지
+    if (!action && e.target.closest('[data-percent]')) return;
 
     if (action === 'decr') {
         currentValues = currentValues.map(v => v - 0.5);
@@ -236,6 +240,8 @@ document.addEventListener('click', (e) => {
         activeInput.value = lines.filter(v => v).join('\n');
         if (currentLine < 8) currentLine++;
     }
+
+    if(activeInput) activeInput.focus(); // 포커스 재설정
 });
 
 document.getElementById('copyReport').addEventListener('click', async () => {
@@ -253,7 +259,6 @@ document.getElementById('copyReport').addEventListener('click', async () => {
     }
 });
 
-// 초기화
 document.querySelector('.keyboard-btn[data-percent="25"]').classList.add('active');
 updateNumberButtons();
 </script>

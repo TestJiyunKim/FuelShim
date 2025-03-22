@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 39s (최종 버전) -->
+    <!-- Revision: 40s (핫픽스 버전) -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,7 +14,7 @@
             background-color: #f4f4f9;
             color: #333;
             margin: 0;
-            padding-bottom: 120px; /* 두 줄 버튼 높이에 맞춰 조정 */
+            padding-bottom: 120px;
         }
         h2 {
             color: #444;
@@ -75,7 +75,7 @@
             font-size: 13px;
         }
         .numbering {
-            margin-top: 13px !important; /* 3포인트 올림 */
+            margin-top: 13px !important; /* 3포인트 상향 조정 */
             width: 29px !important;
             height: 416px;
             padding: 3px;
@@ -145,10 +145,10 @@
             padding: 0 10px;
         }
         #buttonRow1 {
-            bottom: 60px; /* 두 번째 줄 위에 위치 */
+            bottom: 60px;
         }
         #buttonRow2 {
-            bottom: 10px; /* 최하단 위치 */
+            bottom: 10px;
         }
         .button-row button {
             flex: 1;
@@ -215,10 +215,45 @@
     </div>
 
     <script>
-        const revision = '39s';
+        const revision = '40s';
         let initialPrefix = '14';
         const MAX_LINES = 9;
         const STORAGE_KEY = 'fuelShimData';
+
+        // 복구된 기능들 -------------------------------------------------
+        function generateReport() {
+            const target = document.getElementById('targetNumber').value;
+            const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+            
+            let report = `[FUEL SHIM 보고서]\n`;
+            report += `작업일: ${now}\n`;
+            report += `목표값: ${target}\n\n`;
+
+            document.querySelectorAll('.input-group').forEach((group, index) => {
+                const values = group.querySelector('.input-numbers').value.split('\n');
+                const results = Array.from(group.querySelectorAll('.results div')).map(div => div.textContent);
+                
+                report += `[${index+1}번 베드]\n`;
+                values.forEach((v, i) => {
+                    report += `${i+1}. ${v.padEnd(5)} → ${results[i] || ''}\n`;
+                });
+                report += '\n';
+            });
+
+            return report;
+        }
+
+        function generateShareURL() {
+            const params = new URLSearchParams();
+            params.set('target', document.getElementById('targetNumber').value);
+            
+            document.querySelectorAll('.input-numbers').forEach((input, idx) => {
+                params.set(`bed${idx+1}`, input.value.split('\n').join(','));
+            });
+            
+            return `${location.href}?${params.toString()}`;
+        }
+        // ------------------------------------------------------------
 
         // 숫자 키보드 강제 활성화
         function forceNumericKeyboard() {
@@ -237,7 +272,7 @@
             initialPrefix = '14';
             updateAverage();
             alert('입력창이 초기화되었습니다.');
-            updateLoadButton(); // 초기화 후 버튼 상태 업데이트
+            updateLoadButton();
         }
 
         // 데이터 저장
@@ -250,7 +285,7 @@
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             alert('데이터가 저장되었습니다.');
-            updateLoadButton(); // 저장 후 버튼 상태 업데이트
+            updateLoadButton();
         }
 
         // 데이터 불러오기
@@ -280,22 +315,15 @@
             if (savedData) {
                 const data = JSON.parse(savedData);
                 const saveDate = new Date(data.date);
-                const month = saveDate.getMonth() + 1;
-                const date = saveDate.getDate();
-                loadBtn.textContent = `${month}/${date} 불러오기`;
+                loadBtn.textContent = `${saveDate.getMonth()+1}/${saveDate.getDate()} 불러오기`;
                 loadBtn.classList.remove('disabled');
             } else {
                 loadBtn.textContent = '데이터 불러오기';
                 loadBtn.classList.add('disabled');
             }
-
-            // 글자 길이 확인 (15자 제한)
-            if (loadBtn.textContent.length > 15) {
-                loadBtn.textContent = '데이터 불러오기';
-            }
         }
 
-        // 기존 기능들 (25s + 29s 통합)
+        // 공통 기능들 -------------------------------------------------
         function adjustTargetNumber(value) {
             const targetInput = document.getElementById('targetNumber');
             const newValue = parseInt(targetInput.value) + value;
@@ -306,42 +334,6 @@
                 calculateResults(input);
             });
             updateAverage();
-        }
-
-        function initializeInput(inputElement) {
-            inputElement.value = '';
-            inputElement.addEventListener('focus', handleFirstFocus);
-            inputElement.addEventListener('blur', cleanEmptyLines);
-        }
-
-        function handleFirstFocus(event) {
-            const input = event.target;
-            if (input.value === '') {
-                input.value = initialPrefix;
-                calculateResults(input);
-                input.setSelectionRange(initialPrefix.length, initialPrefix.length);
-            }
-            input.removeEventListener('focus', handleFirstFocus);
-        }
-
-        function cleanEmptyLines(event) {
-            const input = event.target;
-            let values = input.value.split('\n')
-                .map((line, index, arr) => {
-                    if (index === arr.length - 1 && line === getCurrentPrefix(arr[index - 1])) {
-                        return null;
-                    }
-                    return line.trim() !== '' ? line : null;
-                })
-                .filter(line => line !== null)
-                .slice(0, MAX_LINES);
-            
-            input.value = values.join('\n');
-            calculateResults(input);
-        }
-
-        function getCurrentPrefix(prevLine) {
-            return prevLine?.slice(0, 2) || initialPrefix;
         }
 
         function calculateResults(inputElement) {
@@ -377,73 +369,6 @@
                     return `<div class="${classes.join(' ')}">${r.value}</div>`;
                 })
                 .join('');
-        }
-
-        function handleInput(event) {
-            const input = event.target;
-            const isBackspace = event.inputType?.startsWith('delete') || event.key === 'Backspace';
-            
-            const cursorPos = input.selectionStart;
-            const prevValue = input.value;
-            const prevLines = prevValue.split('\n');
-            
-            let currentLine = 0;
-            let posInLine = cursorPos;
-            let accumulatedLength = 0;
-            for (; currentLine < prevLines.length; currentLine++) {
-                const lineLength = prevLines[currentLine].length + 1;
-                if (posInLine <= accumulatedLength + lineLength) {
-                    posInLine -= accumulatedLength;
-                    break;
-                }
-                accumulatedLength += lineLength;
-            }
-
-            let values = input.value.replace(/[^\d\n]/g, '').split('\n')
-                .map(line => line.slice(0, 3))
-                .filter((line, index, arr) => 
-                    index === arr.length - 1 || line.trim() !== ''
-                )
-                .slice(0, MAX_LINES);
-
-            let dynamicPrefix = initialPrefix;
-            if (values.length > 0 && values[values.length - 1].length === 3) {
-                dynamicPrefix = values[values.length - 1].slice(0, 2);
-            }
-
-            let newLineAdded = false;
-            if (!isBackspace && values.length < MAX_LINES && 
-                values[values.length - 1].length === 3 && 
-                values[values.length - 1] !== dynamicPrefix) {
-                values.push(dynamicPrefix);
-                newLineAdded = true;
-            }
-
-            const newValue = values.join('\n');
-            if (newValue !== prevValue) {
-                input.value = newValue;
-                calculateResults(input);
-
-                let newCursorPos;
-                if (newLineAdded) {
-                    newCursorPos = newValue.length;
-                } else {
-                    const newLines = newValue.split('\n');
-                    newCursorPos = 0;
-                    for (let i = 0; i < currentLine; i++) {
-                        newCursorPos += (newLines[i]?.length || 0) + 1;
-                    }
-                    newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
-                }
-
-                requestAnimationFrame(() => {
-                    input.setSelectionRange(newCursorPos, newCursorPos);
-                });
-            } else {
-                calculateResults(input);
-            }
-            
-            updateAverage();
         }
 
         function updateAverage() {
@@ -484,26 +409,28 @@
             }
 
             document.querySelectorAll('.input-numbers').forEach(input => {
-                initializeInput(input);
                 input.addEventListener('input', handleInput);
                 input.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
             });
 
-            // 숫자 키보드 강제 활성화
             forceNumericKeyboard();
 
             // 버튼 이벤트 바인딩
             document.getElementById('resetButton').addEventListener('click', resetInputs);
             document.getElementById('saveButton').addEventListener('click', saveData);
             document.getElementById('loadButton').addEventListener('click', function() {
-                if (!this.classList.contains('disabled')) {
-                    loadData();
-                }
+                if (!this.classList.contains('disabled')) loadData();
+            });
+            document.getElementById('copyReportButton').addEventListener('click', () => {
+                navigator.clipboard.writeText(generateReport());
+                alert('보고서가 클립보드에 복사되었습니다');
+            });
+            document.getElementById('shareButton').addEventListener('click', () => {
+                navigator.clipboard.writeText(generateShareURL());
+                alert('공유 URL이 클립보드에 복사되었습니다');
             });
 
-            // 데이터 불러오기 버튼 상태 업데이트
             updateLoadButton();
-
             updateAverage();
         }
     </script>

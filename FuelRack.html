@@ -16,7 +16,7 @@
         h2 {
             text-align: center;
             color: #444;
-            margin: 8px 0;
+            margin: 20px 0 15px 0; /* 제목 아래 여백 추가 */
         }
         #revision {
             position: fixed;
@@ -34,26 +34,26 @@
         .group-row {
             display: flex;
             gap: 2%;
-            width: 96%;
-            padding: 0 2%;
+            width: 94%; /* 그룹창 폭 조정 */
+            padding: 0 3%; /* 양쪽 여백 추가 */
             align-items: flex-start;
         }
         .numbering {
             width: 10%;
-            height: 63vh; /* 높이 50포인트 추가 */
-            margin-top: 25px;
+            height: 58vh; /* 번호창 높이 20포인트 축소 */
+            margin-top: 29px; /* 번호창 4포인트 아래로 내림 */
             padding: 15px 1%;
             font-size: 28px;
-            line-height: 1.4; /* 줄바꿈 높이 통일 */
+            line-height: 1.4;
             border: 1px solid #ccc;
             border-radius: 4px;
             background-color: #f0f0f0;
         }
         .input-group {
-            width: 35%; /* 번호창 대비 입력창 폭 축소 */
+            width: 42%; /* 입력창 폭 확대 */
             border: 2px solid #007bff;
             border-radius: 6px;
-            padding: 25px 1% 5px;
+            padding: 25px 1% 5px; /* 내부 상단 여백 동일하게 수정 */
             position: relative;
             background-color: white;
             height: 63vh;
@@ -81,7 +81,7 @@
             padding: 5px;
             resize: none;
             font-size: 28px;
-            line-height: 1.4; /* 줄바꿈 높이 통일 */
+            line-height: 1.4;
             caret-color: transparent;
         }
         .virtual-keyboard {
@@ -122,14 +122,15 @@
         }
         #copyReport {
             position: fixed;
-            top: 10px;
-            left: 10px;
+            bottom: 130px; /* 우측 하단 가상 키보드보다 약간 위로 이동 */
+            right: 20px;
             padding: 6px 12px;
             background: #28a745;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            z-index: 1001;
         }
     </style>
 </head>

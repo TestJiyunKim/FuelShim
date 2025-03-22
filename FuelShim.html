@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 24s -->
+    <!-- Revision: 25s -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -161,7 +161,7 @@
         }
     </style>
     <script>
-        const revision = '24s';
+        const revision = '25s';
         let initialPrefix = '14';
         const MAX_LINES = 9;
 
@@ -353,59 +353,69 @@
             const now = new Date();
             const isoDate = now.toISOString().replace('T', ' ').substring(0, 19);
             
-            // 입력이 있는 베드만 필터링
+            // 입력이 있는 베드만 필터링 (9라인 전체 확인)
             const beds = Array.from(document.querySelectorAll('.input-group'))
                 .map(group => {
                     const bedNumber = group.querySelector('.bed-label').textContent.replace('번 베드', '').trim();
-                    const values = group.querySelector('.input-numbers').value.split('\n').map(v => v.trim()).filter(v => v !== '');
+                    const lines = group.querySelector('.input-numbers').value.split('\n');
+                    const values = lines.map(v => v.trim());
                     const results = Array.from(group.querySelectorAll('.results div')).map(div => div.textContent.trim());
                     return { bedNumber, values, results };
                 })
-                .filter(bed => bed.values.length > 0); // 입력이 있는 베드만 포함
+                .filter(bed => bed.values.some(v => v !== ''));
 
             let reportLines = [];
             reportLines.push(`# FUEL SHIM REPORT`);
             reportLines.push(`**TARGET:** ${target}`);
-            reportLines.push(`**DATE:** ${isoDate}`);
-            reportLines.push(``);
+            reportLines.push(`**DATE:** ${isoDate}\n`);
 
-            beds.forEach((bed) => {
-                reportLines.push(`## BED ${bed.bedNumber}`);
-                reportLines.push(``);
+            // 폭 계산 함수 (공백 2/3 가중치)
+            const calcWidth = str => Math.ceil(
+                str.replace(/ /g,'').length + 
+                (str.match(/ /g)?.length || 0) * 0.666
+            );
+
+            beds.forEach(bed => {
+                const rows = [];
                 
-                let inputCells = [];
-                let resultCells = [];
-                for (let i = 0; i < MAX_LINES; i++) {
-                    // 입력값 처리
-                    let rawInput = bed.values[i] || "";
-                    let inputCell = rawInput.padStart(3, '0').substring(0,3);
-                    inputCell = inputCell || '-';
-                    inputCells.push(inputCell);
-
-                    // 결과값 처리 (음수 **표시 제거)
-                    let rawResult = bed.results[i] || "";
-                    resultCells.push(rawResult || '-');
+                // 유효한 행만 추출
+                for(let i=0; i<MAX_LINES; i++) {
+                    const input = bed.values[i]?.replace(/[^0-9]/g,'') || '';
+                    const result = bed.results[i] || '';
+                    
+                    if(input.length !== 3 && result === '') continue;
+                    
+                    rows.push({
+                        no: i+1,
+                        input: input.padStart(3,'0'),
+                        result: result.replace(/\*\*/g,'')
+                    });
                 }
 
-                // 테이블 헤더 생성
-                const inputHeader = "INPUT";
-                const resultHeader = "RESULT";
-                let inputMaxWidth = Math.max(...inputCells.map(c => c.length), inputHeader.length);
-                let resultMaxWidth = Math.max(...resultCells.map(c => c.replace(/[^0-9.-]/g,'').length), resultHeader.length);
+                // 컬럼 폭 계산
+                let noWidth = 3, inputWidth = 5, resultWidth = 6;
+                rows.forEach(row => {
+                    noWidth = Math.max(noWidth, calcWidth(row.no.toString()));
+                    inputWidth = Math.max(inputWidth, calcWidth(row.input));
+                    resultWidth = Math.max(resultWidth, calcWidth(row.result));
+                });
 
                 // 테이블 생성
-                reportLines.push(`| ${inputHeader.padEnd(inputMaxWidth)} | ${resultHeader.padEnd(resultMaxWidth)} |`);
-                reportLines.push(`| ${'-'.repeat(inputMaxWidth)} | ${'-'.repeat(resultMaxWidth)} |`);
+                reportLines.push(`## BED ${bed.bedNumber}\n`);
+                reportLines.push(`| NO.${' '.repeat(noWidth-3)} | INPUT${' '.repeat(inputWidth-5)} | RESULT${' '.repeat(resultWidth-6)} |`);
+                reportLines.push(`|${'-'.repeat(noWidth+2)}|${'-'.repeat(inputWidth+2)}|${'-'.repeat(resultWidth+2)}|`);
                 
-                for (let i = 0; i < MAX_LINES; i++) {
-                    const input = inputCells[i].padEnd(inputMaxWidth);
-                    const result = resultCells[i].padEnd(resultMaxWidth);
-                    reportLines.push(`| ${input} | ${result} |`);
-                }
-                reportLines.push(``);
+                rows.forEach(row => {
+                    reportLines.push(
+                        `| ${row.no.toString().padEnd(noWidth)} ` +
+                        `| ${row.input.padEnd(inputWidth)} ` +
+                        `| ${row.result.padEnd(resultWidth)} |`
+                    );
+                });
+                reportLines.push('');
             });
-            
-            return reportLines.join("\n");
+
+            return reportLines.join('\n');
         }
 
         window.onload = function () {

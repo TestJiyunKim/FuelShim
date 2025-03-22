@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 29s -->
+    <!-- Revision: 30s (25s 기능 통합) -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -104,6 +104,9 @@
             resize: none;
             background-color: white;
         }
+        .input-numbers:focus {
+            outline: 2px solid #007bff;
+        }
         .results {
             width: 144px !important;
             background-color: #f0f0f0;
@@ -185,46 +188,50 @@
     <button id="copyReportButton">보고서 생성</button>
 
     <script>
-        const revision = '29s';
+        const revision = '30s';
         let initialPrefix = '14';
         const MAX_LINES = 9;
 
-        // 초기화 함수
-        function init() {
-            document.getElementById('revisionDisplay').textContent = `Rev: ${revision}`;
-            document.getElementById('targetNumber').value = 144;
-            initialPrefix = document.getElementById('targetNumber').value.toString().slice(0, 2);
-
-            // 베드 생성
-            const bedContainer = document.getElementById('bedContainer');
-            for (let i = 1; i <= 4; i++) {
-                bedContainer.insertAdjacentHTML('beforeend', `
-                    <div class="group-wrapper">
-                        <div class="numbering">${Array.from({length: MAX_LINES}, (_, i) => `${i+1}.`).join('\n')}</div>
-                        <div class="input-group">
-                            <div class="bed-label">${i}번 베드</div>
-                            <textarea class="input-numbers"></textarea>
-                            <div class="results"></div>
-                        </div>
-                    </div>
-                `);
-            }
-
-            // 이벤트 바인딩
-            document.querySelectorAll('.input-numbers').forEach(input => {
-                input.addEventListener('input', handleInput);
-                input.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
-            });
-
-            // URL 데이터 로드
-            loadFromURL();
-            updateAverage();
+        function initializeInput(inputElement) {
+            inputElement.value = '';
+            inputElement.addEventListener('focus', handleFirstFocus);
+            inputElement.addEventListener('blur', cleanEmptyLines);
         }
 
-        // 타겟 값 조정
+        function handleFirstFocus(event) {
+            const input = event.target;
+            if (input.value === '') {
+                input.value = initialPrefix;
+                calculateResults(input);
+                input.setSelectionRange(initialPrefix.length, initialPrefix.length);
+            }
+            input.removeEventListener('focus', handleFirstFocus);
+        }
+
+        function cleanEmptyLines(event) {
+            const input = event.target;
+            let values = input.value.split('\n')
+                .map((line, index, arr) => {
+                    if (index === arr.length - 1 && line === getCurrentPrefix(arr[index - 1])) {
+                        return null;
+                    }
+                    return line.trim() !== '' ? line : null;
+                })
+                .filter(line => line !== null)
+                .slice(0, MAX_LINES);
+            
+            input.value = values.join('\n');
+            calculateResults(input);
+        }
+
+        function getCurrentPrefix(prevLine) {
+            return prevLine?.slice(0, 2) || initialPrefix;
+        }
+
         function adjustTargetNumber(value) {
             const targetInput = document.getElementById('targetNumber');
-            const newValue = parseInt(targetInput.value) + value;
+            let newValue = parseInt(targetInput.value) + value;
+            newValue = Math.min(Math.max(newValue, 100), 200);
             targetInput.value = newValue;
             initialPrefix = targetInput.value.toString().slice(0, 2);
             
@@ -234,7 +241,41 @@
             updateAverage();
         }
 
-        // 입력 처리
+        function calculateResults(inputElement) {
+            const wrapper = inputElement.closest('.group-wrapper');
+            const target = parseInt(document.getElementById('targetNumber').value);
+            const numbers = inputElement.value.split('\n');
+            
+            const results = numbers.map((num, index) => {
+                const isLastLine = index === numbers.length - 1;
+                if (!isLastLine && num.length > 0 && num.length < 3 && /^\d+$/.test(num)) {
+                    return { 
+                        value: '오류!', 
+                        style: 'invalid' 
+                    };
+                }
+                if (num.length !== 3) return { value: num.length > 0 ? '⚠' : '', isNegative: false };
+                
+                const n = parseInt(num);
+                const diff = target - n;
+                const result = Math.trunc(diff * 0.125 * 10) / 10;
+                return {
+                    value: Math.abs(result) > 0.1 ? result.toFixed(1).replace(/\.0$/, '') : '',
+                    isNegative: result < 0
+                };
+            });
+
+            wrapper.querySelector('.results').innerHTML = results
+                .map(r => {
+                    if (!r.value) return '<div></div>';
+                    let classes = [];
+                    if (r.style) classes.push(r.style);
+                    if (r.isNegative) classes.push('negative');
+                    return `<div class="${classes.join(' ')}">${r.value}</div>`;
+                })
+                .join('');
+        }
+
         function handleInput(event) {
             const input = event.target;
             const isBackspace = event.inputType?.startsWith('delete') || event.key === 'Backspace';
@@ -302,43 +343,6 @@
             updateAverage();
         }
 
-        // 결과 계산
-        function calculateResults(inputElement) {
-            const wrapper = inputElement.closest('.group-wrapper');
-            const target = parseInt(document.getElementById('targetNumber').value);
-            const numbers = inputElement.value.split('\n');
-            
-            const results = numbers.map((num, index) => {
-                const isLastLine = index === numbers.length - 1;
-                if (!isLastLine && num.length > 0 && num.length < 3 && /^\d+$/.test(num)) {
-                    return { 
-                        value: '오류!', 
-                        style: 'invalid' 
-                    };
-                }
-                if (num.length !== 3) return { value: num.length > 0 ? '⚠' : '', isNegative: false };
-                
-                const n = parseInt(num);
-                const diff = target - n;
-                const result = Math.trunc(diff * 0.125 * 10) / 10;
-                return {
-                    value: Math.abs(result) > 0.1 ? result.toFixed(1).replace(/\.0$/, '') : '',
-                    isNegative: result < 0
-                };
-            });
-
-            wrapper.querySelector('.results').innerHTML = results
-                .map(r => {
-                    if (!r.value) return '<div></div>';
-                    let classes = [];
-                    if (r.style) classes.push(r.style);
-                    if (r.isNegative) classes.push('negative');
-                    return `<div class="${classes.join(' ')}">${r.value}</div>`;
-                })
-                .join('');
-        }
-
-        // 평균 업데이트
         function updateAverage() {
             const inputs = Array.from(document.querySelectorAll('.input-numbers'))
                 .slice(0, 4)
@@ -356,24 +360,51 @@
             document.getElementById('averageDisplay').textContent = `평균: ${average}`;
         }
 
-        // URL 데이터 로드
         function loadFromURL() {
             const params = new URLSearchParams(window.location.search);
             if (!params.has('target')) return;
 
-            // 타겟 값 설정
-            document.getElementById('targetNumber').value = params.get('target');
-            adjustTargetNumber(0); // 입력값 업데이트
+            const target = Math.min(Math.max(parseInt(params.get('target') || 144, 100), 200);
+            document.getElementById('targetNumber').value = target;
+            initialPrefix = target.toString().slice(0,2);
 
-            // 베드 데이터 로드
             Array.from(document.querySelectorAll('.input-numbers')).forEach((input, idx) => {
                 const bedData = params.get(`bed${idx+1}`)?.split(',') || [];
-                input.value = bedData.join('\n');
+                input.value = bedData.map(v => v.padStart(3, '0')).join('\n');
                 calculateResults(input);
             });
+            updateAverage();
         }
 
-        // 초기화 실행
+        function init() {
+            document.getElementById('revisionDisplay').textContent = `Rev: ${revision}`;
+            document.getElementById('targetNumber').value = 144;
+            initialPrefix = '14';
+
+            const bedContainer = document.getElementById('bedContainer');
+            for (let i = 1; i <= 4; i++) {
+                bedContainer.insertAdjacentHTML('beforeend', `
+                    <div class="group-wrapper">
+                        <div class="numbering">${Array.from({length: MAX_LINES}, (_, i) => `${i+1}.`).join('\n')}</div>
+                        <div class="input-group">
+                            <div class="bed-label">${i}번 베드</div>
+                            <textarea class="input-numbers"></textarea>
+                            <div class="results"></div>
+                        </div>
+                    </div>
+                `);
+            }
+
+            document.querySelectorAll('.input-numbers').forEach(input => {
+                initializeInput(input);
+                input.addEventListener('input', handleInput);
+                input.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
+            });
+
+            loadFromURL();
+            updateAverage();
+        }
+
         window.onload = init;
     </script>
 </body>

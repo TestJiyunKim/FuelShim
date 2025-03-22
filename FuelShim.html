@@ -1,24 +1,31 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 30s (25s 기능 통합) -->
+    <!-- Revision: 31s (iOS Hotfix) -->
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>FUEL SHIM 계산</title>
     <style>
+        /* 기본 스타일 */
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, Arial, sans-serif;
             padding: 10px;
             background-color: #f4f4f9;
             color: #333;
             margin: 0;
+            -webkit-text-size-adjust: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
+
         h2 {
             color: #444;
             margin-bottom: 8px;
             text-align: center;
         }
+
         .number-control {
             display: flex;
             align-items: center;
@@ -27,6 +34,7 @@
             padding: 0 10px;
             justify-content: center;
         }
+
         .number-control input {
             width: 50px;
             height: 18px;
@@ -38,17 +46,23 @@
             -webkit-appearance: none;
             -moz-appearance: textfield;
         }
+
         .groups-container {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             display: flex;
             flex-direction: column;
             gap: 4px;
         }
+
         .group-wrapper {
             display: flex;
             gap: 2px;
             width: 100%;
             align-items: flex-start;
         }
+
         .input-group {
             display: flex;
             gap: 2px;
@@ -57,10 +71,12 @@
             border-radius: 6px;
             background-color: white;
             position: relative;
-            height: 438px;
+            height: auto;
+            min-height: 438px;
             box-sizing: border-box;
             flex: 1;
         }
+
         .bed-label {
             position: absolute;
             top: -11px;
@@ -72,62 +88,63 @@
             color: #007bff;
             font-size: 13px;
         }
-        .numbering {
-            margin-top: 9px;
-            width: 29px !important;
-            height: 416px;
-            padding: 3px;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-            background-color: #f0f0f0;
-            font-size: 30px;
-            line-height: 42px;
-            text-align: right;
-            overflow-y: hidden;
-        }
+
+        .numbering,
         .input-numbers,
         .results {
-            height: 416px;
+            height: auto;
+            min-height: 416px;
             padding: 3px;
             border: 1px solid #ccc;
             border-radius: 3px;
-            font-size: 30px;
-            line-height: 42px;
+            font-size: 26px;
+            line-height: 38px;
             flex-shrink: 0;
             box-sizing: border-box;
             min-width: 44px;
             min-height: 44px;
             touch-action: manipulation;
         }
+
+        .numbering {
+            width: 29px !important;
+            background-color: #f0f0f0;
+            text-align: right;
+            overflow-y: hidden;
+        }
+
         .input-numbers {
             width: 144px !important;
             resize: none;
             background-color: white;
         }
-        .input-numbers:focus {
-            outline: 2px solid #007bff;
-        }
+
         .results {
             width: 144px !important;
             background-color: #f0f0f0;
         }
+
         .negative {
             color: red !important;
         }
+
         .invalid {
             color: red !important;
             font-weight: bold;
         }
+
         .results div:empty {
-            height: 42px;
+            height: 38px;
             visibility: hidden;
         }
+
         #averageDisplay {
             margin-left: 10px;
             color: #007bff;
             font-weight: bold;
             font-size: 13px;
         }
+
         #revisionDisplay {
             position: absolute;
             top: 10px;
@@ -135,42 +152,46 @@
             color: #666;
             font-size: 12px;
         }
+
+        /* 버튼 컨테이너 */
+        #buttonContainer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #f4f4f9;
+            padding: 10px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+
+        #shareButton,
         #copyReportButton {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 12px 24px;
-            background-color: #007bff;
-            color: white;
+            flex: 1;
+            max-width: 200px;
+            padding: 12px 20px;
+            border-radius: 20px;
+            font-size: 15px;
             border: none;
-            border-radius: 25px;
             cursor: pointer;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.16);
-            font-size: 16px;
-            z-index: 1000;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: background-color 0.2s;
         }
-        #copyReportButton:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 8px rgba(0,0,0,0.2);
-        }
+
         #shareButton {
-            position: fixed;
-            bottom: 20px;
-            right: 140px;
-            padding: 12px 24px;
             background-color: #28a745;
             color: white;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.16);
-            font-size: 16px;
-            z-index: 1000;
-            transition: transform 0.2s;
         }
-        #shareButton:hover {
-            transform: translateY(-2px);
+
+        #copyReportButton {
+            background-color: #007bff;
+            color: white;
+        }
+
+        #shareButton:hover,
+        #copyReportButton:hover {
+            opacity: 0.9;
         }
     </style>
 </head>
@@ -184,198 +205,44 @@
         <span id="averageDisplay">평균: 0.0</span>
     </div>
     <div class="groups-container" id="bedContainer"></div>
-    <button id="shareButton">데이터 공유</button>
-    <button id="copyReportButton">보고서 생성</button>
+    
+    <!-- 고정 버튼 컨테이너 -->
+    <div id="buttonContainer">
+        <button id="shareButton">데이터 공유</button>
+        <button id="copyReportButton">보고서 생성</button>
+    </div>
 
     <script>
-        const revision = '30s';
+        const revision = '31s';
         let initialPrefix = '14';
         const MAX_LINES = 9;
 
-        function initializeInput(inputElement) {
-            inputElement.value = '';
-            inputElement.addEventListener('focus', handleFirstFocus);
-            inputElement.addEventListener('blur', cleanEmptyLines);
+        // iOS 높이 계산 보정
+        function setViewportHeight() {
+            let vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
         }
 
-        function handleFirstFocus(event) {
-            const input = event.target;
-            if (input.value === '') {
-                input.value = initialPrefix;
-                calculateResults(input);
-                input.setSelectionRange(initialPrefix.length, initialPrefix.length);
+        // iOS 키보드 이벤트 처리
+        function handleIOSResize() {
+            const activeElement = document.activeElement;
+            if (/(iPhone|iPad|iPod)/i.test(navigator.userAgent) && 
+               activeElement.tagName === 'TEXTAREA') {
+                setTimeout(() => {
+                    activeElement.scrollIntoView({behavior: 'smooth', block: 'center'});
+                }, 300);
             }
-            input.removeEventListener('focus', handleFirstFocus);
         }
 
-        function cleanEmptyLines(event) {
-            const input = event.target;
-            let values = input.value.split('\n')
-                .map((line, index, arr) => {
-                    if (index === arr.length - 1 && line === getCurrentPrefix(arr[index - 1])) {
-                        return null;
-                    }
-                    return line.trim() !== '' ? line : null;
-                })
-                .filter(line => line !== null)
-                .slice(0, MAX_LINES);
-            
-            input.value = values.join('\n');
-            calculateResults(input);
+        // iOS 초기화
+        function initIOS() {
+            setViewportHeight();
+            window.addEventListener('resize', setViewportHeight);
+            window.addEventListener('resize', handleIOSResize);
+            document.body.classList.add('ios-device');
         }
 
-        function getCurrentPrefix(prevLine) {
-            return prevLine?.slice(0, 2) || initialPrefix;
-        }
-
-        function adjustTargetNumber(value) {
-            const targetInput = document.getElementById('targetNumber');
-            let newValue = parseInt(targetInput.value) + value;
-            newValue = Math.min(Math.max(newValue, 100), 200);
-            targetInput.value = newValue;
-            initialPrefix = targetInput.value.toString().slice(0, 2);
-            
-            document.querySelectorAll('.input-numbers').forEach(input => {
-                calculateResults(input);
-            });
-            updateAverage();
-        }
-
-        function calculateResults(inputElement) {
-            const wrapper = inputElement.closest('.group-wrapper');
-            const target = parseInt(document.getElementById('targetNumber').value);
-            const numbers = inputElement.value.split('\n');
-            
-            const results = numbers.map((num, index) => {
-                const isLastLine = index === numbers.length - 1;
-                if (!isLastLine && num.length > 0 && num.length < 3 && /^\d+$/.test(num)) {
-                    return { 
-                        value: '오류!', 
-                        style: 'invalid' 
-                    };
-                }
-                if (num.length !== 3) return { value: num.length > 0 ? '⚠' : '', isNegative: false };
-                
-                const n = parseInt(num);
-                const diff = target - n;
-                const result = Math.trunc(diff * 0.125 * 10) / 10;
-                return {
-                    value: Math.abs(result) > 0.1 ? result.toFixed(1).replace(/\.0$/, '') : '',
-                    isNegative: result < 0
-                };
-            });
-
-            wrapper.querySelector('.results').innerHTML = results
-                .map(r => {
-                    if (!r.value) return '<div></div>';
-                    let classes = [];
-                    if (r.style) classes.push(r.style);
-                    if (r.isNegative) classes.push('negative');
-                    return `<div class="${classes.join(' ')}">${r.value}</div>`;
-                })
-                .join('');
-        }
-
-        function handleInput(event) {
-            const input = event.target;
-            const isBackspace = event.inputType?.startsWith('delete') || event.key === 'Backspace';
-            
-            const cursorPos = input.selectionStart;
-            const prevValue = input.value;
-            const prevLines = prevValue.split('\n');
-            
-            let currentLine = 0;
-            let posInLine = cursorPos;
-            let accumulatedLength = 0;
-            for (; currentLine < prevLines.length; currentLine++) {
-                const lineLength = prevLines[currentLine].length + 1;
-                if (posInLine <= accumulatedLength + lineLength) {
-                    posInLine -= accumulatedLength;
-                    break;
-                }
-                accumulatedLength += lineLength;
-            }
-
-            let values = input.value.replace(/[^\d\n]/g, '').split('\n')
-                .map(line => line.slice(0, 3))
-                .filter((line, index, arr) => 
-                    index === arr.length - 1 || line.trim() !== ''
-                )
-                .slice(0, MAX_LINES);
-
-            let dynamicPrefix = initialPrefix;
-            if (values.length > 0 && values[values.length - 1].length === 3) {
-                dynamicPrefix = values[values.length - 1].slice(0, 2);
-            }
-
-            let newLineAdded = false;
-            if (!isBackspace && values.length < MAX_LINES && 
-                values[values.length - 1].length === 3 && 
-                values[values.length - 1] !== dynamicPrefix) {
-                values.push(dynamicPrefix);
-                newLineAdded = true;
-            }
-
-            const newValue = values.join('\n');
-            if (newValue !== prevValue) {
-                input.value = newValue;
-                calculateResults(input);
-
-                let newCursorPos;
-                if (newLineAdded) {
-                    newCursorPos = newValue.length;
-                } else {
-                    const newLines = newValue.split('\n');
-                    newCursorPos = 0;
-                    for (let i = 0; i < currentLine; i++) {
-                        newCursorPos += (newLines[i]?.length || 0) + 1;
-                    }
-                    newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
-                }
-
-                requestAnimationFrame(() => {
-                    input.setSelectionRange(newCursorPos, newCursorPos);
-                });
-            } else {
-                calculateResults(input);
-            }
-            
-            updateAverage();
-        }
-
-        function updateAverage() {
-            const inputs = Array.from(document.querySelectorAll('.input-numbers'))
-                .slice(0, 4)
-                .flatMap(input => 
-                    input.value.split('\n')
-                    .filter(num => num.length === 3)
-                    .map(num => parseInt(num))
-                )
-                .filter(num => !isNaN(num));
-
-            const average = inputs.length > 0 
-                ? (inputs.reduce((a, b) => a + b, 0) / inputs.length).toFixed(1)
-                : '0.0';
-
-            document.getElementById('averageDisplay').textContent = `평균: ${average}`;
-        }
-
-        function loadFromURL() {
-            const params = new URLSearchParams(window.location.search);
-            if (!params.has('target')) return;
-
-            const target = Math.min(Math.max(parseInt(params.get('target') || 144, 100), 200);
-            document.getElementById('targetNumber').value = target;
-            initialPrefix = target.toString().slice(0,2);
-
-            Array.from(document.querySelectorAll('.input-numbers')).forEach((input, idx) => {
-                const bedData = params.get(`bed${idx+1}`)?.split(',') || [];
-                input.value = bedData.map(v => v.padStart(3, '0')).join('\n');
-                calculateResults(input);
-            });
-            updateAverage();
-        }
-
+        // 초기화 함수
         function init() {
             document.getElementById('revisionDisplay').textContent = `Rev: ${revision}`;
             document.getElementById('targetNumber').value = 144;
@@ -396,16 +263,19 @@
             }
 
             document.querySelectorAll('.input-numbers').forEach(input => {
-                initializeInput(input);
                 input.addEventListener('input', handleInput);
                 input.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
             });
 
-            loadFromURL();
             updateAverage();
         }
 
-        window.onload = init;
+        window.onload = function() {
+            init();
+            if (/(iPhone|iPad|iPod)/i.test(navigator.userAgent)) {
+                initIOS();
+            }
+        }
     </script>
 </body>
 </html>

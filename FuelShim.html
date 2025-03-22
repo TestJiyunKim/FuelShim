@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 35s (최종 버전) -->
+    <!-- Revision: 37s (최종 버전) -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,7 +14,7 @@
             background-color: #f4f4f9;
             color: #333;
             margin: 0;
-            padding-bottom: 80px; /* 버튼 높이만큼 하단 여백 추가 */
+            padding-bottom: 120px; /* 두 줄 버튼 높이에 맞춰 조정 */
         }
         h2 {
             color: #444;
@@ -135,18 +135,22 @@
             font-size: 12px;
         }
         /* 버튼 스타일 */
-        #buttonContainer {
+        .button-row {
             position: fixed;
-            bottom: 10px;
             left: 10px;
             right: 10px;
             display: flex;
-            flex-wrap: nowrap;
             gap: 8px;
             justify-content: center;
             padding: 0 10px;
         }
-        #buttonContainer button {
+        #buttonRow1 {
+            bottom: 60px; /* 두 번째 줄 위에 위치 */
+        }
+        #buttonRow2 {
+            bottom: 10px; /* 최하단 위치 */
+        }
+        .button-row button {
             flex: 1;
             min-width: 90px;
             max-width: 200px;
@@ -155,22 +159,22 @@
             border-radius: 25px;
             font-size: 13px;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.2s;
             white-space: nowrap;
         }
-        #buttonContainer button:hover {
+        .button-row button:hover {
             transform: translateY(-2px);
         }
-        #shareButton {
-            background-color: #28a745;
+        #resetButton {
+            background-color: #dc3545;
             color: white;
         }
         #copyReportButton {
             background-color: #007bff;
             color: white;
         }
-        #resetButton {
-            background-color: #dc3545;
+        #shareButton {
+            background-color: #28a745;
             color: white;
         }
         #saveButton {
@@ -180,6 +184,11 @@
         #loadButton {
             background-color: #17a2b8;
             color: white;
+        }
+        #loadButton.disabled {
+            background-color: #999 !important;
+            cursor: not-allowed;
+            opacity: 0.7;
         }
     </style>
 </head>
@@ -195,16 +204,18 @@
     <div class="groups-container" id="bedContainer"></div>
     
     <!-- 버튼 컨테이너 -->
-    <div id="buttonContainer">
+    <div class="button-row" id="buttonRow1">
         <button id="resetButton">초기화</button>
-        <button id="saveButton">데이터 저장</button>
-        <button id="loadButton">데이터 불러오기</button>
-        <button id="shareButton">데이터 공유</button>
         <button id="copyReportButton">보고서 생성</button>
+    </div>
+    <div class="button-row" id="buttonRow2">
+        <button id="shareButton">데이터 공유</button>
+        <button id="saveButton">데이터 저장</button>
+        <button id="loadButton" class="disabled">데이터 불러오기</button>
     </div>
 
     <script>
-        const revision = '35s';
+        const revision = '37s';
         let initialPrefix = '14';
         const MAX_LINES = 9;
         const STORAGE_KEY = 'fuelShimData';
@@ -226,6 +237,7 @@
             initialPrefix = '14';
             updateAverage();
             alert('입력창이 초기화되었습니다.');
+            updateLoadButton(); // 초기화 후 버튼 상태 업데이트
         }
 
         // 데이터 저장
@@ -238,7 +250,7 @@
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             alert('데이터가 저장되었습니다.');
-            updateLoadButton(); // 저장 후 버튼 이름 업데이트
+            updateLoadButton(); // 저장 후 버튼 상태 업데이트
         }
 
         // 데이터 불러오기
@@ -260,7 +272,7 @@
             }
         }
 
-        // 데이터 불러오기 버튼 이름 업데이트
+        // 데이터 불러오기 버튼 업데이트
         function updateLoadButton() {
             const savedData = localStorage.getItem(STORAGE_KEY);
             const loadBtn = document.getElementById('loadButton');
@@ -270,13 +282,15 @@
                 const saveDate = new Date(data.date);
                 const month = saveDate.getMonth() + 1;
                 const date = saveDate.getDate();
-                loadBtn.textContent = `${month}/${date} 데이터 불러오기`;
-                
-                // 글자 길이 확인 (20자 제한)
-                if (loadBtn.textContent.length > 20) {
-                    loadBtn.textContent = '데이터 불러오기';
-                }
+                loadBtn.textContent = `${month}/${date} 불러오기`;
+                loadBtn.classList.remove('disabled');
             } else {
+                loadBtn.textContent = '데이터 불러오기';
+                loadBtn.classList.add('disabled');
+            }
+
+            // 글자 길이 확인 (15자 제한)
+            if (loadBtn.textContent.length > 15) {
                 loadBtn.textContent = '데이터 불러오기';
             }
         }
@@ -481,9 +495,13 @@
             // 버튼 이벤트 바인딩
             document.getElementById('resetButton').addEventListener('click', resetInputs);
             document.getElementById('saveButton').addEventListener('click', saveData);
-            document.getElementById('loadButton').addEventListener('click', loadData);
+            document.getElementById('loadButton').addEventListener('click', function() {
+                if (!this.classList.contains('disabled')) {
+                    loadData();
+                }
+            });
 
-            // 데이터 불러오기 버튼 이름 업데이트
+            // 데이터 불러오기 버튼 상태 업데이트
             updateLoadButton();
 
             updateAverage();

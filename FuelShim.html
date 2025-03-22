@@ -84,7 +84,7 @@
             font-size: 13px;
         }
         .numbering {
-            margin-top: 10px !important;
+            margin-top: 11px !important; /* 1포인트 내림 */
             width: 29px !important;
             height: 416px;
             padding: 3px;
@@ -203,21 +203,40 @@
         @media (orientation: landscape) {
             .groups-container {
                 flex-direction: row !important;
-                flex-wrap: wrap;
+                gap: 2px !important;
             }
             .group-wrapper {
-                width: 49% !important;
-                margin-bottom: 5px;
+                width: auto !important;
+                flex: 1;
+                margin-right: 2px !important; /* 우측 여백 축소 */
+            }
+            .group-wrapper:not(:first-child) .numbering {
+                display: none !important; /* 첫 번째 번호창만 표시 */
+            }
+            .input-group {
+                margin-right: 0 !important;
             }
             .button-row {
-                position: fixed !important;
                 bottom: 5px !important;
                 flex-wrap: nowrap !important;
+                gap: 4px !important;
             }
             #buttonRow1, #buttonRow2 {
-                position: static !important;
-                flex-direction: row !important;
+                display: none !important;
             }
+            #landscapeButtons {
+                display: flex !important;
+                width: 100%;
+            }
+        }
+        @media (orientation: portrait) {
+            #buttonRow1 button {
+                padding: 8px 10px !important;
+                font-size: 12px !important;
+            }
+        }
+        #landscapeButtons {
+            display: none;
         }
     </style>
 </head>
@@ -238,6 +257,13 @@
         <button id="copyReportButton">보고서 생성</button>
     </div>
     <div class="button-row" id="buttonRow2">
+        <button id="shareButton">데이터 공유</button>
+        <button id="saveButton">데이터 저장</button>
+        <button id="loadButton" class="disabled">데이터 불러오기</button>
+    </div>
+    <div class="button-row" id="landscapeButtons">
+        <button id="resetButton">초기화</button>
+        <button id="copyReportButton">보고서 생성</button>
         <button id="shareButton">데이터 공유</button>
         <button id="saveButton">데이터 저장</button>
         <button id="loadButton" class="disabled">데이터 불러오기</button>

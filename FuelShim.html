@@ -151,31 +151,13 @@
             transform: translateY(-2px);
             box-shadow: 0 5px 8px rgba(0,0,0,0.2);
         }
-        #shareButton {
-            position: fixed;
-            bottom: 120px;
-            right: 20px;
-            padding: 12px 24px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.16);
-            z-index: 10000;
-            transition: transform 0.2s;
-        }
-        #shareButton:hover {
-            transform: translateY(-2px);
-        }
         @media (max-width: 768px) {
-            #copyReportButton, #shareButton {
-                bottom: 100px;
+            #copyReportButton {
+                bottom: 60px;
                 right: 15px;
                 padding: 10px 20px;
                 font-size: 14px;
             }
-            #shareButton { bottom: 150px; }
         }
     </style>
     <script>
@@ -436,52 +418,6 @@
             return reportLines.join('\n');
         }
 
-        // 새로 추가된 URL 처리 기능 ====================================
-        function generateShareLink() {
-            const target = document.getElementById('targetNumber').value;
-            const beds = Array.from(document.querySelectorAll('.input-numbers'))
-                .map(input => input.value.split('\n').join(','));
-            
-            const params = new URLSearchParams({
-                ver: revision,
-                target: target,
-                ...beds.reduce((acc, val, idx) => {
-                    acc[`bed${idx+1}`] = val;
-                    return acc;
-                }, {})
-            });
-
-            return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
-        }
-
-        function loadFromURL() {
-            const params = new URLSearchParams(window.location.search);
-            if (!params.has('target')) return;
-
-            // 타겟 값 설정
-            document.getElementById('targetNumber').value = params.get('target');
-            adjustTargetNumber(0); // 입력값 업데이트
-
-            // 베드 데이터 로드
-            Array.from(document.querySelectorAll('.input-numbers')).forEach((input, idx) => {
-                const bedData = params.get(`bed${idx+1}`)?.split(',') || [];
-                input.value = bedData.join('\n');
-                calculateResults(input);
-            });
-        }
-
-        // 공유 기능 초기화 ============================================
-        document.getElementById('shareButton').addEventListener('click', async () => {
-            const link = generateShareLink();
-            try {
-                await navigator.clipboard.writeText(link);
-                alert('공유 링크가 클립보드에 복사되었습니다!\n\n' + link);
-            } catch(err) {
-                prompt('링크를 수동으로 복사해 주세요:', link);
-            }
-        });
-
-        // 초기화 시 URL 로드 ==========================================
         window.onload = function () {
             document.getElementById('revisionDisplay').textContent = `Rev: ${revision}`;
             document.getElementById('targetNumber').value = 144;
@@ -507,8 +443,6 @@
                 }
             });
 
-            // 새로 추가된 URL 로드
-            loadFromURL();
             updateAverage();
         }
     </script>
@@ -524,6 +458,5 @@
     </div>
     <div class="groups-container" id="bedContainer"></div>
     <button id="copyReportButton">보고서 생성</button>
-    <button id="shareButton">데이터 공유</button>
 </body>
 </html>

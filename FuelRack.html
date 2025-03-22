@@ -30,18 +30,20 @@
             flex-direction: column;
             gap: 12px;
             margin-top: 15px;
+            height: 78vh; /* 그룹창 높이 5포인트 추가 */
         }
         .group-row {
             display: flex;
-            gap: 2%;
-            width: 94%; /* 그룹창 폭 조정 */
-            padding: 0 3%; /* 양쪽 여백 추가 */
+            gap: 1%; /* 그룹창 폭 조정 */
+            width: 96%; /* 입력창 감싸도록 폭 수정 */
+            padding: 0 2%;
             align-items: flex-start;
+            height: 49%; /* 그룹창 높이 조정 */
         }
         .numbering {
             width: 10%;
-            height: 58vh; /* 번호창 높이 20포인트 축소 */
-            margin-top: 29px; /* 번호창 4포인트 아래로 내림 */
+            height: 60vh; /* 높이 조정 (+15-20포인트) */
+            margin-top: 27px; /* 2포인트 위로 올림 (29px → 27px) */
             padding: 15px 1%;
             font-size: 28px;
             line-height: 1.4;
@@ -50,13 +52,14 @@
             background-color: #f0f0f0;
         }
         .input-group {
-            width: 42%; /* 입력창 폭 확대 */
+            width: 38%; /* 입력창 폭 축소 */
             border: 2px solid #007bff;
             border-radius: 6px;
-            padding: 25px 1% 5px; /* 내부 상단 여백 동일하게 수정 */
+            padding: 25px 1% 5px;
             position: relative;
             background-color: white;
-            height: 63vh;
+            height: 65vh; /* 입력창 높이 15포인트 추가 */
+            box-sizing: border-box;
         }
         .input-group:focus-within {
             border-color: #00f;
@@ -83,6 +86,7 @@
             font-size: 28px;
             line-height: 1.4;
             caret-color: transparent;
+            overflow: hidden; /* 스크롤링 방지 */
         }
         .virtual-keyboard {
             position: fixed;
@@ -175,94 +179,94 @@
         <div class="keyboard-row" id="number-buttons"></div>
     </div>
 
-<script>
-const presets = {
-    '25': [9.5, 10, 10.5],
-    '50': [17.5, 18, 18.5],
-    '75': [24.5, 25, 25.5],
-    '100': [32.5, 33, 33.5],
-    '110': [35.5, 36, 36.5]
-};
+    <script>
+        const presets = {
+            '25': [9.5, 10, 10.5],
+            '50': [17.5, 18, 18.5],
+            '75': [24.5, 25, 25.5],
+            '100': [32.5, 33, 33.5],
+            '110': [35.5, 36, 36.5]
+        };
 
-let currentPercent = '25';
-let activeInput = null;
-let currentValues = [...presets[currentPercent]];
-let currentLine = 0;
+        let currentPercent = '25';
+        let activeInput = null;
+        let currentValues = [...presets[currentPercent]];
+        let currentLine = 0;
 
-function updateNumberButtons() {
-    const container = document.getElementById('number-buttons');
-    container.innerHTML = `
-        <button class="keyboard-btn" data-action="decr">-</button>
-        <button class="keyboard-btn">${currentValues[0].toFixed(1)}</button>
-        <button class="keyboard-btn">${currentValues[1].toFixed(1)}</button>
-        <button class="keyboard-btn">${currentValues[2].toFixed(1)}</button>
-        <button class="keyboard-btn" data-action="incr">+</button>
-        <button class="keyboard-btn del" data-action="del">Del</button>
-    `;
-}
+        function updateNumberButtons() {
+            const container = document.getElementById('number-buttons');
+            container.innerHTML = `
+                <button class="keyboard-btn" data-action="decr">-</button>
+                <button class="keyboard-btn">${currentValues[0].toFixed(1)}</button>
+                <button class="keyboard-btn">${currentValues[1].toFixed(1)}</button>
+                <button class="keyboard-btn">${currentValues[2].toFixed(1)}</button>
+                <button class="keyboard-btn" data-action="incr">+</button>
+                <button class="keyboard-btn del" data-action="del">Del</button>
+            `;
+        }
 
-document.querySelectorAll('.keyboard-btn[data-percent]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        currentPercent = e.target.dataset.percent;
-        currentValues = [...presets[currentPercent]];
-        document.querySelectorAll('.keyboard-btn[data-percent]').forEach(b => 
-            b.classList.remove('active'));
-        e.target.classList.add('active');
+        document.querySelectorAll('.keyboard-btn[data-percent]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                currentPercent = e.target.dataset.percent;
+                currentValues = [...presets[currentPercent]];
+                document.querySelectorAll('.keyboard-btn[data-percent]').forEach(b => 
+                    b.classList.remove('active'));
+                e.target.classList.add('active');
+                updateNumberButtons();
+            });
+        });
+
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.input-numbers')) {
+                activeInput = e.target;
+                currentLine = activeInput.value.split('\n').length;
+                activeInput.focus();
+                return;
+            }
+            
+            const action = e.target.dataset.action;
+            if (!action && e.target.closest('[data-percent]')) return;
+
+            if (action === 'decr') {
+                currentValues = currentValues.map(v => v - 0.5);
+                updateNumberButtons();
+            } else if (action === 'incr') {
+                currentValues = currentValues.map(v => v + 0.5);
+                updateNumberButtons();
+            } else if (action === 'del') {
+                const lines = activeInput.value.split('\n');
+                lines.pop();
+                activeInput.value = lines.join('\n');
+                currentLine = Math.max(0, lines.length - 1);
+            } else if (e.target.classList.contains('keyboard-btn') && activeInput) {
+                const value = parseFloat(e.target.textContent);
+                const lines = activeInput.value.split('\n');
+                lines[currentLine] = value.toFixed(1);
+                activeInput.value = lines.filter(v => v).join('\n');
+                if (currentLine < 8) currentLine++;
+            }
+
+            if(activeInput) activeInput.focus();
+        });
+
+        document.getElementById('copyReport').addEventListener('click', async () => {
+            try {
+                const report = Array.from(document.querySelectorAll('.input-group')).map(group => {
+                    const bedNumber = group.querySelector('.bed-label').textContent;
+                    const values = group.querySelector('.input-numbers').value.split('\n').filter(v => v);
+                    return `${bedNumber}: ${values.join(', ')}`;
+                }).join('\n');
+                
+                await navigator.clipboard.writeText(report);
+                alert('보고서가 클립보드에 복사되었습니다.');
+            } catch (err) {
+                alert('복사 실패: ' + err.message);
+            }
+        });
+
+        document.querySelector('.keyboard-btn[data-percent="25"]').classList.add('active');
         updateNumberButtons();
-    });
-});
-
-document.addEventListener('click', (e) => {
-    if (e.target.closest('.input-numbers')) {
-        activeInput = e.target;
-        currentLine = activeInput.value.split('\n').length;
-        activeInput.focus();
-        return;
-    }
-    
-    const action = e.target.dataset.action;
-    if (!action && e.target.closest('[data-percent]')) return;
-
-    if (action === 'decr') {
-        currentValues = currentValues.map(v => v - 0.5);
-        updateNumberButtons();
-    } else if (action === 'incr') {
-        currentValues = currentValues.map(v => v + 0.5);
-        updateNumberButtons();
-    } else if (action === 'del') {
-        const lines = activeInput.value.split('\n');
-        lines.pop();
-        activeInput.value = lines.join('\n');
-        currentLine = Math.max(0, lines.length - 1);
-    } else if (e.target.classList.contains('keyboard-btn') && activeInput) {
-        const value = parseFloat(e.target.textContent);
-        const lines = activeInput.value.split('\n');
-        lines[currentLine] = value.toFixed(1);
-        activeInput.value = lines.filter(v => v).join('\n');
-        if (currentLine < 8) currentLine++;
-    }
-
-    if(activeInput) activeInput.focus();
-});
-
-document.getElementById('copyReport').addEventListener('click', async () => {
-    try {
-        const report = Array.from(document.querySelectorAll('.input-group')).map(group => {
-            const bedNumber = group.querySelector('.bed-label').textContent;
-            const values = group.querySelector('.input-numbers').value.split('\n').filter(v => v);
-            return `${bedNumber}: ${values.join(', ')}`;
-        }).join('\n');
-        
-        await navigator.clipboard.writeText(report);
-        alert('보고서가 클립보드에 복사되었습니다.');
-    } catch (err) {
-        alert('복사 실패: ' + err.message);
-    }
-});
-
-document.querySelector('.keyboard-btn[data-percent="25"]').classList.add('active');
-updateNumberButtons();
-</script>
+    </script>
 </body>
 </html>

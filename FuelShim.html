@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 39s-fix (보고서 생성 및 데이터 공유 기능 복구) -->
+    <!-- Revision: 최종 (UI:39s-fix 유지) -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>FUEL SHIM 계산</title>
     <style>
-        /* 기본 스타일 */
+        /* 39s-fix UI 스타일 */
         body {
             font-family: Arial, sans-serif;
             padding: 10px;
@@ -75,7 +75,7 @@
             font-size: 13px;
         }
         .numbering {
-            margin-top: 13px !important; /* 3포인트 상향 조정 */
+            margin-top: 13px !important;
             width: 29px !important;
             height: 416px;
             padding: 3px;
@@ -215,120 +215,86 @@
     </div>
 
     <script>
-        const revision = '39s-fix';
+        const revision = '최종';
         let initialPrefix = '14';
         const MAX_LINES = 9;
         const STORAGE_KEY = 'fuelShimData';
 
-        // 보고서 생성 기능
-        function generateReport() {
-            const target = document.getElementById('targetNumber').value;
-            const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
-            
-            let report = `# FUEL SHIM REPORT\n`;
-            report += `**TARGET:** ${target}\n`;
-            report += `**DATE:** ${now}\n\n`;
-
-            document.querySelectorAll('.input-group').forEach((group, idx) => {
-                const inputs = group.querySelector('.input-numbers').value.split('\n');
-                const results = Array.from(group.querySelectorAll('.results div')).map(div => div.textContent);
-                
-                report += `## BED ${idx+1}\n`;
-                report += '| NO. | INPUT | RESULT |\n';
-                report += '|-----|-------|--------|\n';
-                
-                inputs.forEach((v, i) => {
-                    report += `| ${i+1} | ${v.padStart(3, '0')} | ${results[i]} |\n`;
-                });
-                report += '\n';
-            });
-
-            return report;
-        }
-
-        // 데이터 공유 기능
-        function generateShareURL() {
-            const params = new URLSearchParams();
-            params.set('target', document.getElementById('targetNumber').value);
-            
-            document.querySelectorAll('.input-numbers').forEach((input, idx) => {
-                params.set(`bed${idx+1}`, input.value.split('\n').join(','));
-            });
-            
-            return `${window.location.href}?${params.toString()}`;
-        }
-
-        // 초기화 함수
-        function resetInputs() {
-            document.querySelectorAll('.input-numbers').forEach(input => {
-                input.value = '';
-                calculateResults(input);
-            });
-            document.getElementById('targetNumber').value = 144;
-            initialPrefix = '14';
-            updateAverage();
-            alert('입력창이 초기화되었습니다.');
-            updateLoadButton();
-        }
-
-        // 데이터 저장
-        function saveData() {
-            const saveDate = new Date();
-            const data = {
-                date: saveDate.getTime(),
-                target: document.getElementById('targetNumber').value,
-                beds: Array.from(document.querySelectorAll('.input-numbers')).map(input => input.value)
-            };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-            alert('데이터가 저장되었습니다.');
-            updateLoadButton();
-        }
-
-        // 데이터 불러오기
-        function loadData() {
-            const savedData = localStorage.getItem(STORAGE_KEY);
-            if (savedData) {
-                const data = JSON.parse(savedData);
-                document.getElementById('targetNumber').value = data.target;
-                initialPrefix = data.target.toString().slice(0, 2);
-                
-                Array.from(document.querySelectorAll('.input-numbers')).forEach((input, index) => {
-                    input.value = data.beds[index] || '';
-                    calculateResults(input);
-                });
-                updateAverage();
-                alert('데이터가 불러와졌습니다.');
-            } else {
-                alert('저장된 데이터가 없습니다.');
-            }
-        }
-
-        // 데이터 불러오기 버튼 업데이트
-        function updateLoadButton() {
-            const savedData = localStorage.getItem(STORAGE_KEY);
-            const loadBtn = document.getElementById('loadButton');
-            
-            if (savedData) {
-                const data = JSON.parse(savedData);
-                const saveDate = new Date(data.date);
-                loadBtn.textContent = `${saveDate.getMonth()+1}/${saveDate.getDate()} 불러오기`;
-                loadBtn.classList.remove('disabled');
-            } else {
-                loadBtn.textContent = '데이터 불러오기';
-                loadBtn.classList.add('disabled');
-            }
-        }
-
-        // 기존 기능들
+        // 25s 핵심 기능 ------------------------------------------------
         function adjustTargetNumber(value) {
             const targetInput = document.getElementById('targetNumber');
-            const newValue = parseInt(targetInput.value) + value;
+            let newValue = parseInt(targetInput.value) + value;
+            newValue = Math.min(Math.max(newValue, 100), 200);
             targetInput.value = newValue;
-            initialPrefix = targetInput.value.toString().slice(0, 2);
+            initialPrefix = newValue.toString().slice(0, 2);
             
             document.querySelectorAll('.input-numbers').forEach(input => {
                 calculateResults(input);
             });
+            updateAverage();
+        }
+
+        function handleInput(event) {
+            const input = event.target;
+            const isBackspace = event.inputType?.startsWith('delete') || event.key === 'Backspace';
+            
+            const cursorPos = input.selectionStart;
+            const prevValue = input.value;
+            const prevLines = prevValue.split('\n');
+            
+            let currentLine = 0;
+            let posInLine = cursorPos;
+            let accumulatedLength = 0;
+            for (; currentLine < prevLines.length; currentLine++) {
+                const lineLength = prevLines[currentLine].length + 1;
+                if (posInLine <= accumulatedLength + lineLength) {
+                    posInLine -= accumulatedLength;
+                    break;
+                }
+                accumulatedLength += lineLength;
+            }
+
+            let values = input.value.replace(/[^\d\n]/g, '').split('\n')
+                .map(line => line.slice(0, 3))
+                .filter((line, index, arr) => index === arr.length - 1 || line.trim() !== '')
+                .slice(0, MAX_LINES);
+
+            let dynamicPrefix = initialPrefix;
+            if (values.length > 0 && values[values.length - 1].length === 3) {
+                dynamicPrefix = values[values.length - 1].slice(0, 2);
+            }
+
+            let newLineAdded = false;
+            if (!isBackspace && values.length < MAX_LINES && 
+                values[values.length - 1].length === 3 && 
+                values[values.length - 1] !== dynamicPrefix) {
+                values.push(dynamicPrefix);
+                newLineAdded = true;
+            }
+
+            const newValue = values.join('\n');
+            if (newValue !== prevValue) {
+                input.value = newValue;
+                calculateResults(input);
+
+                let newCursorPos;
+                if (newLineAdded) {
+                    newCursorPos = newValue.length;
+                } else {
+                    const newLines = newValue.split('\n');
+                    newCursorPos = 0;
+                    for (let i = 0; i < currentLine; i++) {
+                        newCursorPos += (newLines[i]?.length || 0) + 1;
+                    }
+                    newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
+                }
+
+                requestAnimationFrame(() => {
+                    input.setSelectionRange(newCursorPos, newCursorPos);
+                });
+            } else {
+                calculateResults(input);
+            }
             updateAverage();
         }
 
@@ -340,10 +306,7 @@
             const results = numbers.map((num, index) => {
                 const isLastLine = index === numbers.length - 1;
                 if (!isLastLine && num.length > 0 && num.length < 3 && /^\d+$/.test(num)) {
-                    return { 
-                        value: '오류!', 
-                        style: 'invalid' 
-                    };
+                    return { value: '오류!', style: 'invalid' };
                 }
                 if (num.length !== 3) return { value: num.length > 0 ? '⚠' : '', isNegative: false };
                 
@@ -367,9 +330,89 @@
                 .join('');
         }
 
+        // 39s-fix 추가 기능 --------------------------------------------
+        function generateReport() {
+            const target = document.getElementById('targetNumber').value;
+            const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+            
+            let report = `# FUEL SHIM 보고서\n`;
+            report += `**목표값:** ${target}\n`;
+            report += `**생성일:** ${now}\n\n`;
+
+            document.querySelectorAll('.input-group').forEach((group, idx) => {
+                const inputs = group.querySelector('.input-numbers').value.split('\n');
+                const results = Array.from(group.querySelectorAll('.results div')).map(div => div.textContent);
+                
+                report += `## ${idx+1}번 베드\n`;
+                report += '| 순번 | 입력값 | 결과 |\n';
+                report += '|-----|-------|--------|\n';
+                
+                inputs.forEach((v, i) => {
+                    report += `| ${i+1} | ${v.padStart(3, '0')} | ${results[i] || ''} |\n`;
+                });
+                report += '\n';
+            });
+
+            return report;
+        }
+
+        function generateShareURL() {
+            const params = new URLSearchParams();
+            params.set('target', document.getElementById('targetNumber').value);
+            
+            document.querySelectorAll('.input-numbers').forEach((input, idx) => {
+                params.set(`bed${idx+1}`, input.value.split('\n').join(','));
+            });
+            
+            return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+        }
+
+        function saveData() {
+            const data = {
+                date: new Date().getTime(),
+                target: document.getElementById('targetNumber').value,
+                beds: Array.from(document.querySelectorAll('.input-numbers')).map(input => input.value)
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            alert('데이터 저장 완료');
+            updateLoadButton();
+        }
+
+        function loadData() {
+            const savedData = localStorage.getItem(STORAGE_KEY);
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                document.getElementById('targetNumber').value = data.target;
+                initialPrefix = data.target.toString().slice(0, 2);
+                
+                Array.from(document.querySelectorAll('.input-numbers')).forEach((input, index) => {
+                    input.value = data.beds[index] || '';
+                    calculateResults(input);
+                });
+                updateAverage();
+                alert('데이터 불러오기 완료');
+            } else {
+                alert('저장된 데이터 없음');
+            }
+        }
+
+        function updateLoadButton() {
+            const savedData = localStorage.getItem(STORAGE_KEY);
+            const loadBtn = document.getElementById('loadButton');
+            
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                const saveDate = new Date(data.date);
+                loadBtn.textContent = `${saveDate.getMonth()+1}/${saveDate.getDate()} 불러오기`;
+                loadBtn.classList.remove('disabled');
+            } else {
+                loadBtn.textContent = '데이터 불러오기';
+                loadBtn.classList.add('disabled');
+            }
+        }
+
         function updateAverage() {
             const inputs = Array.from(document.querySelectorAll('.input-numbers'))
-                .slice(0, 4)
                 .flatMap(input => 
                     input.value.split('\n')
                     .filter(num => num.length === 3)
@@ -384,7 +427,7 @@
             document.getElementById('averageDisplay').textContent = `평균: ${average}`;
         }
 
-        // 초기화
+        // 초기화 ------------------------------------------------------
         window.onload = function () {
             document.getElementById('revisionDisplay').textContent = `Rev: ${revision}`;
             document.getElementById('targetNumber').value = 144;
@@ -409,19 +452,28 @@
                 input.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
             });
 
-            // 버튼 이벤트 바인딩
-            document.getElementById('resetButton').addEventListener('click', resetInputs);
-            document.getElementById('saveButton').addEventListener('click', saveData);
-            document.getElementById('loadButton').addEventListener('click', function() {
-                if (!this.classList.contains('disabled')) loadData();
+            document.getElementById('resetButton').addEventListener('click', () => {
+                document.querySelectorAll('.input-numbers').forEach(input => input.value = '');
+                document.getElementById('targetNumber').value = 144;
+                initialPrefix = '14';
+                updateAverage();
+                updateLoadButton();
+                alert('초기화 완료');
             });
+
             document.getElementById('copyReportButton').addEventListener('click', () => {
                 navigator.clipboard.writeText(generateReport());
                 alert('보고서가 클립보드에 복사되었습니다.');
             });
+
             document.getElementById('shareButton').addEventListener('click', () => {
                 navigator.clipboard.writeText(generateShareURL());
                 alert('공유 URL이 클립보드에 복사되었습니다.');
+            });
+
+            document.getElementById('saveButton').addEventListener('click', saveData);
+            document.getElementById('loadButton').addEventListener('click', function() {
+                if (!this.classList.contains('disabled')) loadData();
             });
 
             updateLoadButton();

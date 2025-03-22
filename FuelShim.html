@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 33s (최종 버전) -->
+    <!-- Revision: 35s (최종 버전) -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,6 +14,7 @@
             background-color: #f4f4f9;
             color: #333;
             margin: 0;
+            padding-bottom: 80px; /* 버튼 높이만큼 하단 여백 추가 */
         }
         h2 {
             color: #444;
@@ -73,7 +74,19 @@
             color: #007bff;
             font-size: 13px;
         }
-        .numbering,
+        .numbering {
+            margin-top: 16px; /* 7px 추가 조정 */
+            width: 29px !important;
+            height: 416px;
+            padding: 3px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            background-color: #f0f0f0;
+            font-size: 30px;
+            line-height: 42px;
+            text-align: right;
+            overflow-y: hidden;
+        }
         .input-numbers,
         .results {
             height: 416px;
@@ -87,12 +100,6 @@
             min-width: 44px;
             min-height: 44px;
             touch-action: manipulation;
-        }
-        .numbering {
-            width: 29px !important;
-            background-color: #f0f0f0;
-            text-align: right;
-            overflow-y: hidden;
         }
         .input-numbers {
             width: 144px !important;
@@ -130,24 +137,26 @@
         /* 버튼 스타일 */
         #buttonContainer {
             position: fixed;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
+            flex-wrap: nowrap;
+            gap: 8px;
             justify-content: center;
+            padding: 0 10px;
         }
         #buttonContainer button {
             flex: 1;
-            min-width: 120px;
+            min-width: 90px;
             max-width: 200px;
-            padding: 12px 20px;
+            padding: 10px 12px;
             border: none;
             border-radius: 25px;
-            font-size: 14px;
+            font-size: 13px;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
+            white-space: nowrap;
         }
         #buttonContainer button:hover {
             transform: translateY(-2px);
@@ -187,15 +196,15 @@
     
     <!-- 버튼 컨테이너 -->
     <div id="buttonContainer">
-        <button id="shareButton">데이터 공유</button>
-        <button id="copyReportButton">보고서 생성</button>
         <button id="resetButton">초기화</button>
         <button id="saveButton">데이터 저장</button>
         <button id="loadButton">데이터 불러오기</button>
+        <button id="shareButton">데이터 공유</button>
+        <button id="copyReportButton">보고서 생성</button>
     </div>
 
     <script>
-        const revision = '33s';
+        const revision = '35s';
         let initialPrefix = '14';
         const MAX_LINES = 9;
         const STORAGE_KEY = 'fuelShimData';
@@ -221,12 +230,15 @@
 
         // 데이터 저장
         function saveData() {
+            const saveDate = new Date();
             const data = {
+                date: saveDate.getTime(),
                 target: document.getElementById('targetNumber').value,
                 beds: Array.from(document.querySelectorAll('.input-numbers')).map(input => input.value)
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             alert('데이터가 저장되었습니다.');
+            updateLoadButton(); // 저장 후 버튼 이름 업데이트
         }
 
         // 데이터 불러오기
@@ -245,6 +257,27 @@
                 alert('데이터가 불러와졌습니다.');
             } else {
                 alert('저장된 데이터가 없습니다.');
+            }
+        }
+
+        // 데이터 불러오기 버튼 이름 업데이트
+        function updateLoadButton() {
+            const savedData = localStorage.getItem(STORAGE_KEY);
+            const loadBtn = document.getElementById('loadButton');
+            
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                const saveDate = new Date(data.date);
+                const month = saveDate.getMonth() + 1;
+                const date = saveDate.getDate();
+                loadBtn.textContent = `${month}/${date} 데이터 불러오기`;
+                
+                // 글자 길이 확인 (20자 제한)
+                if (loadBtn.textContent.length > 20) {
+                    loadBtn.textContent = '데이터 불러오기';
+                }
+            } else {
+                loadBtn.textContent = '데이터 불러오기';
             }
         }
 
@@ -449,6 +482,9 @@
             document.getElementById('resetButton').addEventListener('click', resetInputs);
             document.getElementById('saveButton').addEventListener('click', saveData);
             document.getElementById('loadButton').addEventListener('click', loadData);
+
+            // 데이터 불러오기 버튼 이름 업데이트
+            updateLoadButton();
 
             updateAverage();
         }

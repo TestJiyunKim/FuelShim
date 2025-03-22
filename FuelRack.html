@@ -11,6 +11,7 @@
             background-color: #f4f4f9;
             position: relative;
             overflow-x: hidden;
+            padding-bottom: 120px; /* 가상 키보드 높이만큼 하단 여백 추가 */
         }
         h2 {
             text-align: center;
@@ -39,23 +40,23 @@
         }
         .numbering {
             width: 10%;
-            height: 36vh; /* 20pt 축소 */
-            margin-top: 25px; /* 10pt 추가 */
+            height: 63vh; /* 높이 50포인트 추가 */
+            margin-top: 25px;
             padding: 15px 1%;
             font-size: 28px;
-            line-height: 1.4;
+            line-height: 1.4; /* 줄바꿈 높이 통일 */
             border: 1px solid #ccc;
             border-radius: 4px;
             background-color: #f0f0f0;
         }
         .input-group {
-            width: 37.4%; /* 1.1배 확대 */
+            width: 35%; /* 번호창 대비 입력창 폭 축소 */
             border: 2px solid #007bff;
             border-radius: 6px;
             padding: 25px 1% 5px;
             position: relative;
             background-color: white;
-            height: 63vh; /* 0.9배 축소 */
+            height: 63vh;
         }
         .input-group:focus-within {
             border-color: #00f;
@@ -63,7 +64,7 @@
         }
         .bed-label {
             position: absolute;
-            top: -8px; /* 상단 위치 조정 */
+            top: -8px;
             left: 50%;
             transform: translateX(-50%);
             background: white;
@@ -80,7 +81,7 @@
             padding: 5px;
             resize: none;
             font-size: 28px;
-            line-height: 1.5;
+            line-height: 1.4; /* 줄바꿈 높이 통일 */
             caret-color: transparent;
         }
         .virtual-keyboard {

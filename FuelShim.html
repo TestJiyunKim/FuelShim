@@ -1,219 +1,336 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- Revision: 27s -->
+    <!-- Revision: 28s -->
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>FUEL SHIM 계산</title>
     <style>
-        /* CSS 초기화 */
+        /* 초기화 및 기본 스타일 */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
             font-family: Arial, sans-serif;
-            padding: 20px 10px 120px; /* 하단 버튼 공간 확보 */
+            padding: 10px;
             background-color: #f4f4f9;
-            min-height: 100vh;
+            color: #333;
         }
 
         /* 헤더 영역 */
-        .header {
-            position: relative;
-            margin-bottom: 20px;
-        }
-        h1 {
+        h2 { 
+            color: #444;
+            margin-bottom: 8px;
             text-align: center;
-            color: #2c3e50;
-            font-size: 1.8rem;
-            margin-bottom: 15px;
         }
 
-        /* 숫자 입력 컨트롤 */
-        .target-control {
+        /* 타겟 컨트롤 */
+        .number-control {
             display: flex;
-            justify-content: center;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 25px;
+            gap: 4px;
+            margin-bottom: 12px;
+            padding: 0 10px;
+            justify-content: center;
         }
-        .target-control button {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 2px solid #3498db;
-            background: white;
-            font-size: 1.2rem;
-            cursor: pointer;
-        }
-        .target-control input {
-            width: 80px;
-            height: 40px;
+        .number-control input {
+            width: 50px;
+            height: 18px;
             text-align: center;
-            font-size: 1.1rem;
-            border: 2px solid #3498db;
-            border-radius: 8px;
+            padding: 3px;
+            border: 2px solid #007bff;
+            border-radius: 4px;
+            font-size: 13px;
+            -webkit-appearance: none;
+            -moz-appearance: textfield;
         }
 
         /* 베드 컨테이너 */
-        .bed-container {
-            display: grid;
-            gap: 15px;
-            max-width: 800px;
-            margin: 0 auto;
+        .groups-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
 
         /* 베드 그룹 */
-        .bed-group {
+        .group-wrapper {
+            display: flex;
+            gap: 2px;
+            width: 100%;
+            align-items: flex-start;
+        }
+        .input-group {
+            display: flex;
+            gap: 2px;
+            padding: 7px 3px 8px;
+            border: 2px solid #007bff;
+            border-radius: 6px;
+            background-color: white;
+            position: relative;
+            height: 438px;
+            box-sizing: border-box;
+            flex: 1;
+        }
+        .bed-label {
+            position: absolute;
+            top: -11px;
+            left: 50%;
+            transform: translateX(-50%);
             background: white;
-            border-radius: 12px;
-            padding: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .bed-header {
+            padding: 0 6px;
             font-weight: bold;
-            color: #3498db;
-            margin-bottom: 10px;
-            font-size: 1.1rem;
+            color: #007bff;
+            font-size: 13px;
         }
-        .input-wrapper {
-            display: grid;
-            grid-template-columns: 40px 1fr 1fr;
-            gap: 10px;
-        }
-        .line-numbers {
-            font-size: 1.2rem;
-            color: #7f8c8d;
+
+        /* 입력 영역 */
+        .numbering {
+            margin-top: 9px;
+            width: 29px !important;
+            height: 416px;
+            padding: 3px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            background-color: #f0f0f0;
+            font-size: 30px;
+            line-height: 42px;
             text-align: right;
+            overflow-y: hidden;
         }
-        .input-area, .result-area {
-            height: 300px;
-            padding: 10px;
-            border: 1px solid #bdc3c7;
-            border-radius: 8px;
-            font-size: 1.1rem;
+        .input-numbers, .results {
+            height: 416px;
+            padding: 3px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 30px;
+            line-height: 42px;
+            flex-shrink: 0;
+            box-sizing: border-box;
+            min-width: 44px;
+            min-height: 44px;
+            touch-action: manipulation;
+        }
+        .input-numbers {
+            width: 144px !important;
             resize: none;
+            background-color: white;
         }
-        .result-area {
-            background: #ecf0f1;
-            overflow-y: auto;
+        .results {
+            width: 144px !important;
+            background-color: #f0f0f0;
+        }
+
+        /* 결과 스타일 */
+        .negative { color: red !important; }
+        .invalid { color: red !important; font-weight: bold; }
+        .results div:empty { height: 42px; visibility: hidden; }
+
+        /* 평균 표시 */
+        #averageDisplay {
+            margin-left: 10px;
+            color: #007bff;
+            font-weight: bold;
+            font-size: 13px;
         }
 
         /* 액션 버튼 */
-        .action-buttons {
+        #copyReportButton, #shareButton {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            display: flex;
-            gap: 10px;
-        }
-        .action-btn {
             padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
             border: none;
             border-radius: 25px;
             cursor: pointer;
-            font-weight: bold;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.16);
+            font-size: 16px;
+            z-index: 10000;
             transition: transform 0.2s;
         }
-        .action-btn.primary {
-            background: #3498db;
-            color: white;
-        }
-        .action-btn.success {
-            background: #2ecc71;
-            color: white;
-        }
-        .action-btn:hover {
-            transform: translateY(-2px);
-        }
-
-        /* 오류 메시지 */
-        .error-toast {
-            position: fixed;
-            bottom: 80px;
-            right: 20px;
-            padding: 12px 24px;
-            background: #e74c3c;
-            color: white;
-            border-radius: 25px;
-            font-size: 0.9rem;
-            display: none;
-            z-index: 1000;
-        }
+        #shareButton { right: 140px; background-color: #28a745; }
+        #copyReportButton:hover, #shareButton:hover { transform: translateY(-2px); }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>FUEL SHIM 계산</h1>
-        <div class="target-control">
-            <button onclick="adjustTarget(-1)">-</button>
-            <input type="number" id="targetValue" value="144">
-            <button onclick="adjustTarget(1)">+</button>
-        </div>
+    <div id="revisionDisplay"></div>
+    <h2>FUEL SHIM 계산</h2>
+    <div class="number-control">
+        <button onclick="adjustTargetNumber(-1)">-</button>
+        <input type="number" id="targetNumber" value="144" pattern="[0-9]*" inputmode="numeric">
+        <button onclick="adjustTargetNumber(1)">+</button>
+        <span id="averageDisplay">평균: 0.0</span>
     </div>
-
-    <div class="bed-container" id="bedContainer">
-        <!-- 베드 그룹이 동적으로 생성됩니다 -->
-    </div>
-
-    <div class="action-buttons">
-        <button class="action-btn success" id="shareBtn">📤 공유</button>
-        <button class="action-btn primary" id="reportBtn">📄 보고서</button>
-    </div>
-
-    <div class="error-toast" id="errorToast"></div>
+    <div class="groups-container" id="bedContainer"></div>
+    <button id="shareButton">데이터 공유</button>
+    <button id="copyReportButton">보고서 생성</button>
 
     <script>
-        const revision = '27s';
+        const revision = '28s';
+        let initialPrefix = '14';
         const MAX_LINES = 9;
 
         // 초기화 함수
-        function initApp() {
-            // 베드 그룹 생성
-            const container = document.getElementById('bedContainer');
+        function init() {
+            // 베드 생성
+            const bedContainer = document.getElementById('bedContainer');
             for (let i = 1; i <= 4; i++) {
-                container.innerHTML += `
-                    <div class="bed-group">
-                        <div class="bed-header">${i}번 베드</div>
-                        <div class="input-wrapper">
-                            <div class="line-numbers">${Array.from({length: MAX_LINES}, (_, i) => `${i+1}.`).join('<br>')}</div>
-                            <textarea class="input-area" data-bed="${i}"></textarea>
-                            <div class="result-area" data-results="${i}"></div>
+                bedContainer.insertAdjacentHTML('beforeend', `
+                    <div class="group-wrapper">
+                        <div class="numbering">${Array.from({length:9},(_,i)=>i+1+'.').join('<br>')}</div>
+                        <div class="input-group">
+                            <div class="bed-label">${i}번 베드</div>
+                            <textarea class="input-numbers"></textarea>
+                            <div class="results"></div>
                         </div>
                     </div>
-                `;
+                `);
             }
 
             // 이벤트 바인딩
-            document.querySelectorAll('.input-area').forEach(input => {
-                input.addEventListener('input', handleCalculation);
+            document.querySelectorAll('.input-numbers').forEach(input => {
+                input.addEventListener('input', handleInput);
+                input.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
             });
 
             // URL 데이터 로드
             loadFromURL();
+            updateAverage();
         }
 
         // 타겟 값 조정
-        function adjustTarget(value) {
-            const targetInput = document.getElementById('targetValue');
-            targetInput.value = parseInt(targetInput.value) + value;
-            updateCalculations();
+        function adjustTargetNumber(value) {
+            const targetInput = document.getElementById('targetNumber');
+            const newValue = parseInt(targetInput.value) + value;
+            targetInput.value = newValue;
+            initialPrefix = targetInput.value.toString().slice(0, 2);
+            
+            document.querySelectorAll('.input-numbers').forEach(input => {
+                calculateResults(input);
+            });
+            updateAverage();
         }
 
-        // 계산 처리
-        function handleCalculation(event) {
+        // 입력 처리
+        function handleInput(event) {
             const input = event.target;
-            const bedNumber = input.getAttribute('data-bed');
-            const results = document.querySelector(`[data-results="${bedNumber}"]`);
-            const target = parseInt(document.getElementById('targetValue').value);
+            const isBackspace = event.inputType?.startsWith('delete') || event.key === 'Backspace';
+            
+            const cursorPos = input.selectionStart;
+            const prevValue = input.value;
+            const prevLines = prevValue.split('\n');
+            
+            let currentLine = 0;
+            let posInLine = cursorPos;
+            let accumulatedLength = 0;
+            for (; currentLine < prevLines.length; currentLine++) {
+                const lineLength = prevLines[currentLine].length + 1;
+                if (posInLine <= accumulatedLength + lineLength) {
+                    posInLine -= accumulatedLength;
+                    break;
+                }
+                accumulatedLength += lineLength;
+            }
 
-            const values = input.value.split('\n');
-            const output = values.map(line => {
-                if (line.length !== 3) return '';
-                const diff = target - parseInt(line);
-                return (diff * 0.125).toFixed(1);
+            let values = input.value.replace(/[^\d\n]/g, '').split('\n')
+                .map(line => line.slice(0, 3))
+                .filter((line, index, arr) => 
+                    index === arr.length - 1 || line.trim() !== ''
+                )
+                .slice(0, MAX_LINES);
+
+            let dynamicPrefix = initialPrefix;
+            if (values.length > 0 && values[values.length - 1].length === 3) {
+                dynamicPrefix = values[values.length - 1].slice(0, 2);
+            }
+
+            let newLineAdded = false;
+            if (!isBackspace && values.length < MAX_LINES && 
+                values[values.length - 1].length === 3 && 
+                values[values.length - 1] !== dynamicPrefix) {
+                values.push(dynamicPrefix);
+                newLineAdded = true;
+            }
+
+            const newValue = values.join('\n');
+            if (newValue !== prevValue) {
+                input.value = newValue;
+                calculateResults(input);
+
+                let newCursorPos;
+                if (newLineAdded) {
+                    newCursorPos = newValue.length;
+                } else {
+                    const newLines = newValue.split('\n');
+                    newCursorPos = 0;
+                    for (let i = 0; i < currentLine; i++) {
+                        newCursorPos += (newLines[i]?.length || 0) + 1;
+                    }
+                    newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
+                }
+
+                requestAnimationFrame(() => {
+                    input.setSelectionRange(newCursorPos, newCursorPos);
+                });
+            } else {
+                calculateResults(input);
+            }
+            
+            updateAverage();
+        }
+
+        // 결과 계산
+        function calculateResults(inputElement) {
+            const wrapper = inputElement.closest('.group-wrapper');
+            const target = parseInt(document.getElementById('targetNumber').value);
+            const numbers = inputElement.value.split('\n');
+            
+            const results = numbers.map((num, index) => {
+                const isLastLine = index === numbers.length - 1;
+                if (!isLastLine && num.length > 0 && num.length < 3 && /^\d+$/.test(num)) {
+                    return { 
+                        value: '오류!', 
+                        style: 'invalid' 
+                    };
+                }
+                if (num.length !== 3) return { value: num.length > 0 ? '⚠' : '', isNegative: false };
+                
+                const n = parseInt(num);
+                const diff = target - n;
+                const result = Math.trunc(diff * 0.125 * 10) / 10;
+                return {
+                    value: Math.abs(result) > 0.1 ? result.toFixed(1).replace(/\.0$/, '') : '',
+                    isNegative: result < 0
+                };
             });
 
-            results.innerHTML = output.map(val => `<div>${val}</div>`).join('');
+            wrapper.querySelector('.results').innerHTML = results
+                .map(r => {
+                    if (!r.value) return '<div></div>';
+                    let classes = [];
+                    if (r.style) classes.push(r.style);
+                    if (r.isNegative) classes.push('negative');
+                    return `<div class="${classes.join(' ')}">${r.value}</div>`;
+                })
+                .join('');
+        }
+
+        // 평균 업데이트
+        function updateAverage() {
+            const inputs = Array.from(document.querySelectorAll('.input-numbers'))
+                .slice(0, 4)
+                .flatMap(input => 
+                    input.value.split('\n')
+                    .filter(num => num.length === 3)
+                    .map(num => parseInt(num))
+                )
+                .filter(num => !isNaN(num));
+
+            const average = inputs.length > 0 
+                ? (inputs.reduce((a, b) => a + b, 0) / inputs.length).toFixed(1)
+                : '0.0';
+
+            document.getElementById('averageDisplay').textContent = `평균: ${average}`;
         }
 
         // URL 데이터 로드
@@ -222,47 +339,19 @@
             if (!params.has('target')) return;
 
             // 타겟 값 설정
-            document.getElementById('targetValue').value = params.get('target');
+            document.getElementById('targetNumber').value = params.get('target');
+            adjustTargetNumber(0); // 입력값 업데이트
 
             // 베드 데이터 로드
-            Array.from(document.querySelectorAll('.input-area')).forEach((input, idx) => {
+            Array.from(document.querySelectorAll('.input-numbers')).forEach((input, idx) => {
                 const bedData = params.get(`bed${idx+1}`)?.split(',') || [];
                 input.value = bedData.join('\n');
-                handleCalculation({ target: input });
+                calculateResults(input);
             });
         }
 
-        // 공유 기능
-        document.getElementById('shareBtn').addEventListener('click', () => {
-            const target = document.getElementById('targetValue').value;
-            const beds = Array.from(document.querySelectorAll('.input-area'))
-                .map(input => input.value.split('\n').join(','));
-
-            const params = new URLSearchParams({
-                ver: revision,
-                target: target,
-                ...beds.reduce((acc, val, idx) => {
-                    acc[`bed${idx+1}`] = val;
-                    return acc;
-                }, {})
-            });
-
-            const link = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
-            navigator.clipboard.writeText(link)
-                .then(() => alert('링크가 복사되었습니다!'))
-                .catch(() => showError('링크 복사 실패'));
-        });
-
-        // 오류 메시지 표시
-        function showError(message) {
-            const toast = document.getElementById('errorToast');
-            toast.textContent = message;
-            toast.style.display = 'block';
-            setTimeout(() => toast.style.display = 'none', 5000);
-        }
-
-        // 앱 초기화
-        window.addEventListener('DOMContentLoaded', initApp);
+        // 초기화 실행
+        window.onload = init;
     </script>
 </body>
 </html>

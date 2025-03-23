@@ -277,7 +277,7 @@
     </div>
 
     <script>
-        const revision = '26b';
+        const revision = '26c'; // 리비전 업데이트
         let initialPrefix = '14';
         const MAX_LINES = 9;
         const STORAGE_KEY = 'fuelShimData';
@@ -435,24 +435,34 @@
             document.getElementById('averageDisplay').textContent = `평균: ${average}`;
         }
 
-        // 보고서 생성 로직
+        // 보고서 생성 로직 (수정된 부분)
         function generateReport() {
             const target = document.getElementById('targetNumber').value;
-            const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
-            
+            const now = new Date();
+            now.setHours(now.getHours() + 9); // 서울 시간 변환
+            const kstTime = now.toISOString().replace('T', ' ').substring(0, 19);
+
             let report = `# FUEL SHIM 보고서\n`;
             report += `**목표값:** ${target}\n`;
-            report += `**생성일:** ${now}\n\n`;
+            report += `**생성일:** ${kstTime}\n\n`;
 
             document.querySelectorAll('.input-group').forEach((group, idx) => {
-                const inputs = group.querySelector('.input-numbers').value.split('\n');
-                const results = Array.from(group.querySelectorAll('.results div')).map(div => div.textContent);
-                
+                const input = group.querySelector('.input-numbers');
+                const lines = input.value.split('\n').filter(line => 
+                    line.length === 3 && /^\d+$/.test(line) && line !== '000'
+                );
+
+                if (lines.length === 0) return; // 입력 없는 베드 제외
+
+                const results = Array.from(group.querySelectorAll('.results div'))
+                                  .map(div => div.textContent)
+                                  .filter((_, i) => i < lines.length);
+
                 report += `## ${idx+1}번 베드\n`;
                 report += '| 순번 | 입력값 | 결과 |\n';
                 report += '|-----|-------|--------|\n';
                 
-                inputs.forEach((v, i) => {
+                lines.forEach((v, i) => {
                     report += `| ${i+1} | ${v.padStart(3, '0')} | ${results[i] || ''} |\n`;
                 });
                 report += '\n';
@@ -580,6 +590,10 @@
             document.getElementById('loadButtonLandscape').addEventListener('click', function() {
                 if (!this.classList.contains('disabled')) loadData();
             });
+
+            // 초기화 버튼 이벤트 리스너 추가
+            document.getElementById('resetButton').addEventListener('click', resetAll);
+            document.getElementById('resetButtonLandscape').addEventListener('click', resetAll);
 
             updateLoadButton();
             updateAverage();

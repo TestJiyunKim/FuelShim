@@ -116,6 +116,7 @@
             background-color: white;
             inputmode: numeric;
             pattern: "[0-9]*";
+            margin-top: 2px; /* 입력창 2포인트 아래로 내림 */
         }
         .results {
             width: 144px !important;
@@ -274,7 +275,7 @@
     </div>
 
     <script>
-        const revision = '최종';
+        const revision = '26a';
         let initialPrefix = '14';
         const MAX_LINES = 9;
         const STORAGE_KEY = 'fuelShimData';
@@ -284,6 +285,7 @@
             inputElement.value = ''; // ✨ 접두어 미리 입력하지 않음
             inputElement.addEventListener('focus', handleFirstFocus);
             inputElement.addEventListener('click', handleFirstFocus); // ✨ 클릭 이벤트 추가
+            inputElement.addEventListener('blur', handleBlur); // 포커스 아웃 이벤트 추가
         }
 
         // 접두어 삽입 로직
@@ -292,6 +294,17 @@
             if (input.value === '') {
                 input.value = initialPrefix;
                 input.setSelectionRange(initialPrefix.length, initialPrefix.length);
+            }
+        }
+
+        // 포커스 아웃 시 접두어 삭제 로직
+        function handleBlur(event) {
+            const input = event.target;
+            const lines = input.value.split('\n');
+            if (lines[lines.length - 1] === initialPrefix) {
+                lines.pop();
+                input.value = lines.join('\n');
+                calculateResults(input);
             }
         }
 
@@ -327,7 +340,7 @@
                 const diff = target - n;
                 const result = Math.trunc(diff * 0.125 * 10) / 10;
                 return {
-                    value: Math.abs(result) > 0.1 ? result.toFixed(1).replace(/\.0$/, '') : '',
+                    value: Math.abs(result) >= 0.1 ? result.toFixed(1).replace(/\.0$/, '') : '',
                     isNegative: result < 0
                 };
             });

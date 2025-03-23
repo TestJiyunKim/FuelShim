@@ -7,6 +7,7 @@
     <style>
         * {
             box-sizing: border-box;
+            touch-action: manipulation; /* 더블클릭 확대 방지 */
         }
         body {
             font-family: Arial, sans-serif;
@@ -14,7 +15,7 @@
             background-color: #f4f4f9;
             position: relative;
             overflow-x: hidden;
-            padding-bottom: 135px;
+            padding-bottom: 135px; /* 5포인트 증가 */
         }
         h2 {
             text-align: center;
@@ -32,7 +33,7 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
-            margin-top: 19px;
+            margin-top: 19px; /* 4포인트 아래로 이동 */
             padding: 0 2%;
         }
         .group-row {
@@ -43,8 +44,8 @@
         }
         .numbering {
             width: 10%;
-            height: 53vh;
-            margin-top: 19px;
+            height: 53vh; /* 10포인트 감소 */
+            margin-top: 19px; /* 2포인트 감소 */
             padding: 15px 1%;
             position: relative;
             top: 2px;
@@ -58,12 +59,12 @@
             width: 38.4%;
             border: 2px solid #007bff;
             border-radius: 6px;
-            padding: 24px 1% 5px;
+            padding: 24px 1% 5px; /* 상단 여백 1포인트 감소 */
             position: relative;
             background-color: white;
-            height: 63vh;
+            height: 63vh; /* 10포인트 감소 */
             margin-right: 2%;
-            margin-top: 4px;
+            margin-top: 4px; /* 4포인트 아래로 이동 */
         }
         .input-group:last-child {
             margin-right: 0;
@@ -93,7 +94,7 @@
             font-size: 28px;
             line-height: 1.5;
             caret-color: transparent;
-            overflow-y: auto;
+            overflow-y: auto; /* 스크롤 활성화 */
         }
         .virtual-keyboard {
             position: fixed;
@@ -105,10 +106,6 @@
             box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
             z-index: 1000;
             height: 120px;
-            touch-action: manipulation; /* 모바일 더블탭 확대 방지 */
-        }
-        .virtual-keyboard * {
-            touch-action: manipulation; /* 하위 요소에도 적용 */
         }
         .keyboard-row {
             display: flex;
@@ -125,7 +122,12 @@
             flex: 1;
             max-width: 18%;
             font-size: 14px;
-            transition: all 0.2s;
+            transition: all 0.2s; /* 반응속도 원복 */
+            touch-action: manipulation;
+        }
+        .keyboard-btn:active {
+            background: #007bff; /* 모바일 액티브 상태 */
+            color: white;
         }
         .keyboard-btn.active {
             background: #007bff;
@@ -138,7 +140,7 @@
         }
         #copyReport {
             position: fixed;
-            bottom: 145px;
+            bottom: 145px; /* 키보드 위에 플로팅 */
             right: 20px;
             padding: 12px 20px;
             background: #28a745;
@@ -204,6 +206,8 @@ const presets = {
 let currentPercent = '25';
 let activeInput = null;
 let currentValues = [...presets[currentPercent]];
+
+// 입력창 상태 관리용 WeakMap
 const inputStates = new WeakMap();
 
 function getCurrentLine(input) {
@@ -226,9 +230,29 @@ function updateNumberButtons() {
     `;
 }
 
-// 키보드 이벤트 핸들러 (클릭만 처리)
+// 이벤트 핸들러 최적화
 document.querySelectorAll('.keyboard-btn').forEach(btn => {
+    let isTouchEvent = false;
+
+    // 터치 시작 시 플래그 설정
+    btn.addEventListener('touchstart', (e) => {
+        isTouchEvent = true;
+        handleEvent(e);
+    }, { passive: true });
+
+    // 터치 종료 시 기본 동작 방지
+    btn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        handleEvent(e);
+    });
+
+    // 클릭 이벤트 (데스크톱 전용)
     btn.addEventListener('click', (e) => {
+        if (!isTouchEvent) handleEvent(e);
+        isTouchEvent = false;
+    });
+
+    const handleEvent = (e) => {
         e.stopPropagation();
         
         if(e.target.closest('[data-percent]')) {
@@ -239,22 +263,26 @@ document.querySelectorAll('.keyboard-btn').forEach(btn => {
             e.target.classList.add('active');
             updateNumberButtons();
         }
-    });
+    };
 });
 
+// 입력 라인 관리 강화
 document.querySelectorAll('.input-numbers').forEach(input => {
     input.addEventListener('focus', () => {
-        const lines = input.value.split('\n');
-        setCurrentLine(input, lines.length - 1);
+        const lines = input.value.split('\n').length;
+        setCurrentLine(input, lines - 1);
         activeInput = input;
     });
 });
 
-document.addEventListener('click', (e) => {
+document.addEventListener('click', (e) => handleInteraction(e));
+document.addEventListener('touchstart', (e) => handleInteraction(e));
+
+function handleInteraction(e) {
     if (e.target.closest('.input-numbers')) {
         activeInput = e.target;
-        const lines = activeInput.value.split('\n');
-        setCurrentLine(activeInput, lines.length - 1);
+        const lines = activeInput.value.split('\n').length;
+        setCurrentLine(activeInput, lines - 1);
         activeInput.focus();
         return;
     }
@@ -277,26 +305,19 @@ document.addEventListener('click', (e) => {
         const value = parseFloat(e.target.textContent);
         const lines = activeInput.value.split('\n');
         const currentLine = getCurrentLine(activeInput);
-        
-        // [강제 개행 로직]
         lines[currentLine] = value.toFixed(1);
-        if(currentLine < 8) {
-            lines.length = currentLine + 1; // 기존 내용 초기화
-            lines.push(''); // 새로운 빈 줄 추가
-        }
-        
-        activeInput.value = lines.join('\n');
-        setCurrentLine(activeInput, Math.min(currentLine + 1, 8));
+        activeInput.value = lines.filter(v => v).join('\n');
+        if (currentLine < 8) setCurrentLine(activeInput, currentLine + 1); // 자동 줄넘기기 복원
     }
 
-    activeInput.focus();
-});
+    if(activeInput) activeInput.focus();
+}
 
 document.getElementById('copyReport').addEventListener('click', async () => {
     try {
         const report = Array.from(document.querySelectorAll('.input-group'))
             .map(group => {
-                const bedNumber = group.querySelector('.bed-label').textContent.replace('#', '') + '번 베드';
+                const bedNumber = group.querySelector('.bed-label').textContent.replace('#', '') + '번 베드'; // 수정된 부분
                 const values = group.querySelector('.input-numbers').value.split('\n').filter(v => v);
                 return values.length > 0 ? `${bedNumber}: ${values.join(', ')}` : null;
             })

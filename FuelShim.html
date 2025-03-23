@@ -277,7 +277,7 @@
     </div>
 
     <script>
-        const revision = '26g'; // 리비전 업데이트
+        const revision = '26h'; // 리비전 업데이트
         let initialPrefix = '14';
         const MAX_LINES = 9;
         const STORAGE_KEY = 'fuelShimData';
@@ -327,12 +327,17 @@
             }
         }
 
-        // 초기화 버튼 동작
+        // 초기화 버튼 동작 (수정된 부분)
         function resetAll() {
+            // 입력값 초기화
             document.querySelectorAll('.input-numbers').forEach(input => {
                 input.value = '';
                 calculateResults(input);
             });
+            
+            // URL 파라미터 제거 (새로고침 시 초기 상태 유지)
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
             alert('초기화 완료');
         }
 

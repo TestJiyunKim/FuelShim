@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>FUEL SHIM 계산</title>
   <style>
@@ -14,13 +14,11 @@
       color: #333;
       margin: 0;
       padding-bottom: 120px;
-      font-size: calc(16px + 0.3vw);
     }
     h2 {
       color: #444;
       margin-bottom: 8px;
       text-align: center;
-      font-size: calc(1.5rem + 1vw);
     }
     .number-control {
       display: flex;
@@ -42,9 +40,8 @@
       -moz-appearance: textfield;
     }
     .number-control button {
-      width: 50px !important;
-      height: 40px !important;
-      min-height: 40px;
+      width: 40px !important;
+      height: 30px !important;
       font-size: 18px !important;
       padding: 0 !important;
       border: 2px solid #007bff;
@@ -106,22 +103,21 @@
       padding: 3px;
       border: 1px solid #ccc;
       border-radius: 3px;
-      font-size: 1.2rem;
+      font-size: 30px;
       line-height: 42px;
       flex-shrink: 0;
       box-sizing: border-box;
-      min-width: 55px;
-      min-height: 48px;
+      min-width: 44px;
+      min-height: 44px;
       touch-action: manipulation;
     }
     .input-numbers {
       width: 144px !important;
       resize: none;
       background-color: white;
+      /* ARIA 역할 추가 */
       aria-label: "연료 입력";
       margin-top: 2px;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
     }
     .results {
       width: 144px !important;
@@ -173,7 +169,7 @@
       padding: 10px 12px;
       border: none;
       border-radius: 25px;
-      font-size: calc(12px + 0.5vw);
+      font-size: 13px;
       cursor: pointer;
       transition: transform 0.2s;
       white-space: nowrap;
@@ -238,17 +234,6 @@
         padding: 8px 10px !important;
         font-size: 12px !important;
       }
-      .group-wrapper {
-        flex-direction: column;
-      }
-      .input-group {
-        height: auto;
-        padding: 25px 5px 10px;
-      }
-      .input-numbers, .results {
-        width: 100% !important;
-        height: auto;
-      }
     }
     #landscapeButtons {
       display: none;
@@ -288,7 +273,7 @@
   <script>
     (() => {
       // 상수 및 기본 설정
-      const revision = '27m'; // 리비전 업데이트
+      const revision = '26h';
       let initialPrefix = '14';
       const MAX_LINES = 9;
       const STORAGE_KEY = 'fuelShimData';
@@ -325,33 +310,31 @@
        * @param {HTMLElement} inputElement - 계산 대상 입력창
        */
       const calculateResults = (inputElement) => {
-        requestAnimationFrame(() => {
-          const wrapper = inputElement.closest('.group-wrapper');
-          const target = parseInt(targetInput.value);
-          const numbers = inputElement.value.split('\n');
-          const results = numbers.map((num, index) => {
-            const isLastLine = index === numbers.length - 1;
-            if (!isLastLine && num.length > 0 && num.length < 3 && /^\d+$/.test(num)) {
-              return { value: '오류!', style: 'invalid', isNegative: false };
-            }
-            if (num.length !== 3) return { value: num.length > 0 ? '⚠' : '', isNegative: false };
-            const n = parseInt(num);
-            const diff = target - n;
-            const result = Math.trunc(diff * 0.125 * 10) / 10;
-            return {
-              value: Math.abs(result) >= 0.1 ? result.toFixed(1).replace(/\.0$/, '') : '',
-              isNegative: result < 0
-            };
-          });
-          const resultsContainer = wrapper.querySelector('.results');
-          resultsContainer.innerHTML = results.map(r => {
-            if (!r.value) return '<div></div>';
-            const classes = [];
-            if (r.style) classes.push(r.style);
-            if (r.isNegative) classes.push('negative');
-            return `<div class="${classes.join(' ')}">${r.value}</div>`;
-          }).join('');
+        const wrapper = inputElement.closest('.group-wrapper');
+        const target = parseInt(targetInput.value);
+        const numbers = inputElement.value.split('\n');
+        const results = numbers.map((num, index) => {
+          const isLastLine = index === numbers.length - 1;
+          if (!isLastLine && num.length > 0 && num.length < 3 && /^\d+$/.test(num)) {
+            return { value: '오류!', style: 'invalid', isNegative: false };
+          }
+          if (num.length !== 3) return { value: num.length > 0 ? '⚠' : '', isNegative: false };
+          const n = parseInt(num);
+          const diff = target - n;
+          const result = Math.trunc(diff * 0.125 * 10) / 10;
+          return {
+            value: Math.abs(result) >= 0.1 ? result.toFixed(1).replace(/\.0$/, '') : '',
+            isNegative: result < 0
+          };
         });
+        const resultsContainer = wrapper.querySelector('.results');
+        resultsContainer.innerHTML = results.map(r => {
+          if (!r.value) return '<div></div>';
+          const classes = [];
+          if (r.style) classes.push(r.style);
+          if (r.isNegative) classes.push('negative');
+          return `<div class="${classes.join(' ')}">${r.value}</div>`;
+        }).join('');
       };
       
       /**
@@ -407,9 +390,6 @@
        * 입력 이벤트 처리 (디바운스 고려 가능)
        */
       const handleInput = (event) => {
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-          event.target.setAttribute("inputmode", "numeric");
-        }
         const input = event.target;
         const isBackspace = event.inputType?.startsWith('delete') || event.key === 'Backspace';
         const cursorPos = input.selectionStart;

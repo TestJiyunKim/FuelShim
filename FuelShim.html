@@ -127,6 +127,12 @@
         .invalid {
             color: red !important;
             font-weight: bold;
+            animation: shake 0.5s; /* 흔들림 효과 복원 */
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25%, 75% { transform: translateX(8px); }
+            50% { transform: translateX(-8px); }
         }
         .results div:empty {
             height: 42px;
@@ -274,54 +280,135 @@
     </div>
 
     <script>
-        const revision = '240611-1730';
+        const revision = '240611-최종수정';
         let initialPrefix = '14';
         const MAX_LINES = 9;
         const STORAGE_KEY = 'fuelShimData';
 
-        // 22s 기능 통합 부분 --------------------------------------------------
-        function getCurrentPrefix(prevLine) {
-            return prevLine?.slice(0, 2) || initialPrefix;
+        // 1. createBedGroup() 함수 복원 (25s)
+        function createBedGroup(i) {
+            return `
+                <div class="group-wrapper">
+                    <div class="numbering">${Array.from({length: MAX_LINES}, (_, i) => `${i+1}.`).join('\n')}</div>
+                    <div class="input-group">
+                        <div class="bed-label">${i}번 베드</div>
+                        <textarea class="input-numbers" 
+                            rows="9" 
+                            inputmode="numeric"
+                            data-initialized="false"></textarea>
+                        <div class="results"></div>
+                    </div>
+                </div>
+            `;
         }
 
-        function cleanEmptyLines(event) {
+        // 2. 정교한 커서 계산 로직 (25s)
+        function handleInput(event) {
             const input = event.target;
-            const lines = input.value.split('\n');
+            const isBackspace = event.inputType?.startsWith('delete') || event.key === 'Backspace';
             
-            let values = lines
-                .map((line, index, arr) => {
-                    // 22s 마지막 라인 접두어 삭제 로직
-                    if (index === arr.length - 1) {
-                        const prev = arr[index - 1];
-                        const currentPrefix = getCurrentPrefix(prev);
-                        if (line === currentPrefix) return null;
-                    }
-                    return line.trim() !== '' ? line : null;
-                })
-                .filter(line => line !== null)
+            const cursorPos = input.selectionStart;
+            const prevValue = input.value;
+            const prevLines = prevValue.split('\n');
+            
+            let currentLine = 0;
+            let posInLine = cursorPos;
+            let accumulatedLength = 0;
+            for (; currentLine < prevLines.length; currentLine++) {
+                const lineLength = prevLines[currentLine].length + 1;
+                if (posInLine <= accumulatedLength + lineLength) {
+                    posInLine -= accumulatedLength;
+                    break;
+                }
+                accumulatedLength += lineLength;
+            }
+
+            let values = input.value.replace(/[^\d\n]/g, '').split('\n')
+                .map(line => line.slice(0, 3))
+                .filter((line, index, arr) => 
+                    index === arr.length - 1 || line.trim() !== ''
+                )
                 .slice(0, MAX_LINES);
 
-            input.value = values.join('\n');
-            calculateResults(input);
-        }
-        // --------------------------------------------------------------------
-
-        // 기존 함수들 (변경 없음) ---------------------------------------------
-        function initializeInput(inputElement) {
-            inputElement.value = '';
-            inputElement.addEventListener('focus', handleFirstFocus);
-            inputElement.addEventListener('blur', cleanEmptyLines); // 이벤트 연결
-        }
-
-        function handleFirstFocus(event) {
-            const input = event.target;
-            if (input.value === '') {
-                input.value = initialPrefix;
-                input.setSelectionRange(initialPrefix.length, initialPrefix.length);
+            let dynamicPrefix = initialPrefix;
+            if (values.length > 0 && values[values.length - 1].length === 3) {
+                dynamicPrefix = values[values.length - 1].slice(0, 2);
             }
+
+            let newLineAdded = false;
+            if (!isBackspace && values.length < MAX_LINES && 
+                values[values.length - 1].length === 3 && 
+                values[values.length - 1] !== dynamicPrefix) {
+                values.push(dynamicPrefix);
+                newLineAdded = true;
+            }
+
+            const newValue = values.join('\n');
+            if (newValue !== prevValue) {
+                input.value = newValue;
+                calculateResults(input);
+
+                let newCursorPos;
+                if (newLineAdded) {
+                    newCursorPos = newValue.length;
+                } else {
+                    const newLines = newValue.split('\n');
+                    newCursorPos = 0;
+                    for (let i = 0; i < currentLine; i++) {
+                        newCursorPos += (newLines[i]?.length || 0) + 1;
+                    }
+                    newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
+                }
+
+                requestAnimationFrame(() => {
+                    input.setSelectionRange(newCursorPos, newCursorPos);
+                });
+            } else {
+                calculateResults(input);
+            }
+            updateAverage();
         }
 
-        // ... [나머지 함수들은 기존 최신 버전과 동일] ...
+        // 3. 보고서 통계 생성 (22s)
+        function generateReport() {
+            const target = document.getElementById('targetNumber').value;
+            const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+            
+            let report = `# FUEL SHIM 보고서\n`;
+            report += `**목표값:** ${target}\n`;
+            report += `**생성일:** ${now}\n\n`;
+
+            document.querySelectorAll('.input-group').forEach((group, idx) => {
+                const inputs = group.querySelector('.input-numbers').value.split('\n');
+                const results = Array.from(group.querySelectorAll('.results div')).map(div => div.textContent);
+                
+                report += `## ${idx+1}번 베드\n`;
+                report += '| 순번 | 입력값 | 결과 |\n';
+                report += '|-----|-------|--------|\n';
+                
+                inputs.forEach((v, i) => {
+                    report += `| ${i+1} | ${v.padStart(3, '0')} | ${results[i] || ''} |\n`;
+                });
+                report += '\n';
+
+                // 평균 및 경고 카운트 계산
+                let sum = 0, count = 0, warningCount = 0;
+                inputs.forEach(val => {
+                    if (/^\d+$/.test(val)) {
+                        sum += parseInt(val);
+                        count++;
+                    } else if(val === "⚠") {
+                        warningCount++;
+                    }
+                });
+                const average = count > 0 ? (sum / count).toFixed(1) : '-';
+                report += `*평균: ${average}, 경고: ${warningCount}*\n\n`;
+            });
+
+            return report;
+        }
+
+        // ... (나머지 함수들은 기존 최신 버전과 동일) ...
 
         window.onload = function () {
             document.getElementById('revisionDisplay').textContent = `Rev: ${revision}`;
@@ -330,23 +417,13 @@
 
             const bedContainer = document.getElementById('bedContainer');
             for (let i = 1; i <= 4; i++) {
-                bedContainer.insertAdjacentHTML('beforeend', `
-                    <div class="group-wrapper">
-                        <div class="numbering">${Array.from({length: MAX_LINES}, (_, i) => `${i+1}.`).join('\n')}</div>
-                        <div class="input-group">
-                            <div class="bed-label">${i}번 베드</div>
-                            <textarea class="input-numbers"></textarea>
-                            <div class="results"></div>
-                        </div>
-                    </div>
-                `);
+                bedContainer.insertAdjacentHTML('beforeend', createBedGroup(i));
             }
 
             document.querySelectorAll('.input-numbers').forEach(input => {
                 initializeInput(input);
                 input.addEventListener('input', handleInput);
                 input.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
-                input.addEventListener('blur', cleanEmptyLines); // 추가 보장
             });
 
             document.getElementById('resetButton').addEventListener('click', () => {

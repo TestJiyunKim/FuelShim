@@ -116,7 +116,7 @@
             background-color: white;
             inputmode: numeric;
             pattern: "[0-9]*";
-            margin-top: 2px; /* 입력창 2포인트 아래로 내림 */
+            margin-top: 2px;
         }
         .results {
             width: 144px !important;
@@ -164,7 +164,7 @@
         .button-row button {
             flex: 1;
             min-width: 90px;
-            max-width: 200px;
+            max-width: 150px;
             padding: 10px 12px;
             border: none;
             border-radius: 25px;
@@ -205,6 +205,7 @@
             .groups-container {
                 flex-direction: row !important;
                 gap: 2px !important;
+                margin: 0 10px;
             }
             .group-wrapper {
                 width: auto !important;
@@ -219,19 +220,20 @@
             }
             .input-numbers,
             .results {
-                width: 96px !important; /* 2/3 크기로 축소 */
+                width: 82px !important;
             }
             .button-row {
                 bottom: 5px !important;
                 flex-wrap: nowrap !important;
                 gap: 4px !important;
+                padding: 0 10px;
             }
             #buttonRow1, #buttonRow2 {
                 display: none !important;
             }
             #landscapeButtons {
                 display: flex !important;
-                width: 100%;
+                width: calc(100% - 20px);
             }
         }
         @media (orientation: portrait) {
@@ -267,25 +269,26 @@
         <button id="loadButton" class="disabled">데이터 불러오기</button>
     </div>
     <div class="button-row" id="landscapeButtons">
-        <button id="resetButton">초기화</button>
-        <button id="copyReportButton">보고서 생성</button>
-        <button id="shareButton">데이터 공유</button>
-        <button id="saveButton">데이터 저장</button>
-        <button id="loadButton" class="disabled">데이터 불러오기</button>
+        <button id="resetButtonLandscape">초기화</button>
+        <button id="copyReportButtonLandscape">보고서 생성</button>
+        <button id="shareButtonLandscape">데이터 공유</button>
+        <button id="saveButtonLandscape">데이터 저장</button>
+        <button id="loadButtonLandscape" class="disabled">데이터 불러오기</button>
     </div>
 
     <script>
-        const revision = '26a';
+        const revision = '26b';
         let initialPrefix = '14';
         const MAX_LINES = 9;
         const STORAGE_KEY = 'fuelShimData';
 
         // 초기화 로직
         function initializeInput(inputElement) {
-            inputElement.value = ''; // ✨ 접두어 미리 입력하지 않음
+            inputElement.value = '';
             inputElement.addEventListener('focus', handleFirstFocus);
-            inputElement.addEventListener('click', handleFirstFocus); // ✨ 클릭 이벤트 추가
-            inputElement.addEventListener('blur', handleBlur); // 포커스 아웃 이벤트 추가
+            inputElement.addEventListener('click', handleFirstFocus);
+            inputElement.addEventListener('blur', handleBlur);
+            inputElement.setAttribute('inputmode', 'numeric');
         }
 
         // 접두어 삽입 로직
@@ -309,19 +312,13 @@
         }
 
         // 초기화 버튼 동작
-        document.getElementById('resetButton').addEventListener('click', () => {
+        function resetAll() {
             document.querySelectorAll('.input-numbers').forEach(input => {
-                input.value = ''; // ✨ 완전 초기화
+                input.value = '';
                 calculateResults(input);
             });
             alert('초기화 완료');
-        });
-
-        // 숫자 키보드 강제 활성화
-        document.querySelectorAll('.input-numbers').forEach(input => {
-            input.setAttribute('inputmode', 'numeric');
-            input.setAttribute('pattern', '[0-9]*');
-        });
+        }
 
         // 핵심 계산 로직
         function calculateResults(inputElement) {
@@ -511,15 +508,20 @@
         function updateLoadButton() {
             const savedData = localStorage.getItem(STORAGE_KEY);
             const loadBtn = document.getElementById('loadButton');
+            const loadBtnLandscape = document.getElementById('loadButtonLandscape');
             
             if (savedData) {
                 const data = JSON.parse(savedData);
                 const saveDate = new Date(data.date);
                 loadBtn.textContent = `${saveDate.getMonth()+1}/${saveDate.getDate()} 불러오기`;
                 loadBtn.classList.remove('disabled');
+                loadBtnLandscape.textContent = `${saveDate.getMonth()+1}/${saveDate.getDate()} 불러오기`;
+                loadBtnLandscape.classList.remove('disabled');
             } else {
                 loadBtn.textContent = '데이터 불러오기';
                 loadBtn.classList.add('disabled');
+                loadBtnLandscape.textContent = '데이터 불러오기';
+                loadBtnLandscape.classList.add('disabled');
             }
         }
 
@@ -561,6 +563,21 @@
 
             document.getElementById('saveButton').addEventListener('click', saveData);
             document.getElementById('loadButton').addEventListener('click', function() {
+                if (!this.classList.contains('disabled')) loadData();
+            });
+
+            document.getElementById('copyReportButtonLandscape').addEventListener('click', () => {
+                navigator.clipboard.writeText(generateReport());
+                alert('보고서가 클립보드에 복사되었습니다.');
+            });
+
+            document.getElementById('shareButtonLandscape').addEventListener('click', () => {
+                navigator.clipboard.writeText(generateShareURL());
+                alert('공유 URL이 클립보드에 복사되었습니다.');
+            });
+
+            document.getElementById('saveButtonLandscape').addEventListener('click', saveData);
+            document.getElementById('loadButtonLandscape').addEventListener('click', function() {
                 if (!this.classList.contains('disabled')) loadData();
             });
 

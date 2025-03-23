@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>FUEL SHIM 계산</title>
   <style>
-    /* 기본 스타일 */
+    /* 기존 CSS 유지 */
     body {
       font-family: Arial, sans-serif;
       padding: 10px;
@@ -115,8 +115,6 @@
       width: 144px !important;
       resize: none;
       background-color: white;
-      /* ARIA 역할 추가 */
-      aria-label: "연료 입력";
       margin-top: 2px;
     }
     .results {
@@ -177,13 +175,11 @@
     .button-row button:hover {
       transform: translateY(-2px);
     }
-    /* 세로모드 버튼 색상 */
     #resetButton { background-color: #dc3545; color: white; }
     #copyReportButton { background-color: #007bff; color: white; }
     #shareButton { background-color: #28a745; color: white; }
     #saveButton { background-color: #ffc107; color: black; }
     #loadButton { background-color: #17a2b8; color: white; }
-    /* 가로모드 버튼 동일 색상 적용 */
     #resetButtonLandscape { background-color: #dc3545; color: white; }
     #copyReportButtonLandscape { background-color: #007bff; color: white; }
     #shareButtonLandscape { background-color: #28a745; color: white; }
@@ -244,14 +240,13 @@
   <div id="revisionDisplay"></div>
   <h2>FUEL SHIM 계산</h2>
   <div class="number-control">
-    <button id="decrementTarget" aria-label="목표값 감소">-</button>
+    <button id="decrementTarget">-</button>
     <input type="number" id="targetNumber" value="144" pattern="[0-9]*" inputmode="numeric">
-    <button id="incrementTarget" aria-label="목표값 증가">+</button>
+    <button id="incrementTarget">+</button>
     <span id="averageDisplay">평균: 0.0</span>
   </div>
   <div class="groups-container" id="bedContainer"></div>
   
-  <!-- 세로모드 버튼 -->
   <div class="button-row" id="buttonRow1">
     <button id="resetButton">초기화</button>
     <button id="copyReportButton">보고서 생성</button>
@@ -261,7 +256,6 @@
     <button id="saveButton">데이터 저장</button>
     <button id="loadButton" class="disabled">데이터 불러오기</button>
   </div>
-  <!-- 가로모드 버튼 -->
   <div class="button-row" id="landscapeButtons">
     <button id="resetButtonLandscape">초기화</button>
     <button id="copyReportButtonLandscape">보고서 생성</button>
@@ -269,391 +263,244 @@
     <button id="saveButtonLandscape">데이터 저장</button>
     <button id="loadButtonLandscape" class="disabled">데이터 불러오기</button>
   </div>
-  
-  <script>
-    (() => {
-      // 상수 및 기본 설정
-      const revision = '26h';
-      let initialPrefix = '14';
-      const MAX_LINES = 9;
-      const STORAGE_KEY = 'fuelShimData';
-      const bedCount = 4;
-      
-      // DOM 요소 캐싱
-      const revisionDisplay = document.getElementById('revisionDisplay');
-      const targetInput = document.getElementById('targetNumber');
-      const averageDisplay = document.getElementById('averageDisplay');
-      const bedContainer = document.getElementById('bedContainer');
-      const decrementTargetBtn = document.getElementById('decrementTarget');
-      const incrementTargetBtn = document.getElementById('incrementTarget');
-      const resetButtons = [document.getElementById('resetButton'), document.getElementById('resetButtonLandscape')];
-      const copyReportButtons = [document.getElementById('copyReportButton'), document.getElementById('copyReportButtonLandscape')];
-      const shareButtons = [document.getElementById('shareButton'), document.getElementById('shareButtonLandscape')];
-      const saveButtons = [document.getElementById('saveButton'), document.getElementById('saveButtonLandscape')];
-      const loadButtons = [document.getElementById('loadButton'), document.getElementById('loadButtonLandscape')];
-      
-      /**
-       * 입력된 숫자들의 평균을 계산하여 업데이트합니다.
-       */
-      const updateAverage = () => {
-        const inputs = Array.from(document.querySelectorAll('.input-numbers'))
-          .flatMap(input => input.value.split('\n')
-            .filter(line => line.length === 3)
-            .map(line => parseInt(line)))
-          .filter(num => !isNaN(num));
-        const average = inputs.length > 0 ? (inputs.reduce((a, b) => a + b, 0) / inputs.length).toFixed(1) : '0.0';
-        averageDisplay.textContent = `평균: ${average}`;
+
+<script>
+(() => {
+  // 상수 정의
+  const VERSION = '28a';
+  const MAX_LINES = 9;
+  const STORAGE_KEY = 'fuelShimData';
+  const BED_COUNT = 4;
+
+  // 상태 관리
+  const state = {
+    target: 144,
+    beds: Array(BED_COUNT).fill().map(() => []),
+    averages: []
+  };
+
+  // DOM 요소 캐싱
+  const dom = {
+    revisionDisplay: document.getElementById('revisionDisplay'),
+    targetInput: document.getElementById('targetNumber'),
+    averageDisplay: document.getElementById('averageDisplay'),
+    bedContainer: document.getElementById('bedContainer'),
+    decrementTargetBtn: document.getElementById('decrementTarget'),
+    incrementTargetBtn: document.getElementById('incrementTarget')
+  };
+
+  // 계산 로직
+  const calculate = {
+    shimValue(target, input) {
+      if(input.length !== 3) return { type: 'error', value: '⚠' };
+      const diff = target - parseInt(input);
+      return {
+        value: Math.abs(diff * 0.125) >= 0.1 ? (diff * 0.125).toFixed(1).replace(/\.0$/, '') : '',
+        isNegative: diff < 0
       };
+    },
+
+    average() {
+      const inputs = state.beds.flat()
+        .filter(line => line.length === 3)
+        .map(line => parseInt(line));
       
-      /**
-       * 각 입력 창에 대해 결과를 계산하여 화면에 출력합니다.
-       * @param {HTMLElement} inputElement - 계산 대상 입력창
-       */
-      const calculateResults = (inputElement) => {
-        const wrapper = inputElement.closest('.group-wrapper');
-        const target = parseInt(targetInput.value);
-        const numbers = inputElement.value.split('\n');
-        const results = numbers.map((num, index) => {
-          const isLastLine = index === numbers.length - 1;
-          if (!isLastLine && num.length > 0 && num.length < 3 && /^\d+$/.test(num)) {
-            return { value: '오류!', style: 'invalid', isNegative: false };
-          }
-          if (num.length !== 3) return { value: num.length > 0 ? '⚠' : '', isNegative: false };
-          const n = parseInt(num);
-          const diff = target - n;
-          const result = Math.trunc(diff * 0.125 * 10) / 10;
-          return {
-            value: Math.abs(result) >= 0.1 ? result.toFixed(1).replace(/\.0$/, '') : '',
-            isNegative: result < 0
-          };
-        });
-        const resultsContainer = wrapper.querySelector('.results');
-        resultsContainer.innerHTML = results.map(r => {
-          if (!r.value) return '<div></div>';
-          const classes = [];
-          if (r.style) classes.push(r.style);
-          if (r.isNegative) classes.push('negative');
-          return `<div class="${classes.join(' ')}">${r.value}</div>`;
-        }).join('');
-      };
+      const avg = inputs.length ? 
+        (inputs.reduce((a,b) => a + b, 0) / inputs.length).toFixed(1) : '0.0';
       
-      /**
-       * 입력창 초기화 및 이벤트 등록 (접근성을 위해 aria-label 추가)
-       * @param {HTMLTextAreaElement} inputElement
-       */
-      const initializeInput = (inputElement) => {
-        inputElement.value = '';
-        inputElement.addEventListener('focus', handleFirstFocus);
-        inputElement.addEventListener('click', handleFirstFocus);
-        inputElement.addEventListener('blur', handleBlur);
-        inputElement.setAttribute('inputmode', 'numeric');
-      };
+      dom.averageDisplay.textContent = `평균: ${avg}`;
+    }
+  };
+
+  // DOM 조작
+  const render = {
+    updateResults(inputElement) {
+      const wrapper = inputElement.closest('.group-wrapper');
+      const results = inputElement.value.split('\n')
+        .map(line => calculate.shimValue(state.target, line));
       
-      /**
-       * 첫 포커스 시 초기 접두어 입력
-       */
-      const handleFirstFocus = (event) => {
-        const input = event.target;
-        if (input.value === '') {
-          input.value = initialPrefix;
-          input.setSelectionRange(initialPrefix.length, initialPrefix.length);
-        }
-      };
-      
-      /**
-       * 포커스 아웃 시 접두어가 단독으로 남아 있으면 삭제 처리
-       */
-      const handleBlur = (event) => {
-        const input = event.target;
-        const lines = input.value.split('\n');
-        if (lines[lines.length - 1] === initialPrefix) {
-          lines.pop();
-          input.value = lines.join('\n');
-          calculateResults(input);
-        }
-      };
-      
-      /**
-       * 목표값 조절 및 관련 입력창 업데이트
-       * @param {number} delta - 변경 값
-       */
-      const adjustTargetNumber = (delta) => {
-        let currentValue = parseInt(targetInput.value) || 144;
-        const newValue = Math.max(1, currentValue + delta);
-        targetInput.value = newValue;
-        initialPrefix = newValue.toString().slice(0, 2);
-        document.querySelectorAll('.input-numbers').forEach(input => calculateResults(input));
-        updateAverage();
-      };
-      
-      /**
-       * 입력 이벤트 처리 (디바운스 고려 가능)
-       */
-      const handleInput = (event) => {
-        const input = event.target;
-        const isBackspace = event.inputType?.startsWith('delete') || event.key === 'Backspace';
-        const cursorPos = input.selectionStart;
-        const prevValue = input.value;
-        const prevLines = prevValue.split('\n');
-        let currentLine = 0;
-        let posInLine = cursorPos;
-        let accumulatedLength = 0;
-        for (; currentLine < prevLines.length; currentLine++) {
-          const lineLength = prevLines[currentLine].length + 1;
-          if (cursorPos <= accumulatedLength + lineLength) {
-            posInLine -= accumulatedLength;
-            break;
-          }
-          accumulatedLength += lineLength;
-        }
-        
-        let values = input.value.replace(/[^\d\n]/g, '').split('\n')
-          .map(line => line.slice(0, 3))
-          .filter((line, index, arr) => index === arr.length - 1 || line.trim() !== '')
-          .slice(0, MAX_LINES);
-          
-        let dynamicPrefix = initialPrefix;
-        if (values.length > 0 && values[values.length - 1].length === 3) {
-          dynamicPrefix = values[values.length - 1].slice(0, 2);
-        }
-        
-        let newLineAdded = false;
-        if (!isBackspace && values.length < MAX_LINES && values[values.length - 1].length === 3 && values[values.length - 1] !== dynamicPrefix) {
-          values.push(dynamicPrefix);
-          newLineAdded = true;
-        }
-        
-        const newValue = values.join('\n');
-        if (newValue !== prevValue) {
-          input.value = newValue;
-          calculateResults(input);
-          let newCursorPos;
-          if (newLineAdded) {
-            newCursorPos = newValue.length;
-          } else {
-            const newLines = newValue.split('\n');
-            newCursorPos = 0;
-            for (let i = 0; i < currentLine; i++) {
-              newCursorPos += (newLines[i]?.length || 0) + 1;
-            }
-            newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
-          }
-          requestAnimationFrame(() => {
-            input.setSelectionRange(newCursorPos, newCursorPos);
-          });
-        } else {
-          calculateResults(input);
-        }
-        updateAverage();
-      };
-      
-      /**
-       * 전체 초기화 (입력창 리셋, URL 파라미터 제거)
-       */
-      const resetAll = () => {
-        document.querySelectorAll('.input-numbers').forEach(input => {
-          input.value = '';
-          calculateResults(input);
-        });
-        window.history.replaceState({}, document.title, window.location.pathname);
-        alert('초기화 완료');
-      };
-      
-      /**
-       * 보고서 생성: 각 베드의 입력값 및 계산 결과를 문자열로 반환
-       */
-      const generateReport = () => {
-        const target = targetInput.value;
-        const now = new Date();
-        const kstTime = now.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
-        let report = `FUEL SHIM 보고서\n\n목표값: ${target}\n생성일: ${kstTime}\n\n`;
-        document.querySelectorAll('.input-group').forEach((group, idx) => {
-          const input = group.querySelector('.input-numbers');
-          const lines = input.value.split('\n')
-            .map(line => line.padEnd(3, ' ').slice(0, 3))
-            .filter(line => line.trim() !== '');
-          if (lines.length === 0) return;
-          const results = Array.from(group.querySelectorAll('.results div'))
-            .map(div => div.textContent.trim())
-            .slice(0, lines.length);
-          report += `${idx + 1}번 베드\n순번  입력값  결과\n------------------------\n`;
-          lines.forEach((v, i) => {
-            const result = results[i] === '⚠' ? '오류!' : results[i];
-            report += `${(i + 1).toString().padStart(2, ' ')}    ${v.padStart(3, '0')}    ${result}\n`;
-          });
-          report += '\n';
-        });
-        return report;
-      };
-      
-      /**
-       * 데이터 공유 URL 생성
-       */
-      const generateShareURL = () => {
-        const params = new URLSearchParams();
-        params.set('target', targetInput.value);
-        document.querySelectorAll('.input-numbers').forEach((input, idx) => {
-          const value = input.value.split('\n').join(',');
-          params.set(`bed${idx + 1}`, value || '');
-        });
-        return `${window.location.href.split('?')[0]}?${params.toString()}`;
-      };
-      
-      /**
-       * 데이터 저장 (로컬 스토리지에 JSON 형식으로 저장)
-       */
-      const saveData = () => {
-        const data = {
-          date: new Date().getTime(),
-          target: targetInput.value,
-          beds: Array.from(document.querySelectorAll('.input-numbers')).map(input => input.value)
-        };
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-          alert('데이터 저장 완료');
-          updateLoadButton();
-        } catch (error) {
-          alert('데이터 저장 중 오류가 발생했습니다.');
-          console.error(error);
-        }
-      };
-      
-      /**
-       * 저장된 데이터를 로드하여 입력창 업데이트
-       */
-      const loadData = () => {
-        const savedData = localStorage.getItem(STORAGE_KEY);
-        if (savedData) {
-          try {
-            const data = JSON.parse(savedData);
-            targetInput.value = data.target;
-            initialPrefix = data.target.toString().slice(0, 2);
-            document.querySelectorAll('.input-numbers').forEach((input, index) => {
-              input.value = data.beds[index] || '';
-              calculateResults(input);
-            });
-            updateAverage();
-            alert('데이터 불러오기 완료');
-          } catch (error) {
-            alert('저장된 데이터를 불러오는 중 오류가 발생했습니다.');
-            console.error(error);
-          }
-        } else {
-          alert('저장된 데이터가 없습니다.');
-        }
-      };
-      
-      /**
-       * URL 파라미터를 통해 데이터 로드
-       */
-      const loadDataFromURL = () => {
-        const params = new URLSearchParams(window.location.search);
-        const target = params.get('target');
-        if (target) {
-          targetInput.value = target;
-          initialPrefix = target.slice(0, 2);
-        }
-        document.querySelectorAll('.input-numbers').forEach((input, index) => {
-          const bedData = params.get(`bed${index + 1}`);
-          if (bedData) {
-            input.value = bedData.split(',').join('\n');
-            calculateResults(input);
-          } else {
-            input.value = '';
-            calculateResults(input);
-          }
-        });
-        updateAverage();
-      };
-      
-      /**
-       * 로드 버튼의 텍스트 및 상태 업데이트
-       */
-      const updateLoadButton = () => {
-        const savedData = localStorage.getItem(STORAGE_KEY);
-        loadButtons.forEach(loadBtn => {
-          if (savedData) {
-            try {
-              const data = JSON.parse(savedData);
-              const saveDate = new Date(data.date);
-              loadBtn.textContent = `${saveDate.getMonth() + 1}/${saveDate.getDate()} 불러오기`;
-              loadBtn.classList.remove('disabled');
-            } catch (error) {
-              loadBtn.textContent = '데이터 불러오기';
-              loadBtn.classList.add('disabled');
-            }
-          } else {
-            loadBtn.textContent = '데이터 불러오기';
-            loadBtn.classList.add('disabled');
-          }
-        });
-      };
-      
-      /**
-       * 베드(입력창) 생성
-       */
-      const initBeds = () => {
-        let bedHTML = '';
-        for (let i = 1; i <= bedCount; i++) {
-          bedHTML += `
-            <div class="group-wrapper">
-              <div class="numbering">${Array.from({ length: MAX_LINES }, (_, j) => `${j + 1}.`).join('\n')}</div>
-              <div class="input-group">
-                <div class="bed-label">${i}번 베드</div>
-                <textarea class="input-numbers"></textarea>
-                <div class="results"></div>
-              </div>
+      wrapper.querySelector('.results').innerHTML = results
+        .map(r => `<div class="${r.isNegative ? 'negative' : ''}">${r.value}</div>`)
+        .join('');
+    },
+
+    initBeds() {
+      let bedHTML = '';
+      for(let i = 1; i <= BED_COUNT; i++) {
+        bedHTML += `
+          <div class="group-wrapper">
+            <div class="numbering">${Array.from({length: MAX_LINES}, (_, j) => `${j+1}.`).join('\n')}</div>
+            <div class="input-group">
+              <div class="bed-label">${i}번 베드</div>
+              <textarea class="input-numbers"></textarea>
+              <div class="results"></div>
             </div>
-          `;
-        }
-        bedContainer.innerHTML = bedHTML;
-        document.querySelectorAll('.input-numbers').forEach(input => {
-          initializeInput(input);
-          input.addEventListener('input', handleInput);
-          input.addEventListener('keydown', e => { if(e.key === 'Enter') e.preventDefault(); });
+          </div>
+        `;
+      }
+      dom.bedContainer.innerHTML = bedHTML;
+    }
+  };
+
+  // 데이터 처리
+  const data = {
+    save() {
+      const saveData = {
+        target: state.target,
+        beds: [...document.querySelectorAll('.input-numbers')].map(i => i.value)
+      };
+      
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
+        alert('데이터 저장 완료');
+      } catch (e) {
+        console.error('Storage error:', e);
+        alert('저장 실패: 저장 공간 부족');
+      }
+    },
+
+    load() {
+      try {
+        const savedData = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if(!savedData) throw new Error('No data');
+        
+        state.target = savedData.target;
+        dom.targetInput.value = savedData.target;
+        
+        document.querySelectorAll('.input-numbers').forEach((input, i) => {
+          input.value = savedData.beds[i] || '';
+          render.updateResults(input);
         });
-      };
+        
+        calculate.average();
+      } catch (e) {
+        console.error('Load error:', e);
+        alert('불러올 데이터 없음');
+      }
+    },
+
+    generateShareURL() {
+      const params = new URLSearchParams();
+      params.set('target', state.target);
+      [...document.querySelectorAll('.input-numbers')].forEach((input, i) => {
+        params.set(`bed${i+1}`, input.value.replace(/\n/g, ','));
+      });
+      return `${location.origin}${location.pathname}?${params}`;
+    }
+  };
+
+  // 이벤트 핸들러
+  const events = {
+    init() {
+      // 버튼 이벤트
+      const bindButtons = (ids, handler) => ids.forEach(id => {
+        document.getElementById(id).addEventListener('click', handler);
+        document.getElementById(`${id}Landscape`)?.addEventListener('click', handler);
+      });
+
+      bindButtons(['resetButton'], this.resetAll);
+      bindButtons(['copyReportButton'], this.copyReport);
+      bindButtons(['shareButton'], this.shareData);
+      bindButtons(['saveButton'], data.save);
+      bindButtons(['loadButton'], data.load);
+
+      // 입력 필드
+      document.querySelectorAll('.input-numbers').forEach(input => {
+        input.addEventListener('input', this.handleInput);
+        input.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault());
+      });
+
+      // 타겟 조절
+      dom.decrementTargetBtn.addEventListener('click', () => this.adjustTarget(-1));
+      dom.incrementTargetBtn.addEventListener('click', () => this.adjustTarget(1));
+    },
+
+    handleInput(event) {
+      const input = event.target;
+      let values = input.value.replace(/[^\d\n]/g, '').split('\n')
+        .map(line => line.slice(0, 3))
+        .filter((line, idx, arr) => idx === arr.length - 1 || line.trim());
       
-      /**
-       * 초기화 함수: 초기값 설정, 베드 생성, 이벤트 등록, URL 파라미터 로드 등
-       */
-      const init = () => {
-        revisionDisplay.textContent = `Rev: ${revision}`;
-        targetInput.value = 144;
-        initialPrefix = '14';
-        initBeds();
-        decrementTargetBtn.addEventListener('click', () => adjustTargetNumber(-1));
-        incrementTargetBtn.addEventListener('click', () => adjustTargetNumber(1));
-        resetButtons.forEach(btn => btn.addEventListener('click', resetAll));
-        copyReportButtons.forEach(btn => btn.addEventListener('click', () => {
-          navigator.clipboard.writeText(generateReport())
-            .then(() => alert('보고서가 클립보드에 복사되었습니다.'))
-            .catch(err => {
-              alert('보고서 복사 중 오류가 발생했습니다.');
-              console.error(err);
-            });
-        }));
-        shareButtons.forEach(btn => btn.addEventListener('click', () => {
-          navigator.clipboard.writeText(generateShareURL())
-            .then(() => alert('공유 URL이 클립보드에 복사되었습니다.'))
-            .catch(err => {
-              alert('URL 복사 중 오류가 발생했습니다.');
-              console.error(err);
-            });
-        }));
-        saveButtons.forEach(btn => btn.addEventListener('click', saveData));
-        loadButtons.forEach(btn => btn.addEventListener('click', function() {
-          if (!this.classList.contains('disabled')) loadData();
-        }));
-        if (window.location.search) {
-          loadDataFromURL();
+      if(values.length < MAX_LINES && 
+         values[values.length-1].length === 3 &&
+         values[values.length-1] !== state.target.toString().slice(0,2)) {
+        values.push(state.target.toString().slice(0,2));
+      }
+      
+      input.value = values.join('\n');
+      render.updateResults(input);
+      calculate.average();
+    },
+
+    adjustTarget(delta) {
+      state.target = Math.max(1, state.target + delta);
+      dom.targetInput.value = state.target;
+      document.querySelectorAll('.input-numbers').forEach(input => 
+        render.updateResults(input));
+      calculate.average();
+    },
+
+    resetAll() {
+      document.querySelectorAll('.input-numbers').forEach(input => {
+        input.value = '';
+        render.updateResults(input);
+      });
+      state.target = 144;
+      dom.targetInput.value = 144;
+      calculate.average();
+      history.replaceState({}, '', location.pathname);
+    },
+
+    copyReport() {
+      const report = [...document.querySelectorAll('.input-group')]
+        .map((group, i) => {
+          const lines = group.querySelector('.input-numbers').value.split('\n');
+          const results = [...group.querySelectorAll('.results div')]
+            .map(div => div.textContent.trim());
+          
+          return `베드 ${i+1}:\n${lines.map((l, j) => 
+            `${String(j+1).padStart(2)} | ${l.padEnd(3)} | ${results[j] || ''}`
+          ).join('\n')}`;
+        }).join('\n\n');
+      
+      navigator.clipboard.writeText(`FUEL SHIM 보고서\n\n${report}`);
+      alert('보고서 복사 완료');
+    },
+
+    shareData() {
+      navigator.clipboard.writeText(data.generateShareURL());
+      alert('공유 URL 복사 완료');
+    }
+  };
+
+  // 초기화
+  const init = () => {
+    dom.revisionDisplay.textContent = `Rev: ${VERSION}`;
+    render.initBeds();
+    events.init();
+    
+    if(location.search) {
+      const params = new URLSearchParams(location.search);
+      state.target = parseInt(params.get('target')) || 144;
+      dom.targetInput.value = state.target;
+      
+      params.forEach((val, key) => {
+        const bedIndex = key.match(/bed(\d)/)?.[1];
+        if(bedIndex) {
+          const input = document.querySelector(`.input-numbers:nth-of-type(${bedIndex})`);
+          if(input) input.value = val.replace(/,/g, '\n');
         }
-        updateLoadButton();
-        updateAverage();
-      };
+      });
       
-      document.addEventListener('DOMContentLoaded', init);
-    })();
-  </script>
+      document.querySelectorAll('.input-numbers').forEach(input => 
+        render.updateResults(input));
+    }
+    
+    calculate.average();
+  };
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+</script>
 </body>
 </html>

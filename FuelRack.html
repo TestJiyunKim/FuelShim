@@ -121,7 +121,7 @@
             flex: 1;
             max-width: 18%;
             font-size: 14px;
-            transition: all 0.15s; /* 반응속도 조절 */
+            transition: all 0.2s; /* 반응속도 원복 */
             touch-action: manipulation;
         }
         .keyboard-btn.active {
@@ -220,17 +220,14 @@ document.querySelectorAll('.keyboard-btn').forEach(btn => {
         e.preventDefault();
         if(e.cancelable) e.stopPropagation();
         
-        // 반응속도 조절을 위한 지연 추가 (원본 대비 50% 지연)
-        setTimeout(() => {
-            if(e.target.closest('[data-percent]')) {
-                currentPercent = e.target.dataset.percent;
-                currentValues = [...presets[currentPercent]];
-                document.querySelectorAll('.keyboard-btn[data-percent]').forEach(b => 
-                    b.classList.remove('active'));
-                e.target.classList.add('active');
-                updateNumberButtons();
-            }
-        }, 30); // 원래 0ms였던 것을 30ms로 조정
+        if(e.target.closest('[data-percent]')) {
+            currentPercent = e.target.dataset.percent;
+            currentValues = [...presets[currentPercent]];
+            document.querySelectorAll('.keyboard-btn[data-percent]').forEach(b => 
+                b.classList.remove('active'));
+            e.target.classList.add('active');
+            updateNumberButtons();
+        }
     };
 
     btn.addEventListener('click', handleEvent);
@@ -277,7 +274,7 @@ document.getElementById('copyReport').addEventListener('click', async () => {
     try {
         const report = Array.from(document.querySelectorAll('.input-group'))
             .map(group => {
-                const bedNumber = group.querySelector('.bed-label').textContent.replace('#', '번 베드');
+                const bedNumber = group.querySelector('.bed-label').textContent.replace('#', '') + '번 베드'; // 수정된 부분
                 const values = group.querySelector('.input-numbers').value.split('\n').filter(v => v);
                 return values.length > 0 ? `${bedNumber}: ${values.join(', ')}` : null;
             })

@@ -277,7 +277,7 @@
     </div>
 
     <script>
-        const revision = '26d'; // 리비전 업데이트
+        const revision = '26e'; // 리비전 업데이트
         let initialPrefix = '14';
         const MAX_LINES = 9;
         const STORAGE_KEY = 'fuelShimData';
@@ -439,7 +439,7 @@
         function generateReport() {
             const target = document.getElementById('targetNumber').value;
             const now = new Date();
-            const kstTime = now.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }); // 서울 시간 표시
+            const kstTime = now.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
 
             let report = `FUEL SHIM 보고서\n\n`;
             report += `목표값: ${target}\n`;
@@ -447,16 +447,16 @@
 
             document.querySelectorAll('.input-group').forEach((group, idx) => {
                 const input = group.querySelector('.input-numbers');
-                const lines = input.value.split('\n').filter(line => 
-                    line.length === 3 && /^\d+$/.test(line) && line !== '000'
-                );
+                const lines = input.value.split('\n')
+                    .map(line => line.padEnd(3, ' ').slice(0, 3)) // 3자리 고정
+                    .filter(line => line.trim() !== ''); // 완전히 빈 줄만 제거
 
-                // 첫 번째 행이 비어있거나 유효하지 않은 경우 베드 제외
-                if (lines.length === 0 || !/^\d{3}$/.test(lines[0])) return;
+                // 빈 베드 제외 (모든 라인이 빈 경우)
+                if (lines.length === 0) return;
 
                 const results = Array.from(group.querySelectorAll('.results div'))
-                                  .map(div => div.textContent) // 결과값이 없으면 공백 유지
-                                  .filter((_, i) => i < lines.length);
+                                  .map(div => div.textContent)
+                                  .slice(0, lines.length); // 입력 줄 수만큼만 결과 매칭
 
                 report += `${idx + 1}번 베드\n`;
                 report += `순번\t입력값\t결과\n`;

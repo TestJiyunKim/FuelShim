@@ -176,27 +176,21 @@
     .button-row button:hover {
       transform: translateY(-2px);
     }
-    #resetButton {
-      background-color: #dc3545;
-      color: white;
-    }
-    #copyReportButton {
-      background-color: #007bff;
-      color: white;
-    }
-    #shareButton {
-      background-color: #28a745;
-      color: white;
-    }
-    #saveButton {
-      background-color: #ffc107;
-      color: black;
-    }
-    #loadButton {
-      background-color: #17a2b8;
-      color: white;
-    }
-    #loadButton.disabled {
+    /* 기존 세로모드 버튼 색상 */
+    #resetButton { background-color: #dc3545; color: white; }
+    #copyReportButton { background-color: #007bff; color: white; }
+    #shareButton { background-color: #28a745; color: white; }
+    #saveButton { background-color: #ffc107; color: black; }
+    #loadButton { background-color: #17a2b8; color: white; }
+    
+    /* 가로모드(landscape)에서 사용하는 버튼도 동일하게 적용 */
+    #resetButtonLandscape { background-color: #dc3545; color: white; }
+    #copyReportButtonLandscape { background-color: #007bff; color: white; }
+    #shareButtonLandscape { background-color: #28a745; color: white; }
+    #saveButtonLandscape { background-color: #ffc107; color: black; }
+    #loadButtonLandscape { background-color: #17a2b8; color: white; }
+    
+    #loadButton.disabled, #loadButtonLandscape.disabled {
       background-color: #999 !important;
       cursor: not-allowed;
       opacity: 0.7;
@@ -258,7 +252,7 @@
   </div>
   <div class="groups-container" id="bedContainer"></div>
   
-  <!-- 버튼 컨테이너 -->
+  <!-- 버튼 컨테이너 (세로모드용) -->
   <div class="button-row" id="buttonRow1">
     <button id="resetButton">초기화</button>
     <button id="copyReportButton">보고서 생성</button>
@@ -268,6 +262,7 @@
     <button id="saveButton">데이터 저장</button>
     <button id="loadButton" class="disabled">데이터 불러오기</button>
   </div>
+  <!-- 가로모드(landscape)에서 보이는 버튼 -->
   <div class="button-row" id="landscapeButtons">
     <button id="resetButtonLandscape">초기화</button>
     <button id="copyReportButtonLandscape">보고서 생성</button>

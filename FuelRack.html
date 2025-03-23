@@ -149,6 +149,77 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             z-index: 1001;
         }
+
+        /* 모바일 최적화 추가 스타일 */
+        @media (max-width: 768px) {
+            body {
+                padding-bottom: 160px;
+            }
+            .numbering {
+                font-size: 5vw;
+                height: auto;
+                padding: 2vw;
+            }
+            .input-group {
+                width: 48%;
+                height: 50vh;
+            }
+            .input-numbers {
+                font-size: 5vw;
+            }
+            .bed-label {
+                font-size: 5vw;
+            }
+            .keyboard-btn {
+                font-size: 4vw;
+                padding: 12px 2%;
+                min-height: 44px;
+            }
+            #copyReport {
+                bottom: 165px;
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .group-row {
+                flex-direction: column;
+            }
+            .numbering {
+                width: 100%;
+                height: auto;
+                margin-top: 10px;
+                padding: 10px;
+            }
+            .input-group {
+                width: 100%;
+                height: 40vh;
+                margin-right: 0;
+            }
+            .virtual-keyboard {
+                height: 150px;
+            }
+            .keyboard-btn {
+                max-width: 22%;
+                font-size: 16px;
+            }
+        }
+
+        .keyboard-btn {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .input-numbers {
+            -webkit-overflow-scrolling: touch;
+        }
+
+        @media (pointer: coarse) {
+            .input-numbers {
+                min-height: 50vh;
+            }
+        }
     </style>
 </head>
 <body>
@@ -308,6 +379,20 @@ document.getElementById('copyReport').addEventListener('click', async () => {
     } catch (err) {
         alert('복사 실패: ' + err.message);
     }
+});
+
+// 터치 이벤트 추가
+document.querySelectorAll('.keyboard-btn').forEach(btn => {
+    btn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        e.target.classList.add('active');
+    });
+    
+    btn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        e.target.classList.remove('active');
+        e.target.click();
+    });
 });
 
 document.querySelector('.keyboard-btn[data-percent="25"]').classList.add('active');

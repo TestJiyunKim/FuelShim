@@ -15,7 +15,7 @@
             background-color: #f4f4f9;
             position: relative;
             overflow-x: hidden;
-            padding-bottom: 130px; /* 10포인트 증가 */
+            padding-bottom: 135px; /* 5포인트 증가 */
         }
         h2 {
             text-align: center;
@@ -45,7 +45,7 @@
         .numbering {
             width: 10%;
             height: 53vh; /* 10포인트 감소 */
-            margin-top: 21px;
+            margin-top: 19px; /* 2포인트 감소 */
             padding: 15px 1%;
             position: relative;
             top: 2px;
@@ -121,7 +121,8 @@
             flex: 1;
             max-width: 18%;
             font-size: 14px;
-            transition: all 0.2s;
+            transition: all 0.15s; /* 반응속도 조절 */
+            touch-action: manipulation;
         }
         .keyboard-btn.active {
             background: #007bff;
@@ -134,7 +135,7 @@
         }
         #copyReport {
             position: fixed;
-            bottom: 140px; /* 키보드 위에 플로팅 */
+            bottom: 145px; /* 키보드 위에 플로팅 */
             right: 20px;
             padding: 12px 20px;
             background: #28a745;
@@ -219,14 +220,17 @@ document.querySelectorAll('.keyboard-btn').forEach(btn => {
         e.preventDefault();
         if(e.cancelable) e.stopPropagation();
         
-        if(e.target.closest('[data-percent]')) {
-            currentPercent = e.target.dataset.percent;
-            currentValues = [...presets[currentPercent]];
-            document.querySelectorAll('.keyboard-btn[data-percent]').forEach(b => 
-                b.classList.remove('active'));
-            e.target.classList.add('active');
-            updateNumberButtons();
-        }
+        // 반응속도 조절을 위한 지연 추가 (원본 대비 50% 지연)
+        setTimeout(() => {
+            if(e.target.closest('[data-percent]')) {
+                currentPercent = e.target.dataset.percent;
+                currentValues = [...presets[currentPercent]];
+                document.querySelectorAll('.keyboard-btn[data-percent]').forEach(b => 
+                    b.classList.remove('active'));
+                e.target.classList.add('active');
+                updateNumberButtons();
+            }
+        }, 30); // 원래 0ms였던 것을 30ms로 조정
     };
 
     btn.addEventListener('click', handleEvent);

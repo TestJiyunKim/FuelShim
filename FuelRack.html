@@ -207,7 +207,7 @@ let currentPercent = '25';
 let activeInput = null;
 let currentValues = [...presets[currentPercent]];
 
-// [변경 사항 1] 입력창 별 라인 상태 관리
+// [변경 사항] 입력창 별 라인 상태 관리
 const inputStates = new WeakMap(); // 입력창 상태 추적용 WeakMap
 
 function getCurrentLine(input) {
@@ -230,15 +230,12 @@ function updateNumberButtons() {
     `;
 }
 
-// [변경 사항 2] 이벤트 핸들러 최적화
+// 터치 중복 문제 해결을 위해 touchstart 대신 touchend 사용
 document.querySelectorAll('.keyboard-btn').forEach(btn => {
     const handleEvent = (e) => {
         e.preventDefault();
         if(e.cancelable) e.stopPropagation();
-        
-        // 모바일 이중 입력 방지
-        if(e.type === 'touchstart') e.stopImmediatePropagation();
-        
+
         if(e.target.closest('[data-percent]')) {
             currentPercent = e.target.dataset.percent;
             currentValues = [...presets[currentPercent]];
@@ -246,18 +243,21 @@ document.querySelectorAll('.keyboard-btn').forEach(btn => {
                 b.classList.remove('active'));
             e.target.classList.add('active');
             updateNumberButtons();
+            return;
         }
+        
+        // 나머지 이벤트는 handleInteraction에서 처리
     };
 
     btn.addEventListener('click', handleEvent);
-    btn.addEventListener('touchstart', handleEvent, { passive: false }); // 성능 개선
+    btn.addEventListener('touchend', handleEvent, { passive: false });
 });
 
-// [변경 사항 3] 입력 라인 관리 강화
+// 입력 라인 관리 강화 및 빈 줄 우선 채우기
 document.querySelectorAll('.input-numbers').forEach(input => {
     input.addEventListener('focus', () => {
-        const lines = input.value.split('\n').length;
-        setCurrentLine(input, lines - 1);
+        const lines = input.value.split('\n');
+        setCurrentLine(input, lines.length - 1);
         activeInput = input;
     });
 });
@@ -268,8 +268,8 @@ document.addEventListener('touchstart', (e) => handleInteraction(e));
 function handleInteraction(e) {
     if (e.target.closest('.input-numbers')) {
         activeInput = e.target;
-        const lines = activeInput.value.split('\n').length;
-        setCurrentLine(activeInput, lines - 1);
+        const lines = activeInput.value.split('\n');
+        setCurrentLine(activeInput, lines.length - 1);
         activeInput.focus();
         return;
     }
@@ -285,16 +285,26 @@ function handleInteraction(e) {
         updateNumberButtons();
     } else if (action === 'del') {
         const lines = activeInput.value.split('\n');
-        lines.pop();
+        // 현재 줄 삭제
+        let currentLine = getCurrentLine(activeInput);
+        lines[currentLine] = '';
         activeInput.value = lines.join('\n');
-        setCurrentLine(activeInput, Math.max(0, lines.length - 1));
+        setCurrentLine(activeInput, currentLine);
     } else if (e.target.classList.contains('keyboard-btn') && activeInput) {
+        // 숫자 버튼 입력 시, 먼저 빈 줄이 있는지 확인 후 입력
         const value = parseFloat(e.target.textContent);
-        const lines = activeInput.value.split('\n');
-        const currentLine = getCurrentLine(activeInput);
+        let lines = activeInput.value.split('\n');
+        let currentLine = getCurrentLine(activeInput);
+        if(lines[currentLine] && lines[currentLine].trim() !== ''){
+            // 현재 줄에 값이 있다면, 빈 줄이 있는지 확인
+            const emptyIndex = lines.findIndex(line => !line.trim());
+            if(emptyIndex !== -1){
+                currentLine = emptyIndex;
+            }
+        }
         lines[currentLine] = value.toFixed(1);
-        activeInput.value = lines.filter(v => v).join('\n');
-        setCurrentLine(activeInput, currentLine); // [변경] 자동 증가 제거
+        activeInput.value = lines.join('\n');
+        if (currentLine < 8) setCurrentLine(activeInput, currentLine + 1); // 자동 줄넘기기 복원
     }
 
     if(activeInput) activeInput.focus();
@@ -304,8 +314,9 @@ document.getElementById('copyReport').addEventListener('click', async () => {
     try {
         const report = Array.from(document.querySelectorAll('.input-group'))
             .map(group => {
-                const bedNumber = group.querySelector('.bed-label').textContent.replace('#', '') + '번 베드'; // 수정된 부분
-                const values = group.querySelector('.input-numbers').value.split('\n').filter(v => v);
+                const bedNumber = group.querySelector('.bed-label').textContent.replace('#', '') + '번 베드';
+                // 빈 값은 제외하도록 trim() 사용
+                const values = group.querySelector('.input-numbers').value.split('\n').map(v => v.trim()).filter(v => v !== '');
                 return values.length > 0 ? `${bedNumber}: ${values.join(', ')}` : null;
             })
             .filter(line => line !== null)

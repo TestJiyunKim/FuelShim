@@ -2,11 +2,12 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FUEL RACK 입력</title>
     <style>
         * {
             box-sizing: border-box;
+            touch-action: manipulation; /* 더블클릭 확대 방지 */
         }
         body {
             font-family: Arial, sans-serif;
@@ -32,7 +33,7 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
-            margin-top: 15px;
+            margin-top: 19px; /* 4포인트 아래로 이동 */
             padding: 0 2%;
         }
         .group-row {
@@ -43,11 +44,11 @@
         }
         .numbering {
             width: 10%;
-            height: 51vh; /* 높이 15px 감소 */
-            margin-top: 21px; /* 상단 여백 4px 감소 */
+            height: 58vh; /* 7포인트 증가 */
+            margin-top: 21px;
             padding: 15px 1%;
             position: relative;
-            top: 2px; /* 아래로 2px 이동 */
+            top: 2px;
             font-size: 28px;
             line-height: 1.5;
             border: 1px solid #ccc;
@@ -58,11 +59,12 @@
             width: 38.4%;
             border: 2px solid #007bff;
             border-radius: 6px;
-            padding: 30px 1% 5px;
+            padding: 25px 1% 5px; /* 상단 여백 5포인트 감소 */
             position: relative;
             background-color: white;
-            height: 66vh;
+            height: 73vh; /* 7포인트 증가 */
             margin-right: 2%;
+            margin-top: 4px; /* 4포인트 아래로 이동 */
         }
         .input-group:last-child {
             margin-right: 0;
@@ -212,19 +214,29 @@ function updateNumberButtons() {
     `;
 }
 
-document.querySelectorAll('.keyboard-btn[data-percent]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
+document.querySelectorAll('.keyboard-btn').forEach(btn => {
+    const handleEvent = (e) => {
         e.preventDefault();
-        currentPercent = e.target.dataset.percent;
-        currentValues = [...presets[currentPercent]];
-        document.querySelectorAll('.keyboard-btn[data-percent]').forEach(b => 
-            b.classList.remove('active'));
-        e.target.classList.add('active');
-        updateNumberButtons();
-    });
+        if(e.cancelable) e.stopPropagation();
+        
+        if(e.target.closest('[data-percent]')) {
+            currentPercent = e.target.dataset.percent;
+            currentValues = [...presets[currentPercent]];
+            document.querySelectorAll('.keyboard-btn[data-percent]').forEach(b => 
+                b.classList.remove('active'));
+            e.target.classList.add('active');
+            updateNumberButtons();
+        }
+    };
+
+    btn.addEventListener('click', handleEvent);
+    btn.addEventListener('touchstart', handleEvent);
 });
 
-document.addEventListener('click', (e) => {
+document.addEventListener('click', (e) => handleInteraction(e));
+document.addEventListener('touchstart', (e) => handleInteraction(e));
+
+function handleInteraction(e) {
     if (e.target.closest('.input-numbers')) {
         activeInput = e.target;
         currentLine = activeInput.value.split('\n').length;
@@ -255,7 +267,7 @@ document.addEventListener('click', (e) => {
     }
 
     if(activeInput) activeInput.focus();
-});
+}
 
 document.getElementById('copyReport').addEventListener('click', async () => {
     try {

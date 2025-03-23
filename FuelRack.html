@@ -2,12 +2,11 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FUEL RACK 입력</title>
     <style>
         * {
             box-sizing: border-box;
-            touch-action: manipulation; /* 더블클릭 확대 방지 */
         }
         body {
             font-family: Arial, sans-serif;
@@ -15,7 +14,7 @@
             background-color: #f4f4f9;
             position: relative;
             overflow-x: hidden;
-            padding-bottom: 135px; /* 5포인트 증가 */
+            padding-bottom: 135px;
         }
         h2 {
             text-align: center;
@@ -33,7 +32,7 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
-            margin-top: 19px; /* 4포인트 아래로 이동 */
+            margin-top: 19px;
             padding: 0 2%;
         }
         .group-row {
@@ -44,8 +43,8 @@
         }
         .numbering {
             width: 10%;
-            height: 53vh; /* 10포인트 감소 */
-            margin-top: 19px; /* 2포인트 감소 */
+            height: 53vh;
+            margin-top: 19px;
             padding: 15px 1%;
             position: relative;
             top: 2px;
@@ -59,12 +58,12 @@
             width: 38.4%;
             border: 2px solid #007bff;
             border-radius: 6px;
-            padding: 24px 1% 5px; /* 상단 여백 1포인트 감소 */
+            padding: 24px 1% 5px;
             position: relative;
             background-color: white;
-            height: 63vh; /* 10포인트 감소 */
+            height: 63vh;
             margin-right: 2%;
-            margin-top: 4px; /* 4포인트 아래로 이동 */
+            margin-top: 4px;
         }
         .input-group:last-child {
             margin-right: 0;
@@ -94,7 +93,7 @@
             font-size: 28px;
             line-height: 1.5;
             caret-color: transparent;
-            overflow-y: auto; /* 스크롤 활성화 */
+            overflow-y: auto;
         }
         .virtual-keyboard {
             position: fixed;
@@ -122,12 +121,7 @@
             flex: 1;
             max-width: 18%;
             font-size: 14px;
-            transition: all 0.2s; /* 반응속도 원복 */
-            touch-action: manipulation;
-        }
-        .keyboard-btn:active {
-            background: #007bff; /* 모바일 액티브 상태 */
-            color: white;
+            transition: all 0.2s;
         }
         .keyboard-btn.active {
             background: #007bff;
@@ -140,7 +134,7 @@
         }
         #copyReport {
             position: fixed;
-            bottom: 145px; /* 키보드 위에 플로팅 */
+            bottom: 145px;
             right: 20px;
             padding: 12px 20px;
             background: #28a745;
@@ -206,8 +200,6 @@ const presets = {
 let currentPercent = '25';
 let activeInput = null;
 let currentValues = [...presets[currentPercent]];
-
-// 입력창 상태 관리용 WeakMap
 const inputStates = new WeakMap();
 
 function getCurrentLine(input) {
@@ -230,29 +222,9 @@ function updateNumberButtons() {
     `;
 }
 
-// 이벤트 핸들러 최적화
+// 키보드 이벤트 핸들러 (클릭만 처리)
 document.querySelectorAll('.keyboard-btn').forEach(btn => {
-    let isTouchEvent = false;
-
-    // 터치 시작 시 플래그 설정
-    btn.addEventListener('touchstart', (e) => {
-        isTouchEvent = true;
-        handleEvent(e);
-    }, { passive: true });
-
-    // 터치 종료 시 기본 동작 방지
-    btn.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        handleEvent(e);
-    });
-
-    // 클릭 이벤트 (데스크톱 전용)
     btn.addEventListener('click', (e) => {
-        if (!isTouchEvent) handleEvent(e);
-        isTouchEvent = false;
-    });
-
-    const handleEvent = (e) => {
         e.stopPropagation();
         
         if(e.target.closest('[data-percent]')) {
@@ -263,10 +235,9 @@ document.querySelectorAll('.keyboard-btn').forEach(btn => {
             e.target.classList.add('active');
             updateNumberButtons();
         }
-    };
+    });
 });
 
-// 입력 라인 관리 강화
 document.querySelectorAll('.input-numbers').forEach(input => {
     input.addEventListener('focus', () => {
         const lines = input.value.split('\n').length;
@@ -275,10 +246,7 @@ document.querySelectorAll('.input-numbers').forEach(input => {
     });
 });
 
-document.addEventListener('click', (e) => handleInteraction(e));
-document.addEventListener('touchstart', (e) => handleInteraction(e));
-
-function handleInteraction(e) {
+document.addEventListener('click', (e) => {
     if (e.target.closest('.input-numbers')) {
         activeInput = e.target;
         const lines = activeInput.value.split('\n').length;
@@ -307,17 +275,17 @@ function handleInteraction(e) {
         const currentLine = getCurrentLine(activeInput);
         lines[currentLine] = value.toFixed(1);
         activeInput.value = lines.filter(v => v).join('\n');
-        if (currentLine < 8) setCurrentLine(activeInput, currentLine + 1); // 자동 줄넘기기 복원
+        if (currentLine < 8) setCurrentLine(activeInput, currentLine + 1);
     }
 
     if(activeInput) activeInput.focus();
-}
+});
 
 document.getElementById('copyReport').addEventListener('click', async () => {
     try {
         const report = Array.from(document.querySelectorAll('.input-group'))
             .map(group => {
-                const bedNumber = group.querySelector('.bed-label').textContent.replace('#', '') + '번 베드'; // 수정된 부분
+                const bedNumber = group.querySelector('.bed-label').textContent.replace('#', '') + '번 베드';
                 const values = group.querySelector('.input-numbers').value.split('\n').filter(v => v);
                 return values.length > 0 ? `${bedNumber}: ${values.join(', ')}` : null;
             })

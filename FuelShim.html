@@ -277,10 +277,26 @@
     </div>
 
     <script>
-        const revision = '26f'; // 리비전 업데이트
+        const revision = '26g'; // 리비전 업데이트
         let initialPrefix = '14';
         const MAX_LINES = 9;
         const STORAGE_KEY = 'fuelShimData';
+
+        // [+] 추가된 함수: 목표값 조절
+        function adjustTargetNumber(delta) {
+            const targetInput = document.getElementById('targetNumber');
+            let currentValue = parseInt(targetInput.value) || 144;
+            const newValue = Math.max(1, currentValue + delta);
+            
+            targetInput.value = newValue;
+            initialPrefix = newValue.toString().slice(0, 2);
+            
+            document.querySelectorAll('.input-numbers').forEach(input => {
+                calculateResults(input);
+            });
+            
+            updateAverage();
+        }
 
         // 초기화 로직
         function initializeInput(inputElement) {

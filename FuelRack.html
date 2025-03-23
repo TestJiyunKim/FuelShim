@@ -94,6 +94,7 @@
             font-size: 28px;
             line-height: 1.5;
             caret-color: transparent;
+            overflow-y: auto; /* 스크롤 활성화 */
         }
         .virtual-keyboard {
             position: fixed;
@@ -123,6 +124,10 @@
             font-size: 14px;
             transition: all 0.2s; /* 반응속도 원복 */
             touch-action: manipulation;
+        }
+        .keyboard-btn:active {
+            background: #007bff; /* 모바일 액티브 상태 */
+            color: white;
         }
         .keyboard-btn.active {
             background: #007bff;
@@ -215,10 +220,14 @@ function updateNumberButtons() {
     `;
 }
 
+// [이벤트 핸들러 최적화] ---------------------------------
 document.querySelectorAll('.keyboard-btn').forEach(btn => {
     const handleEvent = (e) => {
         e.preventDefault();
         if(e.cancelable) e.stopPropagation();
+        
+        // 모바일 이중 입력 방지
+        if(e.type === 'touchstart') e.stopImmediatePropagation();
         
         if(e.target.closest('[data-percent]')) {
             currentPercent = e.target.dataset.percent;
@@ -231,7 +240,15 @@ document.querySelectorAll('.keyboard-btn').forEach(btn => {
     };
 
     btn.addEventListener('click', handleEvent);
-    btn.addEventListener('touchstart', handleEvent);
+    btn.addEventListener('touchstart', handleEvent, { passive: false }); // 성능 개선
+});
+
+// [입력 라인 관리 강화] ------------------------------------
+document.querySelectorAll('.input-numbers').forEach(input => {
+    input.addEventListener('focus', () => {
+        currentLine = Math.max(0, input.value.split('\n').length - 1);
+        activeInput = input;
+    });
 });
 
 document.addEventListener('click', (e) => handleInteraction(e));

@@ -240,8 +240,8 @@ document.querySelectorAll('.keyboard-btn').forEach(btn => {
 
 document.querySelectorAll('.input-numbers').forEach(input => {
     input.addEventListener('focus', () => {
-        const lines = input.value.split('\n').length;
-        setCurrentLine(input, lines - 1);
+        const lines = input.value.split('\n');
+        setCurrentLine(input, lines.length - 1);
         activeInput = input;
     });
 });
@@ -249,8 +249,8 @@ document.querySelectorAll('.input-numbers').forEach(input => {
 document.addEventListener('click', (e) => {
     if (e.target.closest('.input-numbers')) {
         activeInput = e.target;
-        const lines = activeInput.value.split('\n').length;
-        setCurrentLine(activeInput, lines - 1);
+        const lines = activeInput.value.split('\n');
+        setCurrentLine(activeInput, lines.length - 1);
         activeInput.focus();
         return;
     }
@@ -273,9 +273,19 @@ document.addEventListener('click', (e) => {
         const value = parseFloat(e.target.textContent);
         const lines = activeInput.value.split('\n');
         const currentLine = getCurrentLine(activeInput);
+        
+        // 빈 줄 자동 생성
+        while (lines.length <= currentLine) {
+            lines.push('');
+        }
         lines[currentLine] = value.toFixed(1);
-        activeInput.value = lines.filter(v => v).join('\n');
-        if (currentLine < 8) setCurrentLine(activeInput, currentLine + 1);
+        
+        // 필터링 제거: empty line 유지
+        activeInput.value = lines.join('\n');
+        
+        if (currentLine < 8) {
+            setCurrentLine(activeInput, currentLine + 1);
+        }
     }
 
     if(activeInput) activeInput.focus();

@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FUEL RACK 입력</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -30,33 +33,37 @@
             flex-direction: column;
             gap: 12px;
             margin-top: 15px;
+            padding: 0 2%; /* 그룹 컨테이너 양측 여백 추가 */
         }
         .group-row {
             display: flex;
             gap: 2%;
-            width: 96%;
-            padding: 0 2%;
+            width: 100%;
             align-items: flex-start;
         }
         .numbering {
             width: 10%;
-            height: 46vh; /* 50pt 추가 */
+            height: 56vh; /* 높이 20포인트 추가 */
             margin-top: 25px;
             padding: 15px 1%;
-            font-size: 28px;
-            line-height: 1.4;
+            font-size: 28px; /* 폰트 크기 통일 */
+            line-height: 1.5; /* 줄간격 통일 */
             border: 1px solid #ccc;
             border-radius: 4px;
             background-color: #f0f0f0;
         }
         .input-group {
-            width: 34%; /* 번호창 대비 입력창 폭 축소 */
+            width: 32%; /* 번호창 대비 입력창 폭 축소 */
             border: 2px solid #007bff;
             border-radius: 6px;
             padding: 25px 1% 5px;
             position: relative;
             background-color: white;
-            height: 46vh; /* 번호창과 높이 통일 */
+            height: 56vh; /* 높이 20포인트 추가 */
+            margin-right: 2%; /* 우측 여백 추가 */
+        }
+        .input-group:last-child {
+            margin-right: 0; /* 마지막 입력창 우측 여백 제거 */
         }
         .input-group:focus-within {
             border-color: #00f;
@@ -80,8 +87,8 @@
             border-radius: 4px;
             padding: 5px;
             resize: none;
-            font-size: 28px; /* 입력창 폰트 크기 통일 */
-            line-height: 1.5; /* 줄바꿈 높이 통일 */
+            font-size: 28px; /* 폰트 크기 통일 */
+            line-height: 1.5; /* 줄간격 통일 */
             caret-color: transparent;
         }
         .virtual-keyboard {

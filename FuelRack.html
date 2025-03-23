@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FUEL RACK 입력</title>
     <style>
         * {
@@ -105,6 +105,10 @@
             box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
             z-index: 1000;
             height: 120px;
+            touch-action: manipulation; /* 모바일 더블탭 확대 방지 */
+        }
+        .virtual-keyboard * {
+            touch-action: manipulation; /* 하위 요소에도 적용 */
         }
         .keyboard-row {
             display: flex;
@@ -274,21 +278,18 @@ document.addEventListener('click', (e) => {
         const lines = activeInput.value.split('\n');
         const currentLine = getCurrentLine(activeInput);
         
-        // 빈 줄 자동 생성
-        while (lines.length <= currentLine) {
-            lines.push('');
-        }
+        // [강제 개행 로직]
         lines[currentLine] = value.toFixed(1);
-        
-        // 필터링 제거: empty line 유지
-        activeInput.value = lines.join('\n');
-        
-        if (currentLine < 8) {
-            setCurrentLine(activeInput, currentLine + 1);
+        if(currentLine < 8) {
+            lines.length = currentLine + 1; // 기존 내용 초기화
+            lines.push(''); // 새로운 빈 줄 추가
         }
+        
+        activeInput.value = lines.join('\n');
+        setCurrentLine(activeInput, Math.min(currentLine + 1, 8));
     }
 
-    if(activeInput) activeInput.focus();
+    activeInput.focus();
 });
 
 document.getElementById('copyReport').addEventListener('click', async () => {

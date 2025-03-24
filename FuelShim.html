@@ -344,7 +344,7 @@
           if (num.length !== 3) return { value: num.length > 0 ? '⚠' : '', isNegative: false };
           const n = parseInt(num);
           const diff = target - n;
-          const result = Math.trunc((diff / selectedValue) * 10) / 10; // 나눗셈 적용
+          const result = Math.trunc((diff / selectedValue)) / 10; // 나눗셈 적용
           return {
             value: Math.abs(result) >= 0.1 ? result.toFixed(1).replace(/\.0$/, '') : '',
             isNegative: result < 0

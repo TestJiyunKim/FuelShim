@@ -1,752 +1,176 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>FUEL SHIM 계산</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 10px;
-      background-color: #f4f4f9;
-      color: #333;
-      margin: 0;
-      padding-bottom: 120px;
-    }
-    h2 {
-      color: #444;
-      margin-bottom: 8px;
-      text-align: center;
-    }
-    .number-control {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      margin-bottom: 12px;
-      padding: 0 10px;
-      justify-content: center;
-      flex-wrap: nowrap;
-      overflow-x: auto;
-    }
-    .number-control input {
-      width: 35px;
-      height: 18px;
-      text-align: center;
-      padding: 3px;
-      border: 2px solid #007bff;
-      border-radius: 4px;
-      font-size: 13px;
-      -webkit-appearance: none;
-      -moz-appearance: textfield;
-      flex-shrink: 0;
-    }
-    .number-control button {
-      width: 30px !important;
-      height: 30px !important;
-      font-size: 18px !important;
-      padding: 0 !important;
-      border: 2px solid #007bff;
-      border-radius: 4px;
-      background-color: #007bff;
-      color: white;
-      cursor: pointer;
-      flex-shrink: 0;
-      min-width: 30px;
-    }
-    .groups-container {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .group-wrapper {
-      display: flex;
-      gap: 2px;
-      width: 100%;
-      align-items: flex-start;
-    }
-    .input-group {
-      display: flex;
-      gap: 2px;
-      padding: 7px 3px 8px;
-      border: 2px solid #007bff;
-      border-radius: 6px;
-      background-color: white;
-      position: relative;
-      height: 438px;
-      box-sizing: border-box;
-      flex: 1;
-    }
-    .bed-label {
-      position: absolute;
-      top: -11px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: white;
-      padding: 0 6px;
-      font-weight: bold;
-      color: #007bff;
-      font-size: 13px;
-    }
-    .numbering {
-      margin-top: 11px !important;
-      width: 29px !important;
-      height: 416px;
-      padding: 3px;
-      border: 1px solid #ccc;
-      border-radius: 3px;
-      background-color: #f0f0f0;
-      font-size: 30px;
-      line-height: 42px;
-      text-align: right;
-      overflow-y: hidden;
-    }
-    .input-numbers,
-    .results {
-      height: 416px;
-      padding: 3px;
-      border: 1px solid #ccc;
-      border-radius: 3px;
-      font-size: 30px;
-      line-height: 42px;
-      flex-shrink: 0;
-      box-sizing: border-box;
-      min-width: 44px;
-      min-height: 44px;
-      touch-action: manipulation;
-    }
-    .input-numbers {
-      width: 144px !important;
-      resize: none;
-      background-color: white;
-      margin-top: 2px;
-    }
-    .results {
-      width: 144px !important;
-      background-color: #f0f0f0;
-    }
-    .negative {
-      color: red !important;
-    }
-    .invalid {
-      color: red !important;
-      font-weight: bold;
-    }
-    .results div:empty {
-      height: 42px;
-      visibility: hidden;
-    }
-    #averageDisplay {
-      margin-left: 8px;
-      margin-right: 8px;
-      color: #007bff;
-      font-weight: bold;
-      font-size: 13px;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    #revisionDisplay {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      color: #666;
-      font-size: 12px;
-    }
-    .button-row {
-      position: fixed;
-      left: 10px;
-      right: 10px;
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      padding: 0 10px;
-    }
-    #buttonRow1 {
-      bottom: 60px;
-    }
-    #buttonRow2 {
-      bottom: 10px;
-    }
-    .button-row button {
-      flex: 1;
-      min-width: 90px;
-      max-width: 150px;
-      padding: 10px 12px;
-      border: none;
-      border-radius: 25px;
-      font-size: 13px;
-      cursor: pointer;
-      transition: transform 0.2s;
-      white-space: nowrap;
-    }
-    .button-row button:hover {
-      transform: translateY(-2px);
-    }
-    #resetButton { background-color: #dc3545; color: white; }
-    #copyReportButton { background-color: #007bff; color: white; }
-    #shareButton { background-color: #28a745; color: white; }
-    #saveButton { background-color: #ffc107; color: black; }
-    #loadButton { background-color: #17a2b8; color: white; }
-    #resetButtonLandscape { background-color: #dc3545; color: white; }
-    #copyReportButtonLandscape { background-color: #007bff; color: white; }
-    #shareButtonLandscape { background-color: #28a745; color: white; }
-    #saveButtonLandscape { background-color: #ffc107; color: black; }
-    #loadButtonLandscape { background-color: #17a2b8; color: white; }
-    #loadButton.disabled, #loadButtonLandscape.disabled {
-      background-color: #999 !important;
-      cursor: not-allowed;
-      opacity: 0.7;
-    }
-    .ignore-checkbox {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 13px;
-      color: #666;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    .ignore-checkbox input {
-      width: 18px;
-      height: 18px;
-      margin: 0;
-      accent-color: #007bff;
-    }
-    .ignore-checkbox input:checked {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23007bff'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: center;
-      background-size: 14px;
-    }
-    @media (orientation: landscape) {
-      .groups-container {
-        flex-direction: row !important;
-        gap: 2px !important;
-        margin: 0 10px;
-      }
-      .group-wrapper {
-        width: auto !important;
-        flex: 1;
-        margin-right: 2px !important;
-      }
-      .group-wrapper:not(:first-child) .numbering {
-        display: none !important;
-      }
-      .input-group {
-        margin-right: 0 !important;
-      }
-      .input-numbers,
-      .results {
-        width: 82px !important;
-      }
-      .button-row {
-        bottom: 5px !important;
-        flex-wrap: nowrap !important;
-        gap: 4px !important;
-        padding: 0 10px;
-      }
-      #buttonRow1, #buttonRow2 {
-        display: none !important;
-      }
-      #landscapeButtons {
-        display: flex !important;
-        width: calc(100% - 20px);
-      }
-    }
-    @media (orientation: portrait) {
-      #buttonRow1 button {
-        padding: 8px 10px !important;
-        font-size: 12px !important;
-      }
-    }
-    @media (max-width: 480px) {
-      .ignore-checkbox {
-        font-size: 12px;
-      }
-    }
-    #landscapeButtons {
-      display: none;
-    }
-    .type-selector {
-      text-align: center;
-      margin: 10px 0;
-    }
-    #typeSelect {
-      padding: 8px 12px;
-      border-radius: 20px;
-      border: 2px solid #007bff;
-      font-size: 14px;
-      background-color: white;
-      max-width: 280px;
-      width: 90%;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FUEL RACK 입력</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #f4f4f9;
+            position: relative;
+            overflow-x: hidden;
+            padding-bottom: 135px;
+        }
+        h2 {
+            text-align: center;
+            color: #444;
+            margin: 8px 0;
+        }
+        #revision {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            color: #666;
+            font-size: 12px;
+        }
+        .groups-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 19px;
+            padding: 0 2%;
+        }
+        .group-row {
+            display: flex;
+            gap: 2%;
+            width: 100%;
+            align-items: flex-start;
+        }
+        .numbering {
+            width: 10%;
+            height: calc(53vh + 26.67px);
+            margin-top: 19px;
+            padding: 15px 1%;
+            position: relative;
+            top: 2px;
+            font-size: 28px;
+            line-height: 1.5;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #f0f0f0;
+        }
+        .input-group {
+            width: 38.4%;
+            border: 2px solid #007bff;
+            border-radius: 6px;
+            padding: 24px 1% 5px;
+            position: relative;
+            background-color: white;
+            height: 63vh;
+            margin-right: 2%;
+            margin-top: 4px;
+        }
+        .input-group:last-child {
+            margin-right: 0;
+        }
+        .input-group:focus-within {
+            border-color: #00f;
+            box-shadow: 0 0 8px rgba(0,123,255,0.3);
+        }
+        .bed-label {
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 0 5px;
+            color: #007bff;
+            font-weight: bold;
+            font-size: 26px;
+        }
+        .input-numbers {
+            width: 100%;
+            height: calc(100% - 66.67px);
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 5px;
+            resize: none;
+            font-size: 28px;
+            line-height: 1.5;
+            caret-color: transparent;
+            overflow-y: auto;
+        }
+        .virtual-keyboard {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #fff;
+            padding: 10px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            height: 120px;
+        }
+        .keyboard-row {
+            display: flex;
+            gap: 2%;
+            justify-content: center;
+            margin-bottom: 6px;
+        }
+        .keyboard-btn {
+            padding: 10px 3%;
+            border: 1px solid #007bff;
+            border-radius: 4px;
+            background: #f0f6ff;
+            cursor: pointer;
+            flex: 1;
+            max-width: 18%;
+            font-size: 14px;
+            transition: all 0.2s;
+            touch-action: manipulation;
+            user-select: none;
+        }
+        .keyboard-btn:active {
+            background: #007bff;
+            color: white;
+        }
+        .keyboard-btn.active {
+            background: #007bff;
+            color: white;
+        }
+        .keyboard-btn.del {
+            background: #ffebee;
+            border-color: #ff5252;
+            max-width: 24%;
+        }
+        #copyReport {
+            position: fixed;
+            bottom: 145px;
+            right: 20px;
+            padding: 12px 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 1001;
+        }
+    </style>
 </head>
 <body>
-  <div id="revisionDisplay"></div>
-  <h2 id="mainTitle">FUEL SHIM 계산</h2>
-  
-  <div class="type-selector">
-    <select id="typeSelect">
-      <option value="2.5">22CDF (/2.5)</option>
-      <option value="1.5">27DF (/1.5)</option>
-      <option value="0.8">35DF (/0.8)</option>
-      <option value="2">21/32 & 25/33 (/2)</option>
-      <option value="1.3">32/40 (/1.3)</option>
-    </select>
-  </div>
-  
-  <div class="number-control">
-    <button id="decrementTarget" aria-label="목표값 감소">-</button>
-    <input type="number" id="targetNumber" value="144" pattern="[0-9]*" inputmode="numeric">
-    <button id="incrementTarget" aria-label="목표값 증가">+</button>
-    <span id="averageDisplay">평균:0.0(0개)</span>
-    <label class="ignore-checkbox">
-      <input type="checkbox" id="ignoreCheckbox" aria-label="0.1 이하 값 무시">
-      ±0.1 이하 무시
-    </label>
-  </div>
-  
-  <div class="groups-container" id="bedContainer"></div>
-  
-  <div class="button-row" id="buttonRow1">
-    <button id="resetButton">초기화</button>
-    <button id="copyReportButton">보고서 생성</button>
-  </div>
-  <div class="button-row" id="buttonRow2">
-    <button id="shareButton">데이터 공유</button>
-    <button id="saveButton">데이터 저장</button>
-    <button id="loadButton" class="disabled">데이터 불러오기</button>
-  </div>
-  
-  <div class="button-row" id="landscapeButtons">
-    <button id="resetButtonLandscape">초기화</button>
-    <button id="copyReportButtonLandscape">보고서 생성</button>
-    <button id="shareButtonLandscape">데이터 공유</button>
-    <button id="saveButtonLandscape">데이터 저장</button>
-    <button id="loadButtonLandscape" class="disabled">데이터 불러오기</button>
-  </div>
-  
-  <script>
-    (() => {
-      const revision = '26i';
-      let initialPrefix = '14';
-      const MAX_LINES = 9;
-      const STORAGE_KEY = 'fuelShimData';
-      const bedCount = 4;
-      
-      const revisionDisplay = document.getElementById('revisionDisplay');
-      const targetInput = document.getElementById('targetNumber');
-      const averageDisplay = document.getElementById('averageDisplay');
-      const bedContainer = document.getElementById('bedContainer');
-      const decrementTargetBtn = document.getElementById('decrementTarget');
-      const incrementTargetBtn = document.getElementById('incrementTarget');
-      const resetButtons = [document.getElementById('resetButton'), document.getElementById('resetButtonLandscape')];
-      const copyReportButtons = [document.getElementById('copyReportButton'), document.getElementById('copyReportButtonLandscape')];
-      const shareButtons = [document.getElementById('shareButton'), document.getElementById('shareButtonLandscape')];
-      const saveButtons = [document.getElementById('saveButton'), document.getElementById('saveButtonLandscape')];
-      const loadButtons = [document.getElementById('loadButton'), document.getElementById('loadButtonLandscape')];
-      const typeSelect = document.getElementById('typeSelect');
-      const mainTitle = document.getElementById('mainTitle');
-      const ignoreCheckbox = document.getElementById('ignoreCheckbox');
-
-      let debounceTimeout;
-
-      const updateAverage = () => {
-        const ignoreSmall = ignoreCheckbox.checked;
-        const selectedValue = parseFloat(typeSelect.value);
-        let total = 0;
-        let validCount = 0;
-        let filteredCount = 0;
-
-        document.querySelectorAll('.input-numbers').forEach(input => {
-          const numbers = input.value.split('\n')
-            .filter(line => line.length === 3 && !isNaN(parseInt(line)))
-            .map(line => parseInt(line));
-          
-          numbers.forEach(num => {
-            const diff = parseInt(targetInput.value) - num;
-            const result = Math.trunc((diff / selectedValue)) / 10;
-            
-            validCount++;
-            total += num;
-            
-            if(!ignoreSmall || Math.abs(result) > 0.1) {
-              filteredCount++;
-            }
-          });
-        });
-
-        const average = validCount > 0 ? (total / validCount).toFixed(1) : '0.0';
-        averageDisplay.textContent = `평균:${average}(${filteredCount}개)`;
-      };
-
-      const calculateResults = (inputElement) => {
-        const wrapper = inputElement.closest('.group-wrapper');
-        const target = parseInt(targetInput.value);
-        const numbers = inputElement.value.split('\n');
-        const selectedValue = parseFloat(typeSelect.value);
-        const typeName = typeSelect.options[typeSelect.selectedIndex].text.split(' ')[0];
-        const ignoreSmall = ignoreCheckbox.checked;
-
-        const results = numbers.map((num, index) => {
-          const isLastLine = index === numbers.length - 1;
-          if (!isLastLine && num.length > 0 && num.length < 3 && /^\d+$/.test(num)) {
-            return { value: '오류!', style: 'invalid', isNegative: false };
-          }
-          if (num.length !== 3) return { value: num.length > 0 ? '⚠' : '', isNegative: false };
-          const n = parseInt(num);
-          const diff = target - n;
-          const result = Math.trunc((diff / selectedValue)) / 10;
-          
-          let displayValue = Math.abs(result) >= 0.1 ? result.toFixed(1).replace(/\.0$/, '') : '';
-          if(ignoreSmall && Math.abs(result) <= 0.1) {
-            displayValue = '';
-          }
-          
-          return {
-            value: displayValue,
-            isNegative: result < 0
-          };
-        });
-
-        const resultsContainer = wrapper.querySelector('.results');
-        resultsContainer.innerHTML = results.map(r => {
-          if (!r.value) return '<div></div>';
-          const classes = [];
-          if (r.style) classes.push(r.style);
-          if (r.isNegative) classes.push('negative');
-          return `<div class="${classes.join(' ')}">${r.value}</div>`;
-        }).join('');
-
-        mainTitle.textContent = `${typeName} FUEL SHIM 계산`;
-      };
-
-      const initializeInput = (inputElement) => {
-        inputElement.value = '';
-        inputElement.addEventListener('focus', handleFirstFocus);
-        inputElement.addEventListener('click', handleFirstFocus);
-        inputElement.addEventListener('blur', handleBlur);
-        inputElement.setAttribute('inputmode', 'numeric');
-      };
-
-      const handleFirstFocus = (event) => {
-        const input = event.target;
-        if (input.value === '') {
-          input.value = initialPrefix;
-          input.setSelectionRange(initialPrefix.length, initialPrefix.length);
-        }
-      };
-
-      const handleBlur = (event) => {
-        const input = event.target;
-        const lines = input.value.split('\n');
-        if (lines[lines.length - 1] === initialPrefix) {
-          lines.pop();
-          input.value = lines.join('\n');
-          calculateResults(input);
-        }
-      };
-
-      const adjustTargetNumber = (delta) => {
-        let currentValue = parseInt(targetInput.value) || 144;
-        const newValue = Math.max(1, currentValue + delta);
-        targetInput.value = newValue;
-        initialPrefix = newValue.toString().slice(0, 2);
-        document.querySelectorAll('.input-numbers').forEach(input => calculateResults(input));
-        updateAverage();
-      };
-
-      const handleInput = (event) => {
-        clearTimeout(debounceTimeout);
-        debounceTimeout = setTimeout(() => {
-          const input = event.target;
-          const isBackspace = event.inputType?.startsWith('delete') || event.key === 'Backspace';
-          const cursorPos = input.selectionStart;
-          const prevValue = input.value;
-          const prevLines = prevValue.split('\n');
-          let currentLine = 0;
-          let posInLine = cursorPos;
-          let accumulatedLength = 0;
-          
-          for (; currentLine < prevLines.length; currentLine++) {
-            const lineLength = prevLines[currentLine].length + 1;
-            if (cursorPos <= accumulatedLength + lineLength) {
-              posInLine -= accumulatedLength;
-              break;
-            }
-            accumulatedLength += lineLength;
-          }
-          
-          let values = input.value.replace(/[^\d\n]/g, '').split('\n')
-            .map(line => line.slice(0, 3))
-            .filter((line, index, arr) => index === arr.length - 1 || line.trim() !== '')
-            .slice(0, MAX_LINES);
-            
-          let dynamicPrefix = initialPrefix;
-          if (values.length > 0 && values[values.length - 1].length === 3) {
-            dynamicPrefix = values[values.length - 1].slice(0, 2);
-          }
-          
-          let newLineAdded = false;
-          if (!isBackspace && values.length < MAX_LINES && values[values.length - 1].length === 3 && values[values.length - 1] !== dynamicPrefix) {
-            values.push(dynamicPrefix);
-            newLineAdded = true;
-          }
-          
-          const newValue = values.join('\n');
-          if (newValue !== prevValue) {
-            input.value = newValue;
-            calculateResults(input);
-            let newCursorPos;
-            if (newLineAdded) {
-              newCursorPos = newValue.length;
-            } else {
-              const newLines = newValue.split('\n');
-              newCursorPos = 0;
-              for (let i = 0; i < currentLine; i++) {
-                newCursorPos += (newLines[i]?.length || 0) + 1;
-              }
-              newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
-            }
-            requestAnimationFrame(() => {
-              input.setSelectionRange(newCursorPos, newCursorPos);
-            });
-          } else {
-            calculateResults(input);
-          }
-          updateAverage();
-        }, 300);
-      };
-
-      const resetAll = () => {
-        typeSelect.value = '2.5';
-        mainTitle.textContent = 'FUEL SHIM 계산';
-        ignoreCheckbox.checked = false;
-        document.querySelectorAll('.input-numbers').forEach(input => {
-          input.value = '';
-          calculateResults(input);
-        });
-        window.history.replaceState({}, document.title, window.location.pathname);
-        updateAverage();
-        alert('초기화 완료');
-      };
-
-      const generateReport = () => {
-        const target = targetInput.value;
-        const now = new Date();
-        const kstTime = now.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
-        const ignoreSmall = ignoreCheckbox.checked;
-        let report = `[${typeSelect.options[typeSelect.selectedIndex].text}] FUEL SHIM 보고서\n\n목표값: ${target}\n필터: ${ignoreSmall ? '±0.1 이하 무시' : '모든 결과 표시'}\n생성일: ${kstTime}\n\n`;
-        
-        document.querySelectorAll('.input-group').forEach((group, idx) => {
-          const input = group.querySelector('.input-numbers');
-          const lines = input.value.split('\n')
-            .map(line => line.padEnd(3, ' ').slice(0, 3))
-            .filter(line => line.trim() !== '');
-          if (lines.length === 0) return;
-          
-          const results = Array.from(group.querySelectorAll('.results div'))
-            .map(div => div.textContent.trim())
-            .slice(0, lines.length);
-          
-          report += `${idx + 1}번 베드\n순번  입력값  결과\n------------------------\n`;
-          lines.forEach((v, i) => {
-            const result = results[i] === '⚠' ? '오류!' : results[i];
-            if(ignoreSmall && Math.abs(parseFloat(result)) <= 0.1) return;
-            report += `${(i + 1).toString().padStart(2, ' ')}    ${v.padStart(3, '0')}    ${result}\n`;
-          });
-          report += '\n';
-        });
-        return report;
-      };
-
-      const generateShareURL = () => {
-        const params = new URLSearchParams();
-        params.set('ver', 5);
-        params.set('type', typeSelect.value);
-        params.set('target', targetInput.value);
-        params.set('ignore', ignoreCheckbox.checked ? '1' : '0');
-        document.querySelectorAll('.input-numbers').forEach((input, idx) => {
-          const value = input.value.split('\n').join(',');
-          params.set(`bed${idx + 1}`, value || '');
-        });
-        return `${window.location.href.split('?')[0]}?${params.toString()}`;
-      };
-
-      const saveData = () => {
-        const data = {
-          version: 5,
-          date: new Date().getTime(),
-          target: targetInput.value,
-          type: typeSelect.value,
-          ignoreSmall: ignoreCheckbox.checked,
-          beds: Array.from(document.querySelectorAll('.input-numbers')).map(input => input.value)
-        };
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-          alert('데이터 저장 완료');
-          updateLoadButton();
-        } catch (error) {
-          alert('데이터 저장 중 오류가 발생했습니다.');
-          console.error(error);
-        }
-      };
-
-      const loadData = () => {
-        const savedData = localStorage.getItem(STORAGE_KEY);
-        if (savedData) {
-          try {
-            const data = JSON.parse(savedData);
-            if(data.version < 4) {
-              const typeMap = {
-                '0.4': '2.5', '0.666': '1.5', 
-                '1.25': '0.8', '0.5': '2', '0.769': '1.3'
-              };
-              data.type = typeMap[data.type] || '2.5';
-            }
-            typeSelect.value = data.type || '2.5';
-            mainTitle.textContent = `${typeSelect.options[typeSelect.selectedIndex].text.split(' ')[0]} FUEL SHIM 계산`;
-            targetInput.value = data.target;
-            initialPrefix = data.target.toString().slice(0, 2);
-            ignoreCheckbox.checked = data.ignoreSmall || false;
-            document.querySelectorAll('.input-numbers').forEach((input, index) => {
-              input.value = data.beds[index] || '';
-              calculateResults(input);
-            });
-            updateAverage();
-            alert('데이터 불러오기 완료');
-          } catch (error) {
-            alert('저장된 데이터를 불러오는 중 오류가 발생했습니다.');
-            console.error(error);
-          }
-        } else {
-          alert('저장된 데이터가 없습니다.');
-        }
-      };
-
-      const loadDataFromURL = () => {
-        const params = new URLSearchParams(window.location.search);
-        if(params.get('type')) {
-          const urlType = params.get('type');
-          const typeMap = {
-            '0.4': '2.5', '0.666': '1.5', 
-            '1.25': '0.8', '0.5': '2', '0.769': '1.3'
-          };
-          typeSelect.value = typeMap[urlType] || urlType;
-          mainTitle.textContent = `${typeSelect.options[typeSelect.selectedIndex].text.split(' ')[0]} FUEL SHIM 계산`;
-        }
-        const target = params.get('target');
-        if (target) {
-          targetInput.value = target;
-          initialPrefix = target.slice(0, 2);
-        }
-        ignoreCheckbox.checked = params.get('ignore') === '1';
-        document.querySelectorAll('.input-numbers').forEach((input, index) => {
-          const bedData = params.get(`bed${index + 1}`);
-          if (bedData) {
-            input.value = bedData.split(',').join('\n');
-            calculateResults(input);
-          } else {
-            input.value = '';
-            calculateResults(input);
-          }
-        });
-        updateAverage();
-      };
-
-      const updateLoadButton = () => {
-        const savedData = localStorage.getItem(STORAGE_KEY);
-        loadButtons.forEach(loadBtn => {
-          if (savedData) {
-            try {
-              const data = JSON.parse(savedData);
-              const saveDate = new Date(data.date);
-              loadBtn.textContent = `${saveDate.getMonth() + 1}/${saveDate.getDate()} 불러오기`;
-              loadBtn.classList.remove('disabled');
-            } catch (error) {
-              loadBtn.textContent = '데이터 불러오기';
-              loadBtn.classList.add('disabled');
-            }
-          } else {
-            loadBtn.textContent = '데이터 불러오기';
-            loadBtn.classList.add('disabled');
-          }
-        });
-      };
-
-      const initBeds = () => {
-        let bedHTML = '';
-        for (let i = 1; i <= bedCount; i++) {
-          bedHTML += `
-            <div class="group-wrapper">
-              <div class="numbering">${Array.from({ length: MAX_LINES }, (_, j) => `${j + 1}.`).join('\n')}</div>
-              <div class="input-group">
-                <div class="bed-label">${i}번 베드</div>
-                <textarea class="input-numbers"></textarea>
-                <div class="results"></div>
-              </div>
+    <div id="revision">Rev: 23R2</div>
+    <button id="copyReport">📋 보고서 복사</button>
+    <h2>FUEL RACK 입력</h2>
+    
+    <div class="groups-container">
+        <div class="group-row">
+            <div class="numbering">1.<br>2.<br>3.<br>4.<br>5.<br>6.<br>7.<br>8.<br>9.</div>
+            <div class="input-group">
+                <div class="bed-label">#1</div>
+                <textarea class="input-numbers" data-bed="1" readonly></textarea>
             </div>
-          `;
-        }
-        bedContainer.innerHTML = bedHTML;
-        document.querySelectorAll('.input-numbers').forEach(input => {
-          initializeInput(input);
-          input.addEventListener('input', handleInput);
-          input.addEventListener('keydown', e => { if(e.key === 'Enter') e.preventDefault(); });
-        });
-      };
-
-      const init = () => {
-        revisionDisplay.textContent = `Rev: ${revision}`;
-        targetInput.value = 144;
-        initialPrefix = '14';
-        initBeds();
-        decrementTargetBtn.addEventListener('click', () => adjustTargetNumber(-1));
-        incrementTargetBtn.addEventListener('click', () => adjustTargetNumber(1));
-        resetButtons.forEach(btn => btn.addEventListener('click', resetAll));
-        copyReportButtons.forEach(btn => btn.addEventListener('click', () => {
-          navigator.clipboard.writeText(generateReport())
-            .then(() => alert('보고서가 클립보드에 복사되었습니다.'))
-            .catch(err => {
-              alert('보고서 복사 중 오류가 발생했습니다.');
-              console.error(err);
-            });
-        }));
-        shareButtons.forEach(btn => btn.addEventListener('click', () => {
-          navigator.clipboard.writeText(generateShareURL())
-            .then(() => alert('공유 URL이 클립보드에 복사되었습니다.'))
-            .catch(err => {
-              alert('URL 복사 중 오류가 발생했습니다.');
-              console.error(err);
-            });
-        }));
-        saveButtons.forEach(btn => btn.addEventListener('click', saveData));
-        loadButtons.forEach(btn => btn.addEventListener('click', function() {
-          if (!this.classList.contains('disabled')) loadData();
-        }));
-        ignoreCheckbox.addEventListener('change', () => {
-          document.querySelectorAll('.input-numbers').forEach(input => {
-            calculateResults(input);
-            updateAverage();
-          });
-        });
-        typeSelect.addEventListener('change', () => {
-          document.querySelectorAll('.input-numbers').forEach(input => {
-            calculateResults(input);
-            updateAverage();
-          });
-          mainTitle.textContent = `${typeSelect.options[typeSelect.selectedIndex].text.split(' ')[0]} FUEL SHIM 계산`;
-        });
-        if (window.location.search) {
-          loadDataFromURL();
-        }
-        updateLoadButton();
-        updateAverage();
-      };
-
-      document.addEventListener('DOMContentLoaded', init);
-    })();
-  </script>
+            <div class="input-group">
+                <div class="bed-label">#2</div>
+                <textarea class="input-numbers" data-bed="2" readonly></textarea>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

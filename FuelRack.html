@@ -7,7 +7,7 @@
     <style>
         * {
             box-sizing: border-box;
-            touch-action: manipulation; /* 더블클릭 확대 방지 */
+            touch-action: manipulation;
         }
         body {
             font-family: Arial, sans-serif;
@@ -15,7 +15,7 @@
             background-color: #f4f4f9;
             position: relative;
             overflow-x: hidden;
-            padding-bottom: 135px; /* 5포인트 증가 */
+            padding-bottom: 135px;
         }
         h2 {
             text-align: center;
@@ -33,7 +33,7 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
-            margin-top: 19px; /* 4포인트 아래로 이동 */
+            margin-top: 19px;
             padding: 0 2%;
         }
         .group-row {
@@ -44,8 +44,8 @@
         }
         .numbering {
             width: 10%;
-            height: 53vh; /* 10포인트 감소 */
-            margin-top: 19px; /* 2포인트 감소 */
+            height: 53vh;
+            margin-top: 19px;
             padding: 15px 1%;
             position: relative;
             top: 2px;
@@ -59,12 +59,12 @@
             width: 38.4%;
             border: 2px solid #007bff;
             border-radius: 6px;
-            padding: 24px 1% 5px; /* 상단 여백 1포인트 감소 */
+            padding: 24px 1% 5px;
             position: relative;
             background-color: white;
-            height: 63vh; /* 10포인트 감소 */
+            height: 63vh;
             margin-right: 2%;
-            margin-top: 4px; /* 4포인트 아래로 이동 */
+            margin-top: 4px;
         }
         .input-group:last-child {
             margin-right: 0;
@@ -94,7 +94,7 @@
             font-size: 28px;
             line-height: 1.5;
             caret-color: transparent;
-            overflow-y: auto; /* 스크롤 활성화 */
+            overflow-y: auto;
         }
         .virtual-keyboard {
             position: fixed;
@@ -122,11 +122,12 @@
             flex: 1;
             max-width: 18%;
             font-size: 14px;
-            transition: all 0.2s; /* 반응속도 원복 */
+            transition: all 0.2s;
             touch-action: manipulation;
+            user-select: none;
         }
         .keyboard-btn:active {
-            background: #007bff; /* 모바일 액티브 상태 */
+            background: #007bff;
             color: white;
         }
         .keyboard-btn.active {
@@ -140,7 +141,7 @@
         }
         #copyReport {
             position: fixed;
-            bottom: 145px; /* 키보드 위에 플로팅 */
+            bottom: 145px;
             right: 20px;
             padding: 12px 20px;
             background: #28a745;
@@ -195,6 +196,7 @@
     </div>
 
 <script>
+// 프리셋 데이터
 const presets = {
     '25': [9.5, 10, 10.5],
     '50': [17.5, 18, 18.5],
@@ -203,21 +205,27 @@ const presets = {
     '110': [35.5, 36, 36.5]
 };
 
+// 전역 변수
 let currentPercent = '25';
 let activeInput = null;
 let currentValues = [...presets[currentPercent]];
+let lastEventTime = 0;
+const DEBOUNCE_TIME = 200; // 200ms 내 중복 이벤트 무시
 
-// 입력창 상태 관리용 WeakMap
+// 입력 상태 관리
 const inputStates = new WeakMap();
 
+// 현재 라인 가져오기
 function getCurrentLine(input) {
     return inputStates.get(input) || 0;
 }
 
+// 현재 라인 설정
 function setCurrentLine(input, line) {
     inputStates.set(input, Math.max(0, Math.min(line, 8)));
 }
 
+// 숫자 버튼 업데이트
 function updateNumberButtons() {
     const container = document.getElementById('number-buttons');
     container.innerHTML = `
@@ -228,112 +236,116 @@ function updateNumberButtons() {
         <button class="keyboard-btn" data-action="incr">+</button>
         <button class="keyboard-btn del" data-action="del">Del</button>
     `;
-    
-    // 새로 생성된 버튼에 이벤트 리스너 추가
-    setupKeyboardEvents();
 }
 
-// 이벤트 핸들러 통합
-function setupKeyboardEvents() {
-    document.querySelectorAll('.keyboard-btn').forEach(btn => {
-        let isProcessed = false;
+// 키보드 이벤트 처리 (이벤트 위임)
+function handleKeyboardEvent(e) {
+    const now = Date.now();
+    if (now - lastEventTime < DEBOUNCE_TIME) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        return;
+    }
+    lastEventTime = now;
 
-        // 터치 이벤트 처리
-        btn.addEventListener('touchstart', (e) => {
-            if(isProcessed) return;
-            isProcessed = true;
-            handleButtonAction(e);
-        }, { passive: true });
+    const btn = e.target.closest('.keyboard-btn');
+    if (!btn) return;
 
-        // 클릭 이벤트 처리 (데스크톱 전용)
-        btn.addEventListener('click', (e) => {
-            if(isProcessed) return;
-            handleButtonAction(e);
-        });
-
-        // 터치 종료 시 플래그 리셋
-        btn.addEventListener('touchend', () => {
-            isProcessed = false;
-        });
-    });
-}
-
-function handleButtonAction(e) {
     e.preventDefault();
     e.stopPropagation();
 
-    const btn = e.target.closest('.keyboard-btn');
-    if(!btn) return;
-
-    if(btn.dataset.percent) {
-        // 퍼센트 버튼 처리
+    // 퍼센트 버튼 처리
+    if (btn.dataset.percent) {
         currentPercent = btn.dataset.percent;
         currentValues = [...presets[currentPercent]];
-        document.querySelectorAll('.keyboard-btn[data-percent]').forEach(b => 
-            b.classList.remove('active'));
+        document.querySelectorAll('.keyboard-btn[data-percent]').forEach(b => {
+            b.classList.remove('active');
+        });
         btn.classList.add('active');
         updateNumberButtons();
+        return;
     }
-    else if(btn.dataset.action) {
-        // 액션 버튼 처리
+
+    // 액션 버튼 처리
+    if (btn.dataset.action) {
         const action = btn.dataset.action;
-        if(action === 'decr' || action === 'incr') {
+        if (action === 'decr' || action === 'incr') {
             const step = action === 'decr' ? -0.5 : 0.5;
             currentValues = currentValues.map(v => v + step);
             updateNumberButtons();
-        }
-        else if(action === 'del') {
-            if(!activeInput) return;
+        } else if (action === 'del' && activeInput) {
             const lines = activeInput.value.split('\n');
             lines.pop();
             activeInput.value = lines.join('\n');
             setCurrentLine(activeInput, Math.max(0, lines.length - 1));
         }
+        return;
     }
-    else {
-        // 숫자 입력 처리
-        if(!activeInput) return;
-        const value = parseFloat(btn.textContent);
-        const lines = activeInput.value.split('\n');
-        const currentLine = getCurrentLine(activeInput);
-        lines[currentLine] = value.toFixed(1);
-        activeInput.value = lines.filter(v => v).join('\n');
-        if(currentLine < 8) setCurrentLine(activeInput, currentLine + 1);
+
+    // 숫자 입력 처리
+    if (!activeInput) return;
+    const value = parseFloat(btn.textContent);
+    const lines = activeInput.value.split('\n');
+    const currentLine = getCurrentLine(activeInput);
+    lines[currentLine] = value.toFixed(1);
+    activeInput.value = lines.filter(v => v).join('\n');
+    if (currentLine < 8) {
+        setCurrentLine(activeInput, currentLine + 1);
     }
 }
 
-// 입력 필드 포커스 이벤트 처리
-document.querySelectorAll('.input-numbers').forEach(input => {
-    input.addEventListener('focus', () => {
-        const lines = input.value.split('\n').length;
-        setCurrentLine(input, lines - 1);
-        activeInput = input;
+// 입력 필드 포커스 처리
+function setupInputFields() {
+    document.querySelectorAll('.input-numbers').forEach(input => {
+        input.addEventListener('focus', () => {
+            const lines = input.value.split('\n').length;
+            setCurrentLine(input, lines - 1);
+            activeInput = input;
+        });
     });
-});
+}
 
 // 보고서 복사 기능
-document.getElementById('copyReport').addEventListener('click', async () => {
-    try {
-        const report = Array.from(document.querySelectorAll('.input-group'))
-            .map(group => {
-                const bedNumber = group.querySelector('.bed-label').textContent.replace('#', '') + '번 베드';
-                const values = group.querySelector('.input-numbers').value.split('\n').filter(v => v);
-                return values.length > 0 ? `${bedNumber}: ${values.join(', ')}` : null;
-            })
-            .filter(line => line !== null)
-            .join('\n');
-        
-        await navigator.clipboard.writeText(report);
-        alert('보고서가 클립보드에 복사되었습니다.');
-    } catch (err) {
-        alert('복사 실패: ' + err.message);
-    }
-});
+function setupCopyButton() {
+    document.getElementById('copyReport').addEventListener('click', async () => {
+        try {
+            const report = Array.from(document.querySelectorAll('.input-group'))
+                .map(group => {
+                    const bedNumber = group.querySelector('.bed-label').textContent.replace('#', '') + '번 베드';
+                    const values = group.querySelector('.input-numbers').value.split('\n').filter(v => v);
+                    return values.length > 0 ? `${bedNumber}: ${values.join(', ')}` : null;
+                })
+                .filter(line => line !== null)
+                .join('\n');
+            
+            await navigator.clipboard.writeText(report);
+            alert('보고서가 클립보드에 복사되었습니다.');
+        } catch (err) {
+            alert('복사 실패: ' + err.message);
+        }
+    });
+}
 
-// 초기화
-document.querySelector('.keyboard-btn[data-percent="25"]').classList.add('active');
-updateNumberButtons();
-setupKeyboardEvents();
+// 초기화 함수
+function init() {
+    // 가상 키보드 이벤트 설정
+    const keyboard = document.querySelector('.virtual-keyboard');
+    keyboard.addEventListener('click', handleKeyboardEvent);
+    keyboard.addEventListener('touchstart', handleKeyboardEvent, { passive: true });
+
+    // 입력 필드 설정
+    setupInputFields();
+
+    // 복사 버튼 설정
+    setupCopyButton();
+
+    // 초기 상태 설정
+    document.querySelector('.keyboard-btn[data-percent="25"]').classList.add('active');
+    updateNumberButtons();
+}
+
+// 애플리케이션 초기화
+document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>

@@ -44,7 +44,7 @@
         }
         .numbering {
             width: 10%;
-            height: calc(53vh + 26.67px);
+            height: 53vh;
             margin-top: 19px;
             padding: 15px 1%;
             position: relative;
@@ -86,7 +86,7 @@
         }
         .input-numbers {
             width: 100%;
-            height: calc(100% - 66.67px);
+            height: calc(100% - 40px);
             border: 1px solid #ccc;
             border-radius: 4px;
             padding: 5px;
@@ -171,6 +171,181 @@
                 <textarea class="input-numbers" data-bed="2" readonly></textarea>
             </div>
         </div>
+        <div class="group-row">
+            <div class="numbering">1.<br>2.<br>3.<br>4.<br>5.<br>6.<br>7.<br>8.<br>9.</div>
+            <div class="input-group">
+                <div class="bed-label">#3</div>
+                <textarea class="input-numbers" data-bed="3" readonly></textarea>
+            </div>
+            <div class="input-group">
+                <div class="bed-label">#4</div>
+                <textarea class="input-numbers" data-bed="4" readonly></textarea>
+            </div>
+        </div>
     </div>
+
+    <div class="virtual-keyboard">
+        <div class="keyboard-row">
+            <button class="keyboard-btn" data-percent="25">25%</button>
+            <button class="keyboard-btn" data-percent="50">50%</button>
+            <button class="keyboard-btn" data-percent="75">75%</button>
+            <button class="keyboard-btn" data-percent="100">100%</button>
+            <button class="keyboard-btn" data-percent="110">110%</button>
+        </div>
+        <div class="keyboard-row" id="number-buttons"></div>
+    </div>
+
+<script>
+// 프리셋 데이터
+const presets = {
+    '25': [9.5, 10, 10.5],
+    '50': [17.5, 18, 18.5],
+    '75': [24.5, 25, 25.5],
+    '100': [32.5, 33, 33.5],
+    '110': [35.5, 36, 36.5]
+};
+
+// 전역 변수
+let currentPercent = '25';
+let activeInput = null;
+let currentValues = [...presets[currentPercent]];
+let lastEventTime = 0;
+const DEBOUNCE_TIME = 200; // 200ms 내 중복 이벤트 무시
+
+// 입력 상태 관리
+const inputStates = new WeakMap();
+
+// 현재 라인 가져오기
+function getCurrentLine(input) {
+    return inputStates.get(input) || 0;
+}
+
+// 현재 라인 설정
+function setCurrentLine(input, line) {
+    inputStates.set(input, Math.max(0, Math.min(line, 8)));
+}
+
+// 숫자 버튼 업데이트
+function updateNumberButtons() {
+    const container = document.getElementById('number-buttons');
+    container.innerHTML = `
+        <button class="keyboard-btn" data-action="decr">-</button>
+        <button class="keyboard-btn">${currentValues[0].toFixed(1)}</button>
+        <button class="keyboard-btn">${currentValues[1].toFixed(1)}</button>
+        <button class="keyboard-btn">${currentValues[2].toFixed(1)}</button>
+        <button class="keyboard-btn" data-action="incr">+</button>
+        <button class="keyboard-btn del" data-action="del">Del</button>
+    `;
+}
+
+// 키보드 이벤트 처리 (이벤트 위임)
+function handleKeyboardEvent(e) {
+    const now = Date.now();
+    if (now - lastEventTime < DEBOUNCE_TIME) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        return;
+    }
+    lastEventTime = now;
+
+    const btn = e.target.closest('.keyboard-btn');
+    if (!btn) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    // 퍼센트 버튼 처리
+    if (btn.dataset.percent) {
+        currentPercent = btn.dataset.percent;
+        currentValues = [...presets[currentPercent]];
+        document.querySelectorAll('.keyboard-btn[data-percent]').forEach(b => {
+            b.classList.remove('active');
+        });
+        btn.classList.add('active');
+        updateNumberButtons();
+        return;
+    }
+
+    // 액션 버튼 처리
+    if (btn.dataset.action) {
+        const action = btn.dataset.action;
+        if (action === 'decr' || action === 'incr') {
+            const step = action === 'decr' ? -0.5 : 0.5;
+            currentValues = currentValues.map(v => v + step);
+            updateNumberButtons();
+        } else if (action === 'del' && activeInput) {
+            const lines = activeInput.value.split('\n');
+            lines.pop();
+            activeInput.value = lines.join('\n');
+            setCurrentLine(activeInput, Math.max(0, lines.length - 1));
+        }
+        return;
+    }
+
+    // 숫자 입력 처리
+    if (!activeInput) return;
+    const value = parseFloat(btn.textContent);
+    const lines = activeInput.value.split('\n');
+    const currentLine = getCurrentLine(activeInput);
+    lines[currentLine] = value.toFixed(1);
+    activeInput.value = lines.filter(v => v).join('\n');
+    if (currentLine < 8) {
+        setCurrentLine(activeInput, currentLine + 1);
+    }
+}
+
+// 입력 필드 포커스 처리
+function setupInputFields() {
+    document.querySelectorAll('.input-numbers').forEach(input => {
+        input.addEventListener('focus', () => {
+            const lines = input.value.split('\n').length;
+            setCurrentLine(input, lines - 1);
+            activeInput = input;
+        });
+    });
+}
+
+// 보고서 복사 기능
+function setupCopyButton() {
+    document.getElementById('copyReport').addEventListener('click', async () => {
+        try {
+            const report = Array.from(document.querySelectorAll('.input-group'))
+                .map(group => {
+                    const bedNumber = group.querySelector('.bed-label').textContent.replace('#', '') + '번 베드';
+                    const values = group.querySelector('.input-numbers').value.split('\n').filter(v => v);
+                    return values.length > 0 ? `${bedNumber}: ${values.join(', ')}` : null;
+                })
+                .filter(line => line !== null)
+                .join('\n');
+            
+            await navigator.clipboard.writeText(report);
+            alert('보고서가 클립보드에 복사되었습니다.');
+        } catch (err) {
+            alert('복사 실패: ' + err.message);
+        }
+    });
+}
+
+// 초기화 함수
+function init() {
+    // 가상 키보드 이벤트 설정
+    const keyboard = document.querySelector('.virtual-keyboard');
+    keyboard.addEventListener('click', handleKeyboardEvent);
+    keyboard.addEventListener('touchstart', handleKeyboardEvent, { passive: true });
+
+    // 입력 필드 설정
+    setupInputFields();
+
+    // 복사 버튼 설정
+    setupCopyButton();
+
+    // 초기 상태 설정
+    document.querySelector('.keyboard-btn[data-percent="25"]').classList.add('active');
+    updateNumberButtons();
+}
+
+// 애플리케이션 초기화
+document.addEventListener('DOMContentLoaded', init);
+</script>
 </body>
 </html>

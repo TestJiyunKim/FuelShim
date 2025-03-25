@@ -228,45 +228,81 @@ function updateNumberButtons() {
         <button class="keyboard-btn" data-action="incr">+</button>
         <button class="keyboard-btn del" data-action="del">Del</button>
     `;
+    
+    // 새로 생성된 버튼에 이벤트 리스너 추가
+    setupKeyboardEvents();
 }
 
-// 이벤트 핸들러 최적화
-document.querySelectorAll('.keyboard-btn').forEach(btn => {
-    let isTouchEvent = false;
+// 이벤트 핸들러 통합
+function setupKeyboardEvents() {
+    document.querySelectorAll('.keyboard-btn').forEach(btn => {
+        let isProcessed = false;
 
-    // 터치 시작 시 플래그 설정
-    btn.addEventListener('touchstart', (e) => {
-        isTouchEvent = true;
-        handleEvent(e);
-    }, { passive: true });
+        // 터치 이벤트 처리
+        btn.addEventListener('touchstart', (e) => {
+            if(isProcessed) return;
+            isProcessed = true;
+            handleButtonAction(e);
+        }, { passive: true });
 
-    // 터치 종료 시 기본 동작 방지
-    btn.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        handleEvent(e);
+        // 클릭 이벤트 처리 (데스크톱 전용)
+        btn.addEventListener('click', (e) => {
+            if(isProcessed) return;
+            handleButtonAction(e);
+        });
+
+        // 터치 종료 시 플래그 리셋
+        btn.addEventListener('touchend', () => {
+            isProcessed = false;
+        });
     });
+}
 
-    // 클릭 이벤트 (데스크톱 전용)
-    btn.addEventListener('click', (e) => {
-        if (!isTouchEvent) handleEvent(e);
-        isTouchEvent = false;
-    });
+function handleButtonAction(e) {
+    e.preventDefault();
+    e.stopPropagation();
 
-    const handleEvent = (e) => {
-        e.stopPropagation();
-        
-        if(e.target.closest('[data-percent]')) {
-            currentPercent = e.target.dataset.percent;
-            currentValues = [...presets[currentPercent]];
-            document.querySelectorAll('.keyboard-btn[data-percent]').forEach(b => 
-                b.classList.remove('active'));
-            e.target.classList.add('active');
+    const btn = e.target.closest('.keyboard-btn');
+    if(!btn) return;
+
+    if(btn.dataset.percent) {
+        // 퍼센트 버튼 처리
+        currentPercent = btn.dataset.percent;
+        currentValues = [...presets[currentPercent]];
+        document.querySelectorAll('.keyboard-btn[data-percent]').forEach(b => 
+            b.classList.remove('active'));
+        btn.classList.add('active');
+        updateNumberButtons();
+    }
+    else if(btn.dataset.action) {
+        // 액션 버튼 처리
+        const action = btn.dataset.action;
+        if(action === 'decr' || action === 'incr') {
+            const step = action === 'decr' ? -0.5 : 0.5;
+            currentValues = currentValues.map(v => v + step);
             updateNumberButtons();
         }
-    };
-});
+        else if(action === 'del') {
+            if(!activeInput) return;
+            const lines = activeInput.value.split('\n');
+            lines.pop();
+            activeInput.value = lines.join('\n');
+            setCurrentLine(activeInput, Math.max(0, lines.length - 1));
+        }
+    }
+    else {
+        // 숫자 입력 처리
+        if(!activeInput) return;
+        const value = parseFloat(btn.textContent);
+        const lines = activeInput.value.split('\n');
+        const currentLine = getCurrentLine(activeInput);
+        lines[currentLine] = value.toFixed(1);
+        activeInput.value = lines.filter(v => v).join('\n');
+        if(currentLine < 8) setCurrentLine(activeInput, currentLine + 1);
+    }
+}
 
-// 입력 라인 관리 강화
+// 입력 필드 포커스 이벤트 처리
 document.querySelectorAll('.input-numbers').forEach(input => {
     input.addEventListener('focus', () => {
         const lines = input.value.split('\n').length;
@@ -275,49 +311,12 @@ document.querySelectorAll('.input-numbers').forEach(input => {
     });
 });
 
-document.addEventListener('click', (e) => handleInteraction(e));
-document.addEventListener('touchstart', (e) => handleInteraction(e));
-
-function handleInteraction(e) {
-    if (e.target.closest('.input-numbers')) {
-        activeInput = e.target;
-        const lines = activeInput.value.split('\n').length;
-        setCurrentLine(activeInput, lines - 1);
-        activeInput.focus();
-        return;
-    }
-    
-    const action = e.target.dataset.action;
-    if (!action && e.target.closest('[data-percent]')) return;
-
-    if (action === 'decr') {
-        currentValues = currentValues.map(v => v - 0.5);
-        updateNumberButtons();
-    } else if (action === 'incr') {
-        currentValues = currentValues.map(v => v + 0.5);
-        updateNumberButtons();
-    } else if (action === 'del') {
-        const lines = activeInput.value.split('\n');
-        lines.pop();
-        activeInput.value = lines.join('\n');
-        setCurrentLine(activeInput, Math.max(0, lines.length - 1));
-    } else if (e.target.classList.contains('keyboard-btn') && activeInput) {
-        const value = parseFloat(e.target.textContent);
-        const lines = activeInput.value.split('\n');
-        const currentLine = getCurrentLine(activeInput);
-        lines[currentLine] = value.toFixed(1);
-        activeInput.value = lines.filter(v => v).join('\n');
-        if (currentLine < 8) setCurrentLine(activeInput, currentLine + 1); // 자동 줄넘기기 복원
-    }
-
-    if(activeInput) activeInput.focus();
-}
-
+// 보고서 복사 기능
 document.getElementById('copyReport').addEventListener('click', async () => {
     try {
         const report = Array.from(document.querySelectorAll('.input-group'))
             .map(group => {
-                const bedNumber = group.querySelector('.bed-label').textContent.replace('#', '') + '번 베드'; // 수정된 부분
+                const bedNumber = group.querySelector('.bed-label').textContent.replace('#', '') + '번 베드';
                 const values = group.querySelector('.input-numbers').value.split('\n').filter(v => v);
                 return values.length > 0 ? `${bedNumber}: ${values.join(', ')}` : null;
             })
@@ -331,8 +330,10 @@ document.getElementById('copyReport').addEventListener('click', async () => {
     }
 });
 
+// 초기화
 document.querySelector('.keyboard-btn[data-percent="25"]').classList.add('active');
 updateNumberButtons();
+setupKeyboardEvents();
 </script>
 </body>
 </html>

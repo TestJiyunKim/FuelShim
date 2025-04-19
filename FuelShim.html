@@ -352,7 +352,6 @@
 
       let debounceTimeout;
 
-      // 개선된 updateAverage 함수: 입력값을 trim하고 3자리 여부를 확인하여 계산합니다.
       const updateAverage = () => {
         const ignoreSmall = ignoreCheckbox.checked;
         const selectedValue = parseFloat(typeSelect.value);
@@ -399,8 +398,21 @@
           if (num.length !== 3) return { value: num.length > 0 ? '⚠' : '', isNegative: false };
           const n = parseInt(num);
           const diff = target - n;
-          const result = Math.trunc((diff / selectedValue)) / 10;
           
+          // 수정된 계산 로직
+          const rawValue = diff / selectedValue;
+          const scaled = rawValue * 10;
+          const integerPart = Math.floor(scaled);
+          const remainder = scaled - integerPart;
+          let adjusted = integerPart;
+          
+          // 0.07 이상이면 올림 (절대값으로 처리)
+          if (Math.abs(remainder) >= 0.7) {
+            adjusted += (scaled > 0 ? 1 : -1);
+          }
+          
+          const result = adjusted / 10;
+
           let displayValue = Math.abs(result) >= 0.1 ? result.toFixed(1).replace(/\.0$/, '') : '';
           if(ignoreSmall && Math.abs(result) <= 0.1) {
             displayValue = '';
@@ -459,7 +471,6 @@
         updateAverage();
       };
 
-      // 개선된 handleInput 함수: 디바운스 딜레이를 150ms로 줄이고, 입력값을 한 번만 분리하는 등 최적화함.
       const handleInput = (event) => {
         clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(() => {

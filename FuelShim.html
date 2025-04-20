@@ -329,7 +329,7 @@
   
   <script>
     (() => {
-      const revision = '26j';
+      const revision = '26i';
       let initialPrefix = '14';
       const MAX_LINES = 9;
       const STORAGE_KEY = 'fuelShimData';
@@ -399,19 +399,18 @@
           const n = parseInt(num);
           const diff = target - n;
           
-          // 수정된 계산 로직
+          // Modified calculation logic starts here
           const rawValue = diff / selectedValue;
-          const scaled = rawValue * 10;
-          const integerPart = Math.floor(scaled);
-          const remainder = scaled - integerPart;
-          let adjusted = integerPart;
-          
-          // 0.07 이상이면 올림 (절대값으로 처리)
-          if (Math.abs(remainder) >= 0.7) {
-            adjusted += (scaled > 0 ? 1 : -1);
+          const scaledValue = rawValue * 10;
+          const integerPart = Math.trunc(scaledValue);
+          const decimalPart = Math.abs(scaledValue - integerPart);
+
+          let adjustedScaled = integerPart;
+          if (decimalPart >= 0.7) {
+            adjustedScaled += scaledValue > 0 ? 1 : -1;
           }
-          
-          const result = adjusted / 10;
+          const result = adjustedScaled / 10;
+          // Modified calculation logic ends here
 
           let displayValue = Math.abs(result) >= 0.1 ? result.toFixed(1).replace(/\.0$/, '') : '';
           if(ignoreSmall && Math.abs(result) <= 0.1) {

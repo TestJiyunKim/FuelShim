@@ -290,7 +290,7 @@
     <select id="typeSelect">
       <option value="2.5">22CDF (/2.5)</option>
       <option value="1.5">27DF (/1.5)</option>
-      <option value="8">35DF (/0.8)</option>
+      <option value="0.8">35DF (/0.8)</option>
       <option value="2">21/32 & 25/33 (/2)</option>
       <option value="1.3">32/40 (/1.3)</option>
     </select>
@@ -401,7 +401,7 @@
           
           // Modified calculation logic starts here
           const rawValue = diff / selectedValue;
-          const scaledValue = rawValue * 10;
+          const scaledValue = rawValue ;
           const integerPart = Math.trunc(scaledValue);
           const decimalPart = Math.abs(scaledValue - integerPart);
 

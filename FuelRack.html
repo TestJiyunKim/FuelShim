@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FUEL RACK 입력 (최종 수정)</title>
+    <title>FUEL RACK 입력 (초기화 추가)</title>
     <style>
         * {
             box-sizing: border-box;
@@ -45,7 +45,7 @@
         .numbering {
             width: 10%;
             height: 388px; 
-            margin-top: 30px; /* [수정] 사용자가 요청한 30px로 적용 */
+            margin-top: 30px; /* 사용자 요청 높이 */
             padding: 5px 1%;
             position: relative;
             font-size: 28px;
@@ -55,12 +55,10 @@
             background-color: #f0f0f0;
         }
         
-        /* 현재 입력 라인 하이라이트 */
         .numbering .line-highlight {
             background-color: #ffeb3b;
             font-weight: bold;
             color: #333;
-            /* display: block; 제거됨 (레이아웃 밀림 방지) */
             padding: 0 4px; 
             border-radius: 2px;
         }
@@ -72,16 +70,15 @@
             padding: 24px 1% 5px;
             position: relative;
             background-color: white;
-            height: 417px; /* (388px + 24px + 5px) */
+            height: 417px; 
             margin-right: 2%;
-            margin-top: 4px; /* input-group 자체의 margin-top */
+            margin-top: 4px; 
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         .input-group:last-child {
             margin-right: 0;
         }
         
-        /* 활성화된 입력 그룹(베드) 강조 */
         .input-group.active {
             border-color: #ffc107;
             box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
@@ -100,7 +97,7 @@
         }
         .input-numbers {
             width: 100%;
-            height: 388px; /* (numbering과 높이 일치) */
+            height: 388px; 
             border: 1px solid #ccc;
             border-radius: 4px;
             padding: 5px;
@@ -108,12 +105,11 @@
             font-size: 28px;
             line-height: 1.5;
             caret-color: transparent;
-            overflow-y: hidden; /* 스크롤바 제거 */
+            overflow-y: hidden; 
             user-select: none;
             -webkit-user-select: none;
         }
         
-        /* (가상 키보드 및 하단 버튼 스타일... 변경 없음) */
         .virtual-keyboard {
             position: fixed;
             bottom: 0;
@@ -170,11 +166,29 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             z-index: 1001;
         }
+        
+        /* --- [신규] 초기화 버튼 스타일 --- */
+        #resetAll {
+            position: fixed;
+            bottom: 145px;
+            left: 20px; /* 반대편 위치 */
+            padding: 12px 20px;
+            background: #dc3545; /* 위험을 알리는 빨간색 */
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 1001;
+        }
+        
     </style>
 </head>
 <body>
-    <div id="revision">Rev: 23R2 (Final-v3)</div>
+    <div id="revision">Rev: 23R2 (Final-v4)</div>
     <button id="copyReport">📋 보고서 복사</button>
+    <button id="resetAll">🔄 전체 초기화</button>
+    
     <h2>FUEL RACK 입력</h2>
     
     <div class="groups-container">
@@ -214,7 +228,7 @@
     </div>
 
 <script>
-// 프리셋 데이터 (변경 없음)
+// (프리셋, 전역 변수, WeakMap, Helper 함수 등 ... 변경 없음)
 const presets = {
     '25': [9.5, 10, 10.5],
     '50': [17.5, 18, 18.5],
@@ -222,26 +236,17 @@ const presets = {
     '100': [32.5, 33, 33.5],
     '110': [35.5, 36, 36.5]
 };
-
-// 전역 변수 (변경 없음)
 let currentPercent = '25';
 let activeInput = null;
 let currentValues = [...presets[currentPercent]];
-
-// 입력 상태 관리 (변경 없음)
 const inputStates = new WeakMap();
 
-// 현재 라인 가져오기 (변경 없음)
 function getCurrentLine(input) {
     return inputStates.get(input) || 0;
 }
-
-// 현재 라인 설정 (변경 없음)
 function setCurrentLine(input, line) {
-    inputStates.set(input, Math.max(0, Math.min(line, 8))); // 0~8 (9줄)
+    inputStates.set(input, Math.max(0, Math.min(line, 8)));
 }
-
-// 숫자 버튼 업데이트 (변경 없음)
 function updateNumberButtons() {
     const container = document.getElementById('number-buttons');
     container.innerHTML = `
@@ -253,8 +258,6 @@ function updateNumberButtons() {
         <button class="keyboard-btn del" data-action="del">Del</button>
     `;
 }
-
-// 활성 그룹(베드) 표시 함수 (변경 없음)
 function setActiveGroup(input) {
     document.querySelectorAll('.input-group').forEach(group => {
         group.classList.remove('active');
@@ -263,8 +266,6 @@ function setActiveGroup(input) {
         input.closest('.input-group').classList.add('active');
     }
 }
-
-// 현재 라인 하이라이트 함수 (변경 없음)
 function updateLineHighlight() {
     document.querySelectorAll('.numbering').forEach(numDiv => {
         numDiv.innerHTML = '1.<br>2.<br>3.<br>4.<br>5.<br>6.<br>7.<br>8.<br>9.';
@@ -281,8 +282,6 @@ function updateLineHighlight() {
         numberingElement.innerHTML = lines.join('<br>');
     }
 }
-
-// textarea의 값을 9줄 배열로 정규화하는 헬퍼 함수 (변경 없음)
 function getNormalizedLines(textarea) {
     let lines = textarea.value.split('\n');
     let normalizedLines = Array(9).fill('');
@@ -294,8 +293,7 @@ function getNormalizedLines(textarea) {
     return normalizedLines;
 }
 
-
-// 키보드 이벤트 처리 (click)
+// (키보드 이벤트 처리 ... Del 로직 수정됨, 변경 없음)
 function handleKeyboardEvent(e) {
     const btn = e.target.closest('.keyboard-btn');
     if (!btn) return;
@@ -303,7 +301,7 @@ function handleKeyboardEvent(e) {
     e.preventDefault();
     e.stopPropagation();
 
-    // 퍼센트 버튼 처리 (변경 없음)
+    // 퍼센트 버튼
     if (btn.dataset.percent) {
         currentPercent = btn.dataset.percent;
         currentValues = [...presets[currentPercent]];
@@ -315,7 +313,7 @@ function handleKeyboardEvent(e) {
         return;
     }
 
-    // 액션 버튼 처리
+    // 액션 버튼
     if (btn.dataset.action) {
         const action = btn.dataset.action;
         if (action === 'decr' || action === 'incr') {
@@ -323,32 +321,28 @@ function handleKeyboardEvent(e) {
             currentValues = currentValues.map(v => v + step);
             updateNumberButtons();
         
-        // --- [수정] Del 버튼 로직 ---
+        // Del 버튼 로직
         } else if (action === 'del' && activeInput) {
             let normalizedLines = getNormalizedLines(activeInput);
-            const currentLine = getCurrentLine(activeInput); // 0-8
+            const currentLine = getCurrentLine(activeInput); 
 
             let lineToDelete;
             let lineToMoveTo;
 
-            // [수정] 9줄이 꽉 찼고, 하이라이트가 9번(인덱스 8)에 있는 경우
             if (currentLine === 8 && normalizedLines[8] !== '') {
-                lineToDelete = 8; // 9번째 항목(인덱스 8)을 삭제
-                lineToMoveTo = 8; // 하이라이트는 9번(인덱스 8)에 유지
+                lineToDelete = 8;
+                lineToMoveTo = 8;
             } else {
-                // 그 외의 경우 (하이라이트된 빈 칸의 직전 항목을 삭제)
                 lineToDelete = (currentLine > 0) ? currentLine - 1 : 0;
-                lineToMoveTo = lineToDelete; // 하이라이트를 삭제된 칸으로 이동
+                lineToMoveTo = lineToDelete;
             }
 
-            // [예외 처리] 0번 칸이 비어있고 하이라이트가 1번(인덱스 0)일 때
             if (currentLine === 0 && normalizedLines[0] === '') {
-                // 아무것도 삭제하지 않음
                 return;
             }
 
-            normalizedLines[lineToDelete] = ''; // 선택된 라인 값 비우기
-            activeInput.value = normalizedLines.join('\n'); // 9줄 유지하며 반영
+            normalizedLines[lineToDelete] = '';
+            activeInput.value = normalizedLines.join('\n'); 
             
             setCurrentLine(activeInput, lineToMoveTo);
             updateLineHighlight();
@@ -356,7 +350,7 @@ function handleKeyboardEvent(e) {
         return;
     }
 
-    // 숫자 입력 처리 (변경 없음 - 9줄 유지 로직)
+    // 숫자 입력
     if (!activeInput) return;
     const value = parseFloat(btn.textContent);
     
@@ -373,7 +367,7 @@ function handleKeyboardEvent(e) {
     updateLineHighlight();
 }
 
-// 입력 필드 포커스 처리 (변경 없음)
+// (입력 필드 설정 ... 변경 없음)
 function setupInputFields() {
     document.querySelectorAll('.input-numbers').forEach(input => {
         input.addEventListener('click', (e) => {
@@ -394,7 +388,7 @@ function setupInputFields() {
     });
 }
 
-// 보고서 복사 기능 (변경 없음)
+// (보고서 복사 기능 ... 변경 없음)
 function setupCopyButton() {
     document.getElementById('copyReport').addEventListener('click', async () => {
         try {
@@ -420,13 +414,34 @@ function setupCopyButton() {
     });
 }
 
-// 초기화 함수 (변경 없음)
+// --- [신규] 초기화 버튼 기능 ---
+function setupResetButton() {
+    document.getElementById('resetAll').addEventListener('click', () => {
+        // 사용자에게 확인 받기
+        if (confirm('정말 모든 입력 내용을 초기화하시겠습니까?')) {
+            // 1. 모든 textarea 초기화
+            document.querySelectorAll('.input-numbers').forEach(input => {
+                input.value = '';
+            });
+            
+            // 2. 활성화 상태 및 하이라이트 초기화
+            activeInput = null;
+            setActiveGroup(null);
+            updateLineHighlight();
+            
+            // 3. (선택) WeakMap의 포인터는 다음 클릭 시 어차피 재설정되므로 별도 초기화 불필요
+        }
+    });
+}
+
+// --- [수정] 초기화 함수 ---
 function init() {
     const keyboard = document.querySelector('.virtual-keyboard');
     keyboard.addEventListener('click', handleKeyboardEvent);
 
     setupInputFields();
     setupCopyButton();
+    setupResetButton(); // [신규] 초기화 버튼 리스너 추가
 
     document.querySelector('.keyboard-btn[data-percent="25"]').classList.add('active');
     updateNumberButtons();

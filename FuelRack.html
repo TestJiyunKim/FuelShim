@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FUEL RACK 입력 (초기화 추가)</title>
+    <title>FUEL RACK 입력 (오프라인 지원)</title>
+    <!-- PWA 매니페스트 -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#007bff">
     <style>
         * {
             box-sizing: border-box;
@@ -45,7 +48,7 @@
         .numbering {
             width: 10%;
             height: 388px; 
-            margin-top: 30px; /* 사용자 요청 높이 */
+            margin-top: 30px;
             padding: 5px 1%;
             position: relative;
             font-size: 28px;
@@ -167,13 +170,13 @@
             z-index: 1001;
         }
         
-        /* --- [신규] 초기화 버튼 스타일 --- */
+        /* 개선된 초기화 버튼 스타일 */
         #resetAll {
             position: fixed;
             bottom: 145px;
-            left: 20px; /* 반대편 위치 */
+            left: 20px;
             padding: 12px 20px;
-            background: #dc3545; /* 위험을 알리는 빨간색 */
+            background: #dc3545;
             color: white;
             border: none;
             border-radius: 25px;
@@ -182,12 +185,127 @@
             z-index: 1001;
         }
         
+        /* 개선된 부분: 확인 모달 스타일 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 80%;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .modal-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .modal-confirm {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .modal-cancel {
+            background: #6c757d;
+            color: white;
+        }
+        
+        /* 개선된 부분: 초기화 버튼 상태 표시 */
+        #resetAll:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        /* 개선된 부분: 입력 상태 표시 */
+        .input-status {
+            position: absolute;
+            bottom: 5px;
+            right: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        /* 오프라인 상태 표시기 */
+        .offline-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #ff6b6b;
+            color: white;
+            text-align: center;
+            padding: 5px;
+            font-size: 14px;
+            z-index: 10000;
+            display: none;
+        }
+        
+        /* 데이터 저장 상태 표시 */
+        .save-status {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            font-size: 12px;
+            color: #28a745;
+            background: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        /* 설치 버튼 */
+        #installButton {
+            position: fixed;
+            bottom: 145px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 15px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 1001;
+            display: none;
+        }
     </style>
 </head>
 <body>
+    <!-- 오프라인 상태 표시 -->
+    <div class="offline-indicator" id="offlineIndicator">
+        ⚠️ 오프라인 모드로 작동 중입니다
+    </div>
+
     <div id="revision">Rev: 23R2 (Final-v4)</div>
+    <div class="save-status" id="saveStatus">데이터 저장됨</div>
     <button id="copyReport">📋 보고서 복사</button>
     <button id="resetAll">🔄 전체 초기화</button>
+    <button id="installButton">📱 앱으로 설치</button>
     
     <h2>FUEL RACK 입력</h2>
     
@@ -197,10 +315,12 @@
             <div class="input-group">
                 <div class="bed-label">#1</div>
                 <textarea class="input-numbers" data-bed="1" readonly></textarea>
+                <div class="input-status">0/9 입력됨</div>
             </div>
             <div class="input-group">
                 <div class="bed-label">#2</div>
                 <textarea class="input-numbers" data-bed="2" readonly></textarea>
+                <div class="input-status">0/9 입력됨</div>
             </div>
         </div>
         <div class="group-row">
@@ -208,10 +328,12 @@
             <div class="input-group">
                 <div class="bed-label">#3</div>
                 <textarea class="input-numbers" data-bed="3" readonly></textarea>
+                <div class="input-status">0/9 입력됨</div>
             </div>
             <div class="input-group">
                 <div class="bed-label">#4</div>
                 <textarea class="input-numbers" data-bed="4" readonly></textarea>
+                <div class="input-status">0/9 입력됨</div>
             </div>
         </div>
     </div>
@@ -228,7 +350,7 @@
     </div>
 
 <script>
-// (프리셋, 전역 변수, WeakMap, Helper 함수 등 ... 변경 없음)
+// 프리셋 및 전역 변수
 const presets = {
     '25': [9.5, 10, 10.5],
     '50': [17.5, 18, 18.5],
@@ -241,12 +363,79 @@ let activeInput = null;
 let currentValues = [...presets[currentPercent]];
 const inputStates = new WeakMap();
 
+// 데이터 지속성을 위한 키
+const STORAGE_KEY = 'fuelRackData';
+
+// PWA 설치 관련 변수
+let deferredPrompt;
+
+// 입력 상태 관리 함수
 function getCurrentLine(input) {
     return inputStates.get(input) || 0;
 }
+
 function setCurrentLine(input, line) {
     inputStates.set(input, Math.max(0, Math.min(line, 8)));
 }
+
+// 입력 상태 업데이트 함수
+function updateInputStatus(input) {
+    const statusElement = input.parentNode.querySelector('.input-status');
+    if (statusElement) {
+        const lines = getNormalizedLines(input);
+        const filledCount = lines.filter(line => line !== '').length;
+        statusElement.textContent = `${filledCount}/9 입력됨`;
+    }
+}
+
+// 데이터 저장 함수
+function saveDataToStorage() {
+    const data = {};
+    document.querySelectorAll('.input-numbers').forEach(input => {
+        const bedNumber = input.dataset.bed;
+        data[bedNumber] = input.value;
+    });
+    
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        showSaveStatus();
+    } catch (e) {
+        console.error('데이터 저장 실패:', e);
+    }
+}
+
+// 데이터 로드 함수
+function loadDataFromStorage() {
+    try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+            const data = JSON.parse(stored);
+            document.querySelectorAll('.input-numbers').forEach(input => {
+                const bedNumber = input.dataset.bed;
+                if (data[bedNumber]) {
+                    input.value = data[bedNumber];
+                    updateInputStatus(input);
+                }
+            });
+            updateResetButtonState();
+            return true;
+        }
+    } catch (e) {
+        console.error('데이터 로드 실패:', e);
+    }
+    return false;
+}
+
+// 데이터 저장 상태 표시
+function showSaveStatus() {
+    const statusElement = document.getElementById('saveStatus');
+    statusElement.style.opacity = '1';
+    setTimeout(() => {
+        statusElement.style.opacity = '0';
+    }, 1500);
+}
+
+// 키보드 버튼 업데이트
 function updateNumberButtons() {
     const container = document.getElementById('number-buttons');
     container.innerHTML = `
@@ -258,6 +447,8 @@ function updateNumberButtons() {
         <button class="keyboard-btn del" data-action="del">Del</button>
     `;
 }
+
+// 활성 그룹 설정
 function setActiveGroup(input) {
     document.querySelectorAll('.input-group').forEach(group => {
         group.classList.remove('active');
@@ -266,6 +457,8 @@ function setActiveGroup(input) {
         input.closest('.input-group').classList.add('active');
     }
 }
+
+// 라인 하이라이트 업데이트
 function updateLineHighlight() {
     document.querySelectorAll('.numbering').forEach(numDiv => {
         numDiv.innerHTML = '1.<br>2.<br>3.<br>4.<br>5.<br>6.<br>7.<br>8.<br>9.';
@@ -282,6 +475,8 @@ function updateLineHighlight() {
         numberingElement.innerHTML = lines.join('<br>');
     }
 }
+
+// 정규화된 라인 가져오기
 function getNormalizedLines(textarea) {
     let lines = textarea.value.split('\n');
     let normalizedLines = Array(9).fill('');
@@ -293,7 +488,7 @@ function getNormalizedLines(textarea) {
     return normalizedLines;
 }
 
-// (키보드 이벤트 처리 ... Del 로직 수정됨, 변경 없음)
+// 키보드 이벤트 처리
 function handleKeyboardEvent(e) {
     const btn = e.target.closest('.keyboard-btn');
     if (!btn) return;
@@ -346,6 +541,9 @@ function handleKeyboardEvent(e) {
             
             setCurrentLine(activeInput, lineToMoveTo);
             updateLineHighlight();
+            updateInputStatus(activeInput);
+            updateResetButtonState();
+            saveDataToStorage(); // 데이터 저장
         }
         return;
     }
@@ -365,9 +563,12 @@ function handleKeyboardEvent(e) {
     }
     
     updateLineHighlight();
+    updateInputStatus(activeInput);
+    updateResetButtonState();
+    saveDataToStorage(); // 데이터 저장
 }
 
-// (입력 필드 설정 ... 변경 없음)
+// 입력 필드 설정
 function setupInputFields() {
     document.querySelectorAll('.input-numbers').forEach(input => {
         input.addEventListener('click', (e) => {
@@ -388,7 +589,7 @@ function setupInputFields() {
     });
 }
 
-// (보고서 복사 기능 ... 변경 없음)
+// 보고서 복사 기능
 function setupCopyButton() {
     document.getElementById('copyReport').addEventListener('click', async () => {
         try {
@@ -414,40 +615,235 @@ function setupCopyButton() {
     });
 }
 
-// --- [신규] 초기화 버튼 기능 ---
+// 개선된 초기화 기능
 function setupResetButton() {
-    document.getElementById('resetAll').addEventListener('click', () => {
-        // 사용자에게 확인 받기
-        if (confirm('정말 모든 입력 내용을 초기화하시겠습니까?')) {
-            // 1. 모든 textarea 초기화
-            document.querySelectorAll('.input-numbers').forEach(input => {
-                input.value = '';
-            });
-            
-            // 2. 활성화 상태 및 하이라이트 초기화
-            activeInput = null;
-            setActiveGroup(null);
-            updateLineHighlight();
-            
-            // 3. (선택) WeakMap의 포인터는 다음 클릭 시 어차피 재설정되므로 별도 초기화 불필요
+    const resetButton = document.getElementById('resetAll');
+    
+    // 초기화 버튼 상태 업데이트
+    updateResetButtonState();
+    
+    resetButton.addEventListener('click', () => {
+        // 모든 입력 필드가 비어있는지 확인
+        let hasData = false;
+        document.querySelectorAll('.input-numbers').forEach(input => {
+            if (input.value.trim() !== '') {
+                hasData = true;
+            }
+        });
+        
+        if (!hasData) {
+            alert('초기화할 데이터가 없습니다.');
+            return;
+        }
+        
+        // 사용자에게 확인 받기 (개선된 모달 방식)
+        showResetConfirmation();
+    });
+}
+
+// 초기화 버튼 상태 업데이트
+function updateResetButtonState() {
+    const resetButton = document.getElementById('resetAll');
+    let hasData = false;
+    
+    document.querySelectorAll('.input-numbers').forEach(input => {
+        if (input.value.trim() !== '') {
+            hasData = true;
+        }
+    });
+    
+    resetButton.disabled = !hasData;
+}
+
+// 개선된 확인 모달 표시
+function showResetConfirmation() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <h3>전체 초기화</h3>
+            <p>모든 입력 내용을 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.</p>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-confirm">초기화</button>
+                <button class="modal-btn modal-cancel">취소</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // 이벤트 리스너 설정
+    modal.querySelector('.modal-confirm').addEventListener('click', () => {
+        // 모든 textarea 초기화
+        document.querySelectorAll('.input-numbers').forEach(input => {
+            input.value = '';
+            updateInputStatus(input);
+        });
+        
+        // 활성화 상태 및 하이라이트 초기화
+        activeInput = null;
+        setActiveGroup(null);
+        updateLineHighlight();
+        
+        // 초기화 버튼 상태 업데이트
+        updateResetButtonState();
+        
+        // localStorage에서 데이터 삭제
+        localStorage.removeItem(STORAGE_KEY);
+        
+        // 모달 닫기
+        document.body.removeChild(modal);
+    });
+    
+    modal.querySelector('.modal-cancel').addEventListener('click', () => {
+        document.body.removeChild(modal);
+    });
+    
+    // 모달 외부 클릭 시 닫기
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            document.body.removeChild(modal);
         }
     });
 }
 
-// --- [수정] 초기화 함수 ---
+// PWA 설치 기능
+function setupPWA() {
+    // beforeinstallprompt 이벤트 감지
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // 설치 이벤트 방지
+        e.preventDefault();
+        // 나중에 사용할 수 있도록 이벤트 저장
+        deferredPrompt = e;
+        // 설치 버튼 표시
+        document.getElementById('installButton').style.display = 'block';
+    });
+    
+    // 설치 버튼 클릭 이벤트
+    document.getElementById('installButton').addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        
+        // 설치 프롬프트 표시
+        deferredPrompt.prompt();
+        
+        // 사용자 응답 대기
+        const { outcome } = await deferredPrompt.userChoice;
+        
+        if (outcome === 'accepted') {
+            console.log('사용자가 PWA 설치를 수락함');
+            document.getElementById('installButton').style.display = 'none';
+        }
+        
+        // 이벤트 초기화
+        deferredPrompt = null;
+    });
+    
+    // 앱 설치 후 이벤트
+    window.addEventListener('appinstalled', () => {
+        console.log('PWA가 설치됨');
+        document.getElementById('installButton').style.display = 'none';
+        deferredPrompt = null;
+    });
+}
+
+// 오프라인/온라인 상태 감지
+function setupOfflineDetection() {
+    window.addEventListener('online', function() {
+        document.getElementById('offlineIndicator').style.display = 'none';
+    });
+    
+    window.addEventListener('offline', function() {
+        document.getElementById('offlineIndicator').style.display = 'block';
+    });
+    
+    // 초기 상태 확인
+    if (!navigator.onLine) {
+        document.getElementById('offlineIndicator').style.display = 'block';
+    }
+}
+
+// Service Worker 등록
+function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+            .then(function(registration) {
+                console.log('Service Worker 등록 성공:', registration.scope);
+            })
+            .catch(function(error) {
+                console.log('Service Worker 등록 실패:', error);
+            });
+    }
+}
+
+// 페이지 보이기/숨기기 감지 (모바일 브라우저 전환 시)
+function setupVisibilityChange() {
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            // 페이지가 다시 보일 때 데이터 확인
+            loadDataFromStorage();
+        }
+    });
+}
+
+// 페이지 언로드 시 데이터 저장 (추가 보험)
+function setupBeforeUnload() {
+    window.addEventListener('beforeunload', function() {
+        saveDataToStorage();
+    });
+}
+
+// 주기적인 데이터 자동 저장
+function setupAutoSave() {
+    let saveTimeout;
+    function debouncedSave() {
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+            saveDataToStorage();
+        }, 1000);
+    }
+    
+    // 모든 입력 이벤트에 디바운스 저장 적용
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputs = document.querySelectorAll('.input-numbers');
+        inputs.forEach(input => {
+            input.addEventListener('input', debouncedSave);
+        });
+    });
+}
+
+// 애플리케이션 초기화
 function init() {
     const keyboard = document.querySelector('.virtual-keyboard');
     keyboard.addEventListener('click', handleKeyboardEvent);
 
     setupInputFields();
     setupCopyButton();
-    setupResetButton(); // [신규] 초기화 버튼 리스너 추가
+    setupResetButton();
+    setupPWA();
+    setupOfflineDetection();
+    setupVisibilityChange();
+    setupBeforeUnload();
+    setupAutoSave();
 
     document.querySelector('.keyboard-btn[data-percent="25"]').classList.add('active');
     updateNumberButtons();
+    
+    // 저장된 데이터 로드
+    const hasData = loadDataFromStorage();
+    if (hasData) {
+        console.log('이전 데이터가 복원되었습니다.');
+    }
+    
+    // Service Worker 등록
+    registerServiceWorker();
+    
+    // 초기 입력 상태 업데이트
+    document.querySelectorAll('.input-numbers').forEach(input => {
+        updateInputStatus(input);
+    });
 }
 
-// 애플리케이션 초기화
+// DOM 로드 완료 후 초기화
 document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>

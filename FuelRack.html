@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FUEL RACK 입력</title>
+    <title>FUEL RACK 입력 (최종 수정)</title>
     <style>
         * {
             box-sizing: border-box;
@@ -44,17 +44,26 @@
         }
         .numbering {
             width: 10%;
-            height: 53vh;
-            margin-top: 19px;
-            padding: 15px 1%;
+            height: 428px; /* [수정] 9줄 높이에 맞춤 */
+            margin-top: 4px;
+            padding: 5px 1%;
             position: relative;
-            top: 2px;
             font-size: 28px;
             line-height: 1.5;
             border: 1px solid #ccc;
             border-radius: 4px;
             background-color: #f0f0f0;
         }
+        
+        /* 현재 입력 라인 하이라이트 */
+        .numbering .line-highlight {
+            background-color: #ffeb3b;
+            font-weight: bold;
+            color: #333;
+            display: block;
+            border-radius: 2px;
+        }
+
         .input-group {
             width: 38.4%;
             border: 2px solid #007bff;
@@ -62,17 +71,21 @@
             padding: 24px 1% 5px;
             position: relative;
             background-color: white;
-            height: 63vh;
+            height: 428px; /* [수정] 9줄 높이에 맞춤 */
             margin-right: 2%;
             margin-top: 4px;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
         .input-group:last-child {
             margin-right: 0;
         }
-        .input-group:focus-within {
-            border-color: #00f;
-            box-shadow: 0 0 8px rgba(0,123,255,0.3);
+        
+        /* 활성화된 입력 그룹(베드) 강조 */
+        .input-group.active {
+            border-color: #ffc107;
+            box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
         }
+
         .bed-label {
             position: absolute;
             top: -8px;
@@ -86,7 +99,7 @@
         }
         .input-numbers {
             width: 100%;
-            height: calc(100% - 40px);
+            height: calc(100% - 40px); /* 428px - 40px = 388px */
             border: 1px solid #ccc;
             border-radius: 4px;
             padding: 5px;
@@ -94,7 +107,9 @@
             font-size: 28px;
             line-height: 1.5;
             caret-color: transparent;
-            overflow-y: auto;
+            overflow-y: hidden; /* [수정] 스크롤바 제거 */
+            user-select: none;
+            -webkit-user-select: none;
         }
         .virtual-keyboard {
             position: fixed;
@@ -155,7 +170,7 @@
     </style>
 </head>
 <body>
-    <div id="revision">Rev: 23R2</div>
+    <div id="revision">Rev: 23R2 (Final)</div>
     <button id="copyReport">📋 보고서 복사</button>
     <h2>FUEL RACK 입력</h2>
     
@@ -209,10 +224,8 @@ const presets = {
 let currentPercent = '25';
 let activeInput = null;
 let currentValues = [...presets[currentPercent]];
-let lastEventTime = 0;
-const DEBOUNCE_TIME = 200; // 200ms 내 중복 이벤트 무시
 
-// 입력 상태 관리
+// 입력 상태 관리 (WeakMap: input 요소와 라인 인덱스를 매핑)
 const inputStates = new WeakMap();
 
 // 현재 라인 가져오기
@@ -222,7 +235,7 @@ function getCurrentLine(input) {
 
 // 현재 라인 설정
 function setCurrentLine(input, line) {
-    inputStates.set(input, Math.max(0, Math.min(line, 8)));
+    inputStates.set(input, Math.max(0, Math.min(line, 8))); // 0~8 (9줄)
 }
 
 // 숫자 버튼 업데이트
@@ -238,16 +251,43 @@ function updateNumberButtons() {
     `;
 }
 
-// 키보드 이벤트 처리 (이벤트 위임)
-function handleKeyboardEvent(e) {
-    const now = Date.now();
-    if (now - lastEventTime < DEBOUNCE_TIME) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        return;
+// 활성 그룹(베드) 표시 함수
+function setActiveGroup(input) {
+    document.querySelectorAll('.input-group').forEach(group => {
+        group.classList.remove('active');
+    });
+    if (input) {
+        input.closest('.input-group').classList.add('active');
     }
-    lastEventTime = now;
+}
 
+// 현재 라인 하이라이트 함수
+function updateLineHighlight() {
+    // 1. 모든 .numbering의 하이라이트 초기화
+    document.querySelectorAll('.numbering').forEach(numDiv => {
+        numDiv.innerHTML = '1.<br>2.<br>3.<br>4.<br>5.<br>6.<br>7.<br>8.<br>9.';
+    });
+
+    if (!activeInput) return; // 활성 입력 필드가 없으면 종료
+
+    // 2. 현재 활성 입력 필드와 연결된 .numbering 요소 찾기
+    const groupRow = activeInput.closest('.group-row');
+    if (!groupRow) return;
+    const numberingElement = groupRow.querySelector('.numbering');
+    if (!numberingElement) return;
+
+    // 3. 현재 라인 인덱스를 가져와서 해당 라인 강조
+    const currentLine = getCurrentLine(activeInput); // 0-8
+    const lines = numberingElement.innerHTML.split('<br>');
+    
+    if (currentLine >= 0 && currentLine < lines.length) {
+        lines[currentLine] = `<span class="line-highlight">${lines[currentLine]}</span>`;
+        numberingElement.innerHTML = lines.join('<br>');
+    }
+}
+
+// 키보드 이벤트 처리 (click)
+function handleKeyboardEvent(e) {
     const btn = e.target.closest('.keyboard-btn');
     if (!btn) return;
 
@@ -273,11 +313,29 @@ function handleKeyboardEvent(e) {
             const step = action === 'decr' ? -0.5 : 0.5;
             currentValues = currentValues.map(v => v + step);
             updateNumberButtons();
+        
+        // Del 버튼 로직
         } else if (action === 'del' && activeInput) {
-            const lines = activeInput.value.split('\n');
-            lines.pop();
-            activeInput.value = lines.join('\n');
-            setCurrentLine(activeInput, Math.max(0, lines.length - 1));
+            let lines = activeInput.value.split('\n');
+            // 9줄 배열로 정규화 (빈 값은 빈 문자열로)
+            let normalizedLines = Array(9).fill('');
+            lines.filter(v => v).forEach((val, idx) => {
+                if(idx < 9) normalizedLines[idx] = val;
+            });
+
+            const currentLine = getCurrentLine(activeInput);
+            
+            // 현재 포인터가 0이면 0번 라인을, 그렇지 않으면 포인터 이전 라인을 지움
+            const lineToDelete = (currentLine > 0) ? currentLine - 1 : 0;
+            const lineToMoveTo = lineToDelete; // 포커서를 지워진 라인으로 이동
+
+            normalizedLines[lineToDelete] = ''; // 해당 라인 값을 비움
+            
+            // 빈 줄을 제거하고 다시 조인
+            activeInput.value = normalizedLines.filter(v => v).join('\n');
+            
+            setCurrentLine(activeInput, lineToMoveTo);
+            updateLineHighlight(); // 시각적 피드백 업데이트
         }
         return;
     }
@@ -285,22 +343,45 @@ function handleKeyboardEvent(e) {
     // 숫자 입력 처리
     if (!activeInput) return;
     const value = parseFloat(btn.textContent);
-    const lines = activeInput.value.split('\n');
+    
+    let lines = activeInput.value.split('\n');
+    // 9줄 배열로 정규화 (빈 값은 빈 문자열로)
+    let normalizedLines = Array(9).fill('');
+    lines.filter(v => v).forEach((val, idx) => {
+        if(idx < 9) normalizedLines[idx] = val;
+    });
+
     const currentLine = getCurrentLine(activeInput);
-    lines[currentLine] = value.toFixed(1);
-    activeInput.value = lines.filter(v => v).join('\n');
+    
+    normalizedLines[currentLine] = value.toFixed(1); // 현재 라인에 값 입력
+    
+    // 빈 줄을 제거하고 다시 조인
+    activeInput.value = normalizedLines.filter(v => v).join('\n');
+
+    // 다음 라인으로 포커스 이동 (최대 8번 인덱스)
     if (currentLine < 8) {
         setCurrentLine(activeInput, currentLine + 1);
     }
+    
+    updateLineHighlight(); // 시각적 피드백 업데이트
 }
 
 // 입력 필드 포커스 처리
 function setupInputFields() {
     document.querySelectorAll('.input-numbers').forEach(input => {
-        input.addEventListener('focus', () => {
-            const lines = input.value.split('\n').length;
-            setCurrentLine(input, lines - 1);
+        // readonly이므로 'focus' 대신 'click' 사용
+        input.addEventListener('click', (e) => {
+            e.preventDefault(); 
+            
+            // 입력된 라인 수(빈 줄 제외)를 기준으로 다음 라인 인덱스 계산
+            const linesFilled = input.value.split('\n').filter(v => v).length;
+            const nextLine = Math.min(linesFilled, 8); // 0~8
+            
+            setCurrentLine(input, nextLine);
             activeInput = input;
+            
+            setActiveGroup(input);
+            updateLineHighlight();
         });
     });
 }
@@ -318,6 +399,11 @@ function setupCopyButton() {
                 .filter(line => line !== null)
                 .join('\n');
             
+            if (!report) {
+                alert('입력된 값이 없습니다.');
+                return;
+            }
+            
             await navigator.clipboard.writeText(report);
             alert('보고서가 클립보드에 복사되었습니다.');
         } catch (err) {
@@ -328,10 +414,9 @@ function setupCopyButton() {
 
 // 초기화 함수
 function init() {
-    // 가상 키보드 이벤트 설정
+    // 가상 키보드 이벤트 설정 (click만 사용)
     const keyboard = document.querySelector('.virtual-keyboard');
     keyboard.addEventListener('click', handleKeyboardEvent);
-    keyboard.addEventListener('touchstart', handleKeyboardEvent, { passive: true });
 
     // 입력 필드 설정
     setupInputFields();

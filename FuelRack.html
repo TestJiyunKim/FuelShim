@@ -44,7 +44,7 @@
         }
         .numbering {
             width: 10%;
-            height: 428px; /* [수정] 9줄 높이에 맞춤 */
+            height: 388px; /* [수정] 9줄 높이에 정확히 맞춤 (42px * 9 + 10px padding) */
             margin-top: 4px;
             padding: 5px 1%;
             position: relative;
@@ -60,7 +60,8 @@
             background-color: #ffeb3b;
             font-weight: bold;
             color: #333;
-            display: block;
+            /* [수정] display: block; 제거 (레이아웃 밀림 방지) */
+            padding: 0 4px; /* 가독성을 위한 좌우 여백 */
             border-radius: 2px;
         }
 
@@ -71,7 +72,7 @@
             padding: 24px 1% 5px;
             position: relative;
             background-color: white;
-            height: 428px; /* [수정] 9줄 높이에 맞춤 */
+            height: 417px; /* [수정] input-numbers 높이(388px) + 상하 여백(24+5) */
             margin-right: 2%;
             margin-top: 4px;
             transition: border-color 0.2s, box-shadow 0.2s;
@@ -99,7 +100,7 @@
         }
         .input-numbers {
             width: 100%;
-            height: calc(100% - 40px); /* 428px - 40px = 388px */
+            height: 388px; /* [수정] 9줄 높이에 정확히 맞춤 (numbering과 동일) */
             border: 1px solid #ccc;
             border-radius: 4px;
             padding: 5px;
@@ -107,7 +108,7 @@
             font-size: 28px;
             line-height: 1.5;
             caret-color: transparent;
-            overflow-y: hidden; /* [수정] 스크롤바 제거 */
+            overflow-y: hidden; /* 스크롤바 제거 */
             user-select: none;
             -webkit-user-select: none;
         }
@@ -170,7 +171,7 @@
     </style>
 </head>
 <body>
-    <div id="revision">Rev: 23R2 (Final)</div>
+    <div id="revision">Rev: 23R2 (Final-v2)</div>
     <button id="copyReport">📋 보고서 복사</button>
     <h2>FUEL RACK 입력</h2>
     
@@ -286,6 +287,19 @@ function updateLineHighlight() {
     }
 }
 
+// textarea의 값을 9줄 배열로 정규화하는 헬퍼 함수
+function getNormalizedLines(textarea) {
+    let lines = textarea.value.split('\n');
+    let normalizedLines = Array(9).fill('');
+    for (let i = 0; i < 9; i++) {
+        if (lines[i]) {
+            normalizedLines[i] = lines[i];
+        }
+    }
+    return normalizedLines;
+}
+
+
 // 키보드 이벤트 처리 (click)
 function handleKeyboardEvent(e) {
     const btn = e.target.closest('.keyboard-btn');
@@ -316,26 +330,20 @@ function handleKeyboardEvent(e) {
         
         // Del 버튼 로직
         } else if (action === 'del' && activeInput) {
-            let lines = activeInput.value.split('\n');
-            // 9줄 배열로 정규화 (빈 값은 빈 문자열로)
-            let normalizedLines = Array(9).fill('');
-            lines.filter(v => v).forEach((val, idx) => {
-                if(idx < 9) normalizedLines[idx] = val;
-            });
-
+            // [수정] 현재 값을 기준으로 9줄 배열 생성
+            let normalizedLines = getNormalizedLines(activeInput);
             const currentLine = getCurrentLine(activeInput);
             
-            // 현재 포인터가 0이면 0번 라인을, 그렇지 않으면 포인터 이전 라인을 지움
             const lineToDelete = (currentLine > 0) ? currentLine - 1 : 0;
             const lineToMoveTo = lineToDelete; // 포커서를 지워진 라인으로 이동
 
             normalizedLines[lineToDelete] = ''; // 해당 라인 값을 비움
             
-            // 빈 줄을 제거하고 다시 조인
-            activeInput.value = normalizedLines.filter(v => v).join('\n');
+            // [수정] 9줄 전체를 join하여 textarea에 반영 (줄 일치 목적)
+            activeInput.value = normalizedLines.join('\n');
             
             setCurrentLine(activeInput, lineToMoveTo);
-            updateLineHighlight(); // 시각적 피드백 업데이트
+            updateLineHighlight();
         }
         return;
     }
@@ -344,19 +352,14 @@ function handleKeyboardEvent(e) {
     if (!activeInput) return;
     const value = parseFloat(btn.textContent);
     
-    let lines = activeInput.value.split('\n');
-    // 9줄 배열로 정규화 (빈 값은 빈 문자열로)
-    let normalizedLines = Array(9).fill('');
-    lines.filter(v => v).forEach((val, idx) => {
-        if(idx < 9) normalizedLines[idx] = val;
-    });
-
+    // [수정] 현재 값을 기준으로 9줄 배열 생성
+    let normalizedLines = getNormalizedLines(activeInput);
     const currentLine = getCurrentLine(activeInput);
     
     normalizedLines[currentLine] = value.toFixed(1); // 현재 라인에 값 입력
     
-    // 빈 줄을 제거하고 다시 조인
-    activeInput.value = normalizedLines.filter(v => v).join('\n');
+    // [수정] 9줄 전체를 join하여 textarea에 반영 (줄 일치 목적)
+    activeInput.value = normalizedLines.join('\n');
 
     // 다음 라인으로 포커스 이동 (최대 8번 인덱스)
     if (currentLine < 8) {
@@ -373,9 +376,12 @@ function setupInputFields() {
         input.addEventListener('click', (e) => {
             e.preventDefault(); 
             
-            // 입력된 라인 수(빈 줄 제외)를 기준으로 다음 라인 인덱스 계산
-            const linesFilled = input.value.split('\n').filter(v => v).length;
-            const nextLine = Math.min(linesFilled, 8); // 0~8
+            // [수정] 9줄 배열을 기준으로 다음 빈 라인을 찾음
+            const lines = getNormalizedLines(input);
+            let nextLine = lines.findIndex(line => !line); // 비어있는 첫 번째 라인 인덱스
+            if (nextLine === -1) { // 모든 줄이 찼다면
+                nextLine = 8; // 마지막 줄(인덱스 8)을 가리킴
+            }
             
             setCurrentLine(input, nextLine);
             activeInput = input;
@@ -393,6 +399,7 @@ function setupCopyButton() {
             const report = Array.from(document.querySelectorAll('.input-group'))
                 .map(group => {
                     const bedNumber = group.querySelector('.bed-label').textContent.replace('#', '') + '번 베드';
+                    // [수정] 9줄로 관리되므로, filter로 빈 줄을 확실히 제거
                     const values = group.querySelector('.input-numbers').value.split('\n').filter(v => v);
                     return values.length > 0 ? `${bedNumber}: ${values.join(', ')}` : null;
                 })
@@ -414,17 +421,12 @@ function setupCopyButton() {
 
 // 초기화 함수
 function init() {
-    // 가상 키보드 이벤트 설정 (click만 사용)
     const keyboard = document.querySelector('.virtual-keyboard');
     keyboard.addEventListener('click', handleKeyboardEvent);
 
-    // 입력 필드 설정
     setupInputFields();
-
-    // 복사 버튼 설정
     setupCopyButton();
 
-    // 초기 상태 설정
     document.querySelector('.keyboard-btn[data-percent="25"]').classList.add('active');
     updateNumberButtons();
 }

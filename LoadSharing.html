@@ -2,120 +2,89 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0f172a">
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
   <title>병렬 부하 분담 계산기</title>
   <style>
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; touch-action: manipulation; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
       margin: 0;
-      padding: 12px 12px 90px;
+      padding: 10px 10px calc(76px + env(safe-area-inset-bottom));
       background: #0f172a;
-      color: #e2e8f0;
+      color: #f1f5f9;
     }
-    .wrap { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
-    .top-bar { display: flex; align-items: center; justify-content: space-between; }
-    .home-link { text-decoration: none; color: #38bdf8; font-weight: 800; font-size: 13px; }
-    h2 { margin: 0; font-size: 18px; color: #f8fafc; }
+    .wrap { max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+    .top-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .home-link {
+      text-decoration: none; color: #38bdf8; font-weight: 800; font-size: 14px;
+      padding: 8px 10px; background: #1e293b; border-radius: 8px; border: 1px solid #334155;
+    }
+    h1 { margin: 0; font-size: 17px; font-weight: 900; color: #f8fafc; }
+
     .panel {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 10px;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+      background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 10px;
+      display: flex; flex-direction: column; gap: 8px;
     }
-    .ctrl-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
+    .cfg-toggle {
+      width: 100%; min-height: 42px; border-radius: 8px; border: 1px solid #475569;
+      background: #0f172a; color: #cbd5e1; padding: 8px 10px; font-size: 13px; font-weight: 800;
+      display: flex; align-items: center; justify-content: space-between; cursor: pointer;
     }
-    .field label { display: block; font-size: 11px; color: #94a3b8; font-weight: 700; margin-bottom: 3px; }
+    .cfg-grid { display: none; grid-template-columns: repeat(2, 1fr); gap: 8px; padding-top: 4px; }
+    .cfg-grid.open { display: grid; }
+    .field label { display: block; font-size: 11px; color: #94a3b8; font-weight: 800; margin-bottom: 3px; }
     select, input {
-      width: 100%;
-      padding: 7px 8px;
-      border-radius: 6px;
-      border: 1px solid #475569;
-      background: #0f172a;
-      color: #f8fafc;
-      font-size: 13px;
-      font-weight: 700;
+      width: 100%; min-height: 44px; padding: 8px; border-radius: 8px;
+      border: 1px solid #475569; background: #0f172a; color: #f8fafc;
+      font-size: 16px; font-weight: 800;
     }
-    .summary-bar {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
-      text-align: center;
-    }
-    .sum-box {
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      padding: 6px;
-    }
-    .sum-lbl { font-size: 10px; color: #94a3b8; font-weight: 700; }
-    .sum-val { font-size: 14px; font-weight: 900; margin-top: 2px; font-family: monospace; }
+    .summary-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; }
+    .sum-box { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 8px 4px; }
+    .sum-lbl { font-size: 11px; color: #94a3b8; font-weight: 700; }
+    .sum-val { font-size: 15px; font-weight: 900; margin-top: 2px; font-family: monospace; }
     .ok { color: #34d399; }
     .warn { color: #fbbf24; }
-    .bad { color: #f87171; }
+
     .eng-card {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 10px;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+      background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 10px;
+      display: flex; flex-direction: column; gap: 8px;
     }
     .eng-card.needs-adj { border-color: #f59e0b; }
-    .eng-head { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
-    .eng-title { font-weight: 900; font-size: 14px; color: #38bdf8; }
-    .pill {
-      font-size: 11px;
-      font-weight: 800;
-      padding: 2px 8px;
-      border-radius: 999px;
-    }
+    .eng-head { display: flex; justify-content: space-between; align-items: center; }
+    .eng-title { font-weight: 900; font-size: 16px; color: #38bdf8; }
+    .pill { font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 999px; }
     .pill-ok { background: #064e3b; color: #6ee7b7; }
     .pill-adj { background: #78350f; color: #fcd34d; }
     .pill-ref { background: #1e3a8a; color: #93c5fd; }
-    .eng-inputs {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
-    }
+
+    .eng-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .eng-inputs input { text-align: center; padding: 6px 4px; }
+
     .eng-res {
-      background: #0f172a;
-      border-radius: 8px;
-      padding: 8px;
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 6px;
-      font-size: 12px;
+      background: #0f172a; border-radius: 8px; padding: 8px 10px;
+      display: flex; flex-direction: column; gap: 6px;
     }
-    .eng-res strong { font-family: monospace; font-size: 14px; }
+    .res-main {
+      display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+      border-bottom: 1px solid #1e293b; padding-bottom: 4px;
+    }
+    .res-cmd { font-size: 18px; font-weight: 900; font-family: monospace; }
+    .res-sub {
+      display: flex; justify-content: space-between; font-size: 12px; color: #94a3b8; font-family: monospace;
+    }
+
     .bottom-bar {
-      position: fixed;
-      left: 0; right: 0; bottom: 0;
-      background: #0f172a;
-      border-top: 1px solid #334155;
-      padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 100;
+      background: rgba(15, 23, 42, 0.96); border-top: 1px solid #334155;
+      padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
     }
     .btn {
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      font-weight: 800;
-      font-size: 13px;
-      cursor: pointer;
-      color: #fff;
+      min-height: 46px; border: none; border-radius: 10px;
+      font-weight: 800; font-size: 14px; cursor: pointer; color: #fff;
     }
     .btn-copy { background: #0284c7; }
     .btn-save { background: #059669; }
@@ -126,12 +95,16 @@
   <div class="wrap">
     <div class="top-bar">
       <a class="home-link" href="./index.html">← 메뉴</a>
-      <h2>병렬 부하 분담 계산기</h2>
-      <span style="font-size:11px;color:#64748b;">v3</span>
+      <h1>병렬 부하 분담</h1>
+      <span style="width:52px;"></span>
     </div>
 
     <div class="panel">
-      <div class="ctrl-grid">
+      <button id="cfgToggle" class="cfg-toggle" type="button">
+        <span id="cfgSummary">4대 · 20%구간 · 자동 K_i · 로드±10%</span>
+        <span>설정 ▾</span>
+      </button>
+      <div id="cfgGrid" class="cfg-grid">
         <div class="field">
           <label for="engineCount">운전 대수</label>
           <select id="engineCount">
@@ -154,7 +127,7 @@
         <div class="field">
           <label for="calcMode">계산 모드</label>
           <select id="calcMode">
-            <option value="auto_calc" selected>자동계산 (구간 K_i)</option>
+            <option value="auto_calc" selected>자동계산 (K_i)</option>
             <option value="reference">기준 추종</option>
             <option value="target_base">기준 고정</option>
           </select>
@@ -182,15 +155,15 @@
 
       <div class="summary-bar">
         <div class="sum-box">
-          <div class="sum-lbl">총 실측 부하</div>
+          <div class="sum-lbl">총 실측</div>
           <div id="sumLoad" class="sum-val">0.0 W</div>
         </div>
         <div class="sum-box">
-          <div class="sum-lbl">부하율 / 편차폭</div>
+          <div class="sum-lbl">부하 / 편차</div>
           <div id="sumSpread" class="sum-val">0% / 0%</div>
         </div>
         <div class="sum-box">
-          <div class="sum-lbl">판정 상태</div>
+          <div class="sum-lbl">판정</div>
           <div id="sumStatus" class="sum-val ok">균형</div>
         </div>
       </div>
@@ -202,7 +175,7 @@
   <div class="bottom-bar">
     <button id="btnReset" class="btn btn-reset" type="button">초기화</button>
     <button id="btnSave" class="btn btn-save" type="button">저장</button>
-    <button id="btnCopy" class="btn btn-copy" type="button">보고서 복사</button>
+    <button id="btnCopy" class="btn btn-copy" type="button">📋 복사</button>
   </div>
 
   <script>
@@ -212,6 +185,8 @@
       const AUTO_CONSTANT_BASE_FACTOR = 2600;
       const TC_X10_THRESHOLD = 4500;
       const SLOPE_BY_STEP = { 20: 1.0, 40: 0.68, 60: 0.5, 75: 0.43, 80: 0.35, 100: 0.35 };
+      const RULE_TEXT = { load_10: '로드±10%', rated_10: '정격±10%', bv_rated_15: '정격±15%' };
+      const MODE_TEXT = { auto_calc: '자동K_i', reference: '기준추종', target_base: '기준고정' };
 
       const defaultEngines = [
         { id: 1, name: '1호기', baseLoad: '93.3', actualLoad: '', tcRpm: '' },
@@ -239,6 +214,10 @@
       const elTcUnit = document.getElementById('tcUnit');
       const elList = document.getElementById('engineList');
 
+      document.getElementById('cfgToggle').addEventListener('click', () => {
+        document.getElementById('cfgGrid').classList.toggle('open');
+      });
+
       const normalizeTc = (raw) => {
         const v = parseFloat(raw);
         if (!Number.isFinite(v) || v <= 0) return null;
@@ -260,6 +239,9 @@
       };
 
       const calculateAll = () => {
+        document.getElementById('cfgSummary').textContent =
+          `${state.engineCount}대 · ${state.loadStep}% · ${MODE_TEXT[state.calcMode]} · ${RULE_TEXT[state.tolRule]}`;
+
         const active = state.engines.slice(0, state.engineCount);
         const stepPct = state.loadStep;
         const maxRated = Math.max(...active.map(e => (parseFloat(e.baseLoad) || 0) * (100 / stepPct)), 1);
@@ -324,9 +306,9 @@
         const adjCount = results.filter(r => r.needsAdj).length;
 
         document.getElementById('sumLoad').textContent = `${totalLoad.toFixed(1)} W`;
-        document.getElementById('sumSpread').textContent = `${loadPct.toFixed(1)}% / ${spread.toFixed(1)}%p`;
+        document.getElementById('sumSpread').textContent = `${loadPct.toFixed(0)}% / ${spread.toFixed(1)}%p`;
         const sumSt = document.getElementById('sumStatus');
-        sumSt.textContent = adjCount === 0 ? '모두 허용 내' : `${adjCount}대 조정 필요`;
+        sumSt.textContent = adjCount === 0 ? '모두 허용 내' : `${adjCount}대 조정`;
         sumSt.className = `sum-val ${adjCount === 0 ? 'ok' : 'warn'}`;
 
         results.forEach((r, idx) => {
@@ -347,19 +329,25 @@
             pill.className = 'pill pill-adj';
           }
 
-          const dirText = r.signedCmd === 0 ? '유지 (0)' : (r.signedCmd > 0 ? `상승 (+)` : `하강 (-)`);
-          const dispAdj = state.tcUnit === 'monitor_x10'
-            ? `${Math.round(r.tcAdj / 10)} (×10)`
-            : `${r.tcAdj} RPM`;
+          const dirText = r.signedCmd === 0 ? '유지' : (r.signedCmd > 0 ? '상승 ▲' : '하강 ▼');
+          const dispAdj = r.signedCmd === 0
+            ? '0'
+            : (state.tcUnit === 'monitor_x10'
+              ? `${r.signedCmd > 0 ? '+' : '-'}${Math.round(r.tcAdj / 10)} (×10)`
+              : `${r.signedCmd > 0 ? '+' : '-'}${r.tcAdj} RPM`);
           const dispTarget = r.targetTc === null
             ? '-'
-            : (state.tcUnit === 'monitor_x10' ? `${Math.round(r.targetTc / 10)} (×10)` : `${r.targetTc} RPM`);
+            : (state.tcUnit === 'monitor_x10' ? `${Math.round(r.targetTc / 10)}` : `${r.targetTc}`);
 
           box.innerHTML = `
-            <div>목표 / 오차: <strong>${r.target.toFixed(1)}W</strong> (${r.error >= 0 ? '+' : ''}${r.error.toFixed(1)})</div>
-            <div>편차 / 상수K: <strong>${r.devPct >= 0 ? '+' : ''}${r.devPct.toFixed(1)}%</strong> / K=${r.k}</div>
-            <div>지시 / 조정량: <strong class="${r.needsAdj ? 'warn' : 'ok'}">${dirText} ${dispAdj}</strong></div>
-            <div>목표 T/C: <strong>${dispTarget}</strong></div>
+            <div class="res-main">
+              <span style="font-size:12px;color:#94a3b8;font-weight:700;">T/C 지시</span>
+              <span class="res-cmd ${r.needsAdj ? 'warn' : 'ok'}">${dirText} ${dispAdj}</span>
+            </div>
+            <div class="res-sub">
+              <span>목표 ${r.target.toFixed(1)}W (${r.error >= 0 ? '+' : ''}${r.error.toFixed(1)})</span>
+              <span>K=${r.k} · 목표T/C ${dispTarget}</span>
+            </div>
           `;
         });
         return results;
@@ -381,15 +369,15 @@
             <div class="eng-inputs">
               <div class="field">
                 <label>기준(W)</label>
-                <input type="number" step="0.1" value="${eng.baseLoad}" data-idx="${i}" data-field="baseLoad">
+                <input type="number" inputmode="decimal" step="0.1" value="${eng.baseLoad}" data-idx="${i}" data-field="baseLoad">
               </div>
               <div class="field">
                 <label>현재(W)</label>
-                <input type="number" step="0.1" value="${eng.actualLoad}" data-idx="${i}" data-field="actualLoad" placeholder="실측 W">
+                <input type="number" inputmode="decimal" step="0.1" value="${eng.actualLoad}" data-idx="${i}" data-field="actualLoad" placeholder="실측">
               </div>
               <div class="field">
                 <label>T/C RPM</label>
-                <input type="number" step="1" value="${eng.tcRpm}" data-idx="${i}" data-field="tcRpm" placeholder="×10 또는 RPM">
+                <input type="number" inputmode="numeric" step="1" value="${eng.tcRpm}" data-idx="${i}" data-field="tcRpm" placeholder="×10">
               </div>
             </div>
             <div id="res_${i}" class="eng-res"></div>
@@ -435,6 +423,7 @@
       });
 
       document.getElementById('btnReset').addEventListener('click', () => {
+        if (!confirm('입력값을 초기화할까요?')) return;
         state.engines = JSON.parse(JSON.stringify(defaultEngines));
         localStorage.removeItem(STORAGE_KEY);
         renderCards();
@@ -443,7 +432,7 @@
       document.getElementById('btnCopy').addEventListener('click', async () => {
         const res = calculateAll();
         const lines = [
-          `[병렬 부하 분담 계산] (${state.loadStep}% / ${state.calcMode} / ${state.tolRule})`,
+          `[병렬 부하 분담] (${state.loadStep}% / ${MODE_TEXT[state.calcMode]} / ${RULE_TEXT[state.tolRule]})`,
           `생성: ${new Date().toLocaleString('ko-KR')}`,
           '',
           ...res.map(r =>
@@ -454,7 +443,7 @@
           await navigator.clipboard.writeText(lines);
           alert('보고서가 복사되었습니다.');
         } catch {
-          alert('클립보드 복사에 실패했습니다.');
+          alert('복사 실패');
         }
       });
 

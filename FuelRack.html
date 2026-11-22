@@ -1,638 +1,333 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FUEL RACK 입력 (오프라인 지원)</title>
-    <link rel="manifest" href="./manifest.json">
-    <link rel="icon" href="./icon.svg" type="image/svg+xml">
-    <meta name="theme-color" content="#007bff">
-    <style>
-        * {
-            box-sizing: border-box;
-            touch-action: manipulation;
-        }
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            background-color: #f4f4f9;
-            position: relative;
-            overflow-x: hidden;
-            padding-bottom: 135px;
-        }
-        .top-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 12px 0;
-        }
-        .home-link {
-            text-decoration: none;
-            color: #007bff;
-            font-weight: bold;
-            font-size: 13px;
-        }
-        h2 {
-            text-align: center;
-            color: #444;
-            margin: 4px 0 8px;
-        }
-        #revision {
-            color: #666;
-            font-size: 12px;
-        }
-        .groups-container {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 10px;
-            padding: 0 2%;
-        }
-        .group-row {
-            display: flex;
-            gap: 2%;
-            width: 100%;
-            align-items: flex-start;
-        }
-        .numbering {
-            width: 10%;
-            height: 388px;
-            margin-top: 30px;
-            padding: 5px 1%;
-            position: relative;
-            font-size: 28px;
-            line-height: 1.5;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background-color: #f0f0f0;
-        }
-        .numbering .line-highlight {
-            background-color: #ffeb3b;
-            font-weight: bold;
-            color: #333;
-            padding: 0 4px;
-            border-radius: 2px;
-        }
-        .input-group {
-            width: 38.4%;
-            border: 2px solid #007bff;
-            border-radius: 6px;
-            padding: 24px 1% 5px;
-            position: relative;
-            background-color: white;
-            height: 417px;
-            margin-right: 2%;
-            margin-top: 4px;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .input-group:last-child {
-            margin-right: 0;
-        }
-        .input-group.active {
-            border-color: #ffc107;
-            box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
-        }
-        .bed-label {
-            position: absolute;
-            top: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: white;
-            padding: 0 5px;
-            color: #007bff;
-            font-weight: bold;
-            font-size: 26px;
-        }
-        .input-numbers {
-            width: 100%;
-            height: 388px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            padding: 5px;
-            resize: none;
-            font-size: 28px;
-            line-height: 1.5;
-            caret-color: transparent;
-            overflow-y: hidden;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-        .virtual-keyboard {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #fff;
-            padding: 10px;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-            z-index: 1000;
-            height: 120px;
-        }
-        .keyboard-row {
-            display: flex;
-            gap: 2%;
-            justify-content: center;
-            margin-bottom: 6px;
-        }
-        .keyboard-btn {
-            padding: 10px 3%;
-            border: 1px solid #007bff;
-            border-radius: 4px;
-            background: #f0f6ff;
-            cursor: pointer;
-            flex: 1;
-            max-width: 18%;
-            font-size: 14px;
-            transition: all 0.2s;
-            touch-action: manipulation;
-            user-select: none;
-        }
-        .keyboard-btn:active,
-        .keyboard-btn.active {
-            background: #007bff;
-            color: white;
-        }
-        .keyboard-btn.del {
-            background: #ffebee;
-            border-color: #ff5252;
-            max-width: 24%;
-        }
-        #copyReport {
-            position: fixed;
-            bottom: 145px;
-            right: 20px;
-            padding: 12px 20px;
-            background: #28a745;
-            color: white;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            z-index: 1001;
-        }
-        #resetAll {
-            position: fixed;
-            bottom: 145px;
-            left: 20px;
-            padding: 12px 20px;
-            background: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            z-index: 1001;
-        }
-        #resetAll:disabled {
-            background-color: #6c757d;
-            cursor: not-allowed;
-        }
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-        }
-        .modal-content {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            max-width: 80%;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-        .modal-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        .modal-btn {
-            padding: 8px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .modal-confirm { background: #dc3545; color: white; }
-        .modal-cancel { background: #6c757d; color: white; }
-        .input-status {
-            position: absolute;
-            bottom: 5px;
-            right: 10px;
-            font-size: 12px;
-            color: #666;
-        }
-        .offline-indicator {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            background: #ff6b6b;
-            color: white;
-            text-align: center;
-            padding: 5px;
-            font-size: 14px;
-            z-index: 10000;
-            display: none;
-        }
-        .save-status {
-            font-size: 12px;
-            color: #28a745;
-            background: white;
-            padding: 2px 6px;
-            border-radius: 3px;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        #installButton {
-            position: fixed;
-            bottom: 145px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 10px 15px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            z-index: 1001;
-            display: none;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>FUEL RACK 입력 (오프라인 지원)</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <meta name="theme-color" content="#0f172a">
+  <style>
+    * { box-sizing: border-box; touch-action: manipulation; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      margin: 0;
+      padding: 10px 10px calc(136px + env(safe-area-inset-bottom));
+      background: #0f172a;
+      color: #f1f5f9;
+    }
+    .app { max-width: 540px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+    .top-bar { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+    .home-link {
+      text-decoration: none; color: #38bdf8; font-weight: 800; font-size: 14px;
+      padding: 8px 10px; background: #1e293b; border-radius: 8px; border: 1px solid #334155;
+    }
+    .top-title { text-align: center; flex: 1; }
+    .top-title h1 { margin: 0; font-size: 17px; font-weight: 900; }
+    .save-status { font-size: 11px; color: #34d399; font-weight: 700; min-height: 14px; opacity: 0; transition: opacity 0.25s; }
+    .top-actions { display: flex; gap: 6px; }
+    .act-btn {
+      min-height: 38px; padding: 6px 10px; border-radius: 8px; border: none;
+      font-size: 12px; font-weight: 800; cursor: pointer; color: #fff;
+    }
+    #copyReport { background: #059669; }
+    #resetAll { background: #dc2626; }
+    #resetAll:disabled { background: #475569; opacity: 0.6; cursor: not-allowed; }
+
+    .offline-indicator {
+      display: none; background: #dc2626; color: #fff; text-align: center;
+      padding: 6px; border-radius: 8px; font-size: 12px; font-weight: 800;
+    }
+
+    /* 베드 선택 탭 */
+    .bed-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .bed-tab {
+      min-height: 46px; border-radius: 10px; border: 1px solid #334155;
+      background: #1e293b; color: #94a3b8; font-weight: 800; font-size: 14px;
+      cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .bed-tab span.cnt { font-size: 11px; opacity: 0.85; }
+    .bed-tab.active { background: #1d4ed8; border-color: #60a5fa; color: #fff; }
+
+    /* 3x3 큰 터치 실린더 슬롯 */
+    .rack-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+      background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 10px;
+    }
+    .rack-cell {
+      min-height: 76px; border-radius: 10px; border: 2px solid #334155;
+      background: #0f172a; padding: 6px; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+      user-select: none;
+    }
+    .rack-cell.active { border-color: #fbbf24; background: #1e1b0e; box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.25); }
+    .rack-cell .lbl { font-size: 12px; font-weight: 800; color: #94a3b8; }
+    .rack-cell .val { font-size: 24px; font-weight: 900; font-family: monospace; color: #38bdf8; min-height: 28px; }
+    .rack-cell .val.empty { color: #475569; font-size: 18px; }
+
+    /* 하단 고정 큰 가상 키패드 */
+    .virtual-keyboard {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 1000;
+      background: #1e293b; border-top: 1px solid #334155;
+      padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .keyboard-row { display: grid; gap: 6px; }
+    .keyboard-row.pct-row { grid-template-columns: repeat(5, 1fr); }
+    .keyboard-row.num-row { grid-template-columns: 44px 1fr 1fr 1fr 44px 58px; }
+    .keyboard-btn {
+      min-height: 48px; border-radius: 8px; border: 1px solid #475569;
+      background: #0f172a; color: #f1f5f9; font-size: 15px; font-weight: 900;
+      cursor: pointer; user-select: none;
+    }
+    .keyboard-btn:active, .keyboard-btn.active { background: #2563eb; border-color: #60a5fa; color: #fff; }
+    .keyboard-btn.val-btn { font-family: monospace; font-size: 18px; color: #38bdf8; }
+    .keyboard-btn.del { background: #7f1d1d; border-color: #ef4444; color: #fecaca; font-size: 14px; }
+
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+      display: flex; justify-content: center; align-items: center; z-index: 2000; padding: 16px;
+    }
+    .modal-content {
+      background: #1e293b; border: 1px solid #475569; padding: 20px; border-radius: 12px;
+      width: 100%; max-width: 340px; text-align: center;
+    }
+    .modal-buttons { display: flex; gap: 8px; margin-top: 16px; }
+    .modal-btn { flex: 1; min-height: 44px; border: none; border-radius: 8px; cursor: pointer; font-weight: 800; font-size: 14px; }
+    .modal-confirm { background: #dc2626; color: #fff; }
+    .modal-cancel { background: #475569; color: #fff; }
+  </style>
 </head>
 <body>
-    <div class="offline-indicator" id="offlineIndicator">
-        ⚠️ 오프라인 모드로 작동 중입니다
-    </div>
+  <div class="app">
+    <div id="offlineIndicator" class="offline-indicator">⚠️ 오프라인 모드로 작동 중</div>
 
     <div class="top-bar">
-        <a class="home-link" href="./index.html">← 메뉴</a>
-        <div class="save-status" id="saveStatus">데이터 저장됨</div>
-        <div id="revision">Rev: 3</div>
+      <a class="home-link" href="./index.html">← 메뉴</a>
+      <div class="top-title">
+        <h1>FUEL RACK 입력</h1>
+        <div id="saveStatus" class="save-status">저장됨</div>
+      </div>
+      <div class="top-actions">
+        <button id="copyReport" class="act-btn" type="button">복사</button>
+        <button id="resetAll" class="act-btn" type="button">초기화</button>
+      </div>
     </div>
 
-    <button id="copyReport">📋 보고서 복사</button>
-    <button id="resetAll">🔄 전체 초기화</button>
-    <button id="installButton">📱 앱으로 설치</button>
-
-    <h2>FUEL RACK 입력</h2>
-
-    <div class="groups-container">
-        <div class="group-row">
-            <div class="numbering">1.<br>2.<br>3.<br>4.<br>5.<br>6.<br>7.<br>8.<br>9.</div>
-            <div class="input-group">
-                <div class="bed-label">#1</div>
-                <textarea class="input-numbers" data-bed="1" readonly></textarea>
-                <div class="input-status">0/9 입력됨</div>
-            </div>
-            <div class="input-group">
-                <div class="bed-label">#2</div>
-                <textarea class="input-numbers" data-bed="2" readonly></textarea>
-                <div class="input-status">0/9 입력됨</div>
-            </div>
-        </div>
-        <div class="group-row">
-            <div class="numbering">1.<br>2.<br>3.<br>4.<br>5.<br>6.<br>7.<br>8.<br>9.</div>
-            <div class="input-group">
-                <div class="bed-label">#3</div>
-                <textarea class="input-numbers" data-bed="3" readonly></textarea>
-                <div class="input-status">0/9 입력됨</div>
-            </div>
-            <div class="input-group">
-                <div class="bed-label">#4</div>
-                <textarea class="input-numbers" data-bed="4" readonly></textarea>
-                <div class="input-status">0/9 입력됨</div>
-            </div>
-        </div>
+    <div class="bed-tabs" id="bedTabs">
+      <button class="bed-tab active" data-bed="1" type="button">#1<span class="cnt">0/9</span></button>
+      <button class="bed-tab" data-bed="2" type="button">#2<span class="cnt">0/9</span></button>
+      <button class="bed-tab" data-bed="3" type="button">#3<span class="cnt">0/9</span></button>
+      <button class="bed-tab" data-bed="4" type="button">#4<span class="cnt">0/9</span></button>
     </div>
 
-    <div class="virtual-keyboard">
-        <div class="keyboard-row">
-            <button class="keyboard-btn" data-percent="25">25%</button>
-            <button class="keyboard-btn" data-percent="50">50%</button>
-            <button class="keyboard-btn" data-percent="75">75%</button>
-            <button class="keyboard-btn" data-percent="100">100%</button>
-            <button class="keyboard-btn" data-percent="110">110%</button>
-        </div>
-        <div class="keyboard-row" id="number-buttons"></div>
+    <div class="rack-grid" id="rackGrid"></div>
+  </div>
+
+  <div class="virtual-keyboard">
+    <div class="keyboard-row pct-row">
+      <button class="keyboard-btn active" data-percent="25" type="button">25%</button>
+      <button class="keyboard-btn" data-percent="50" type="button">50%</button>
+      <button class="keyboard-btn" data-percent="75" type="button">75%</button>
+      <button class="keyboard-btn" data-percent="100" type="button">100%</button>
+      <button class="keyboard-btn" data-percent="110" type="button">110%</button>
     </div>
+    <div class="keyboard-row num-row" id="number-buttons"></div>
+  </div>
 
-<script>
-const presets = {
-    '25': [9.5, 10, 10.5],
-    '50': [17.5, 18, 18.5],
-    '75': [24.5, 25, 25.5],
-    '100': [32.5, 33, 33.5],
-    '110': [35.5, 36, 36.5]
-};
-let currentPercent = '25';
-let activeInput = null;
-let currentValues = [...presets[currentPercent]];
-const inputStates = new WeakMap();
-const STORAGE_KEY = 'fuelRackData';
-let deferredPrompt;
+  <script>
+    const presets = {
+      '25': [9.5, 10, 10.5],
+      '50': [17.5, 18, 18.5],
+      '75': [24.5, 25, 25.5],
+      '100': [32.5, 33, 33.5],
+      '110': [35.5, 36, 36.5]
+    };
+    const STORAGE_KEY = 'fuelRackData';
+    let currentPercent = '25';
+    let currentValues = [...presets[currentPercent]];
+    let activeBed = '1';
+    let activeLine = 0;
 
-function getCurrentLine(input) {
-    return inputStates.get(input) || 0;
-}
+    // 기존 fuelRackData 호환 구조: { "1": "9.5\n10.0...", ... }
+    const bedLines = { '1': Array(9).fill(''), '2': Array(9).fill(''), '3': Array(9).fill(''), '4': Array(9).fill('') };
 
-function setCurrentLine(input, line) {
-    inputStates.set(input, Math.max(0, Math.min(line, 8)));
-}
+    const showSaveStatus = () => {
+      const el = document.getElementById('saveStatus');
+      el.style.opacity = '1';
+      setTimeout(() => { el.style.opacity = '0'; }, 1200);
+    };
 
-function updateInputStatus(input) {
-    const statusElement = input.parentNode.querySelector('.input-status');
-    if (statusElement) {
-        const lines = getNormalizedLines(input);
-        const filledCount = lines.filter(line => line !== '').length;
-        statusElement.textContent = `${filledCount}/9 입력됨`;
-    }
-}
-
-function saveDataToStorage() {
-    const data = {};
-    document.querySelectorAll('.input-numbers').forEach(input => {
-        data[input.dataset.bed] = input.value;
-    });
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    const saveData = () => {
+      const payload = {};
+      for (const b of ['1', '2', '3', '4']) {
+        payload[b] = bedLines[b].join('\n');
+      }
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
         showSaveStatus();
-    } catch (e) {
-        console.error('데이터 저장 실패:', e);
-    }
-}
+      } catch {}
+    };
 
-function loadDataFromStorage() {
-    try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-            const data = JSON.parse(stored);
-            document.querySelectorAll('.input-numbers').forEach(input => {
-                const bedNumber = input.dataset.bed;
-                if (data[bedNumber]) {
-                    input.value = data[bedNumber];
-                    updateInputStatus(input);
-                }
-            });
-            updateResetButtonState();
-            return true;
+    const loadData = () => {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        for (const b of ['1', '2', '3', '4']) {
+          const lines = (parsed[b] || '').split('\n');
+          bedLines[b] = Array.from({ length: 9 }, (_, i) => (lines[i] || '').trim());
         }
-    } catch (e) {
-        console.error('데이터 로드 실패:', e);
-    }
-    return false;
-}
+      } catch {}
+    };
 
-function showSaveStatus() {
-    const statusElement = document.getElementById('saveStatus');
-    statusElement.style.opacity = '1';
-    setTimeout(() => { statusElement.style.opacity = '0'; }, 1500);
-}
+    const updateTabsAndReset = () => {
+      let hasAny = false;
+      document.querySelectorAll('.bed-tab').forEach(tab => {
+        const b = tab.dataset.bed;
+        const cnt = bedLines[b].filter(v => v !== '').length;
+        if (cnt > 0) hasAny = true;
+        tab.querySelector('.cnt').textContent = `${cnt}/9`;
+        tab.classList.toggle('active', b === activeBed);
+      });
+      document.getElementById('resetAll').disabled = !hasAny;
+    };
 
-function updateNumberButtons() {
-    const container = document.getElementById('number-buttons');
-    container.innerHTML = `
-        <button class="keyboard-btn" data-action="decr">-</button>
-        <button class="keyboard-btn">${currentValues[0].toFixed(1)}</button>
-        <button class="keyboard-btn">${currentValues[1].toFixed(1)}</button>
-        <button class="keyboard-btn">${currentValues[2].toFixed(1)}</button>
-        <button class="keyboard-btn" data-action="incr">+</button>
-        <button class="keyboard-btn del" data-action="del">Del</button>
-    `;
-}
+    const renderGrid = () => {
+      const grid = document.getElementById('rackGrid');
+      grid.innerHTML = '';
+      for (let i = 0; i < 9; i++) {
+        const v = bedLines[activeBed][i];
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = `rack-cell${i === activeLine ? ' active' : ''}`;
+        cell.innerHTML = `
+          <span class="lbl">CYL ${i + 1}</span>
+          <span class="val${v === '' ? ' empty' : ''}">${v === '' ? '—' : v}</span>
+        `;
+        cell.addEventListener('click', () => {
+          activeLine = i;
+          renderGrid();
+        });
+        grid.appendChild(cell);
+      }
+      updateTabsAndReset();
+    };
 
-function setActiveGroup(input) {
-    document.querySelectorAll('.input-group').forEach(group => group.classList.remove('active'));
-    if (input) input.closest('.input-group').classList.add('active');
-}
+    const updateNumberButtons = () => {
+      document.getElementById('number-buttons').innerHTML = `
+        <button class="keyboard-btn" data-action="decr" type="button">−</button>
+        <button class="keyboard-btn val-btn" type="button">${currentValues[0].toFixed(1)}</button>
+        <button class="keyboard-btn val-btn" type="button">${currentValues[1].toFixed(1)}</button>
+        <button class="keyboard-btn val-btn" type="button">${currentValues[2].toFixed(1)}</button>
+        <button class="keyboard-btn" data-action="incr" type="button">+</button>
+        <button class="keyboard-btn del" data-action="del" type="button">지움</button>
+      `;
+    };
 
-function updateLineHighlight() {
-    document.querySelectorAll('.numbering').forEach(numDiv => {
-        numDiv.innerHTML = '1.<br>2.<br>3.<br>4.<br>5.<br>6.<br>7.<br>8.<br>9.';
+    document.getElementById('bedTabs').addEventListener('click', (e) => {
+      const tab = e.target.closest('.bed-tab');
+      if (!tab) return;
+      activeBed = tab.dataset.bed;
+      const firstEmpty = bedLines[activeBed].findIndex(v => v === '');
+      activeLine = firstEmpty >= 0 ? firstEmpty : 8;
+      renderGrid();
     });
-    if (!activeInput) return;
-    const groupRow = activeInput.closest('.group-row');
-    if (!groupRow) return;
-    const numberingElement = groupRow.querySelector('.numbering');
-    if (!numberingElement) return;
-    const currentLine = getCurrentLine(activeInput);
-    const lines = numberingElement.innerHTML.split('<br>');
-    if (currentLine >= 0 && currentLine < lines.length) {
-        lines[currentLine] = `<span class="line-highlight">${lines[currentLine]}</span>`;
-        numberingElement.innerHTML = lines.join('<br>');
-    }
-}
 
-function getNormalizedLines(textarea) {
-    const lines = textarea.value.split('\n');
-    const normalizedLines = Array(9).fill('');
-    for (let i = 0; i < 9; i++) {
-        if (lines[i]) normalizedLines[i] = lines[i];
-    }
-    return normalizedLines;
-}
+    document.querySelector('.virtual-keyboard').addEventListener('click', (e) => {
+      const btn = e.target.closest('.keyboard-btn');
+      if (!btn) return;
+      e.preventDefault();
 
-function handleKeyboardEvent(e) {
-    const btn = e.target.closest('.keyboard-btn');
-    if (!btn) return;
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (btn.dataset.percent) {
+      if (btn.dataset.percent) {
         currentPercent = btn.dataset.percent;
         currentValues = [...presets[currentPercent]];
         document.querySelectorAll('.keyboard-btn[data-percent]').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         updateNumberButtons();
         return;
-    }
+      }
 
-    if (btn.dataset.action) {
-        const action = btn.dataset.action;
-        if (action === 'decr' || action === 'incr') {
-            const step = action === 'decr' ? -0.5 : 0.5;
-            currentValues = currentValues.map(v => v + step);
-            updateNumberButtons();
-        } else if (action === 'del' && activeInput) {
-            const normalizedLines = getNormalizedLines(activeInput);
-            const currentLine = getCurrentLine(activeInput);
-            let lineToDelete;
-            let lineToMoveTo;
-
-            if (currentLine === 8 && normalizedLines[8] !== '') {
-                lineToDelete = 8;
-                lineToMoveTo = 8;
-            } else {
-                lineToDelete = currentLine > 0 ? currentLine - 1 : 0;
-                lineToMoveTo = lineToDelete;
-            }
-            if (currentLine === 0 && normalizedLines[0] === '') return;
-
-            normalizedLines[lineToDelete] = '';
-            activeInput.value = normalizedLines.join('\n');
-            setCurrentLine(activeInput, lineToMoveTo);
-            updateLineHighlight();
-            updateInputStatus(activeInput);
-            updateResetButtonState();
-            saveDataToStorage();
-        }
+      if (btn.dataset.action === 'decr' || btn.dataset.action === 'incr') {
+        const step = btn.dataset.action === 'decr' ? -0.5 : 0.5;
+        currentValues = currentValues.map(v => v + step);
+        updateNumberButtons();
         return;
-    }
+      }
 
-    if (!activeInput) return;
-    const value = parseFloat(btn.textContent);
-    const normalizedLines = getNormalizedLines(activeInput);
-    const currentLine = getCurrentLine(activeInput);
-    normalizedLines[currentLine] = value.toFixed(1);
-    activeInput.value = normalizedLines.join('\n');
-    if (currentLine < 8) setCurrentLine(activeInput, currentLine + 1);
-    updateLineHighlight();
-    updateInputStatus(activeInput);
-    updateResetButtonState();
-    saveDataToStorage();
-}
+      if (btn.dataset.action === 'del') {
+        if (bedLines[activeBed][activeLine] !== '') {
+          bedLines[activeBed][activeLine] = '';
+        } else if (activeLine > 0) {
+          activeLine -= 1;
+          bedLines[activeBed][activeLine] = '';
+        }
+        renderGrid();
+        saveData();
+        return;
+      }
 
-function setupInputFields() {
-    document.querySelectorAll('.input-numbers').forEach(input => {
-        input.addEventListener('click', (e) => {
-            e.preventDefault();
-            const lines = getNormalizedLines(input);
-            let nextLine = lines.findIndex(line => !line);
-            if (nextLine === -1) nextLine = 8;
-            setCurrentLine(input, nextLine);
-            activeInput = input;
-            setActiveGroup(input);
-            updateLineHighlight();
-        });
+      const val = parseFloat(btn.textContent);
+      if (!Number.isFinite(val)) return;
+      bedLines[activeBed][activeLine] = val.toFixed(1);
+      if (activeLine < 8) activeLine += 1;
+      renderGrid();
+      saveData();
     });
-}
 
-function setupCopyButton() {
     document.getElementById('copyReport').addEventListener('click', async () => {
-        try {
-            const report = Array.from(document.querySelectorAll('.input-group'))
-                .map(group => {
-                    const bedNumber = group.querySelector('.bed-label').textContent.replace('#', '') + '번 베드';
-                    const values = group.querySelector('.input-numbers').value.split('\n').filter(v => v);
-                    return values.length > 0 ? `${bedNumber}: ${values.join(', ')}` : null;
-                })
-                .filter(line => line !== null)
-                .join('\n');
-            if (!report) {
-                alert('입력된 값이 없습니다.');
-                return;
-            }
-            await navigator.clipboard.writeText(report);
-            alert('보고서가 클립보드에 복사되었습니다.');
-        } catch (err) {
-            alert('복사 실패: ' + err.message);
-        }
+      const lines = ['1', '2', '3', '4']
+        .map(b => {
+          const vals = bedLines[b].filter(v => v !== '');
+          return vals.length > 0 ? `${b}번 베드: ${vals.join(', ')}` : null;
+        })
+        .filter(Boolean);
+      if (lines.length === 0) return alert('입력된 값이 없습니다.');
+      try {
+        await navigator.clipboard.writeText(lines.join('\n'));
+        alert('보고서가 클립보드에 복사되었습니다.');
+      } catch {
+        alert('복사 실패');
+      }
     });
-}
 
-function setupResetButton() {
-    const resetButton = document.getElementById('resetAll');
-    updateResetButtonState();
-    resetButton.addEventListener('click', () => {
-        const hasData = Array.from(document.querySelectorAll('.input-numbers')).some(input => input.value.trim() !== '');
-        if (!hasData) {
-            alert('초기화할 데이터가 없습니다.');
-            return;
-        }
-        showResetConfirmation();
-    });
-}
-
-function updateResetButtonState() {
-    const resetButton = document.getElementById('resetAll');
-    const hasData = Array.from(document.querySelectorAll('.input-numbers')).some(input => input.value.trim() !== '');
-    resetButton.disabled = !hasData;
-}
-
-function showResetConfirmation() {
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    modal.innerHTML = `
+    document.getElementById('resetAll').addEventListener('click', () => {
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
         <div class="modal-content">
-            <h3>전체 초기화</h3>
-            <p>모든 입력 내용을 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.</p>
-            <div class="modal-buttons">
-                <button class="modal-btn modal-confirm">초기화</button>
-                <button class="modal-btn modal-cancel">취소</button>
-            </div>
+          <h3 style="margin:0 0 8px;">전체 초기화</h3>
+          <p style="margin:0;font-size:13px;color:#cbd5e1;">모든 베드 입력값을 삭제할까요?</p>
+          <div class="modal-buttons">
+            <button class="modal-btn modal-confirm" type="button">초기화</button>
+            <button class="modal-btn modal-cancel" type="button">취소</button>
+          </div>
         </div>
-    `;
-    document.body.appendChild(modal);
-    modal.querySelector('.modal-confirm').addEventListener('click', () => {
-        document.querySelectorAll('.input-numbers').forEach(input => {
-            input.value = '';
-            updateInputStatus(input);
-        });
-        activeInput = null;
-        setActiveGroup(null);
-        updateLineHighlight();
-        updateResetButtonState();
+      `;
+      document.body.appendChild(modal);
+      modal.querySelector('.modal-confirm').addEventListener('click', () => {
+        for (const b of ['1', '2', '3', '4']) bedLines[b].fill('');
+        activeLine = 0;
         localStorage.removeItem(STORAGE_KEY);
+        renderGrid();
         document.body.removeChild(modal);
+      });
+      modal.querySelector('.modal-cancel').addEventListener('click', () => document.body.removeChild(modal));
     });
-    modal.querySelector('.modal-cancel').addEventListener('click', () => document.body.removeChild(modal));
-    modal.addEventListener('click', (e) => { if (e.target === modal) document.body.removeChild(modal); });
-}
 
-function setupPWA() {
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        document.getElementById('installButton').style.display = 'block';
-    });
-    document.getElementById('installButton').addEventListener('click', async () => {
-        if (!deferredPrompt) return;
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') document.getElementById('installButton').style.display = 'none';
-        deferredPrompt = null;
-    });
-    window.addEventListener('appinstalled', () => {
-        document.getElementById('installButton').style.display = 'none';
-        deferredPrompt = null;
-    });
-}
-
-function setupOfflineDetection() {
-    const sync = () => {
-        document.getElementById('offlineIndicator').style.display = navigator.onLine ? 'none' : 'block';
+    const syncOnline = () => {
+      document.getElementById('offlineIndicator').style.display = navigator.onLine ? 'none' : 'block';
     };
-    window.addEventListener('online', sync);
-    window.addEventListener('offline', sync);
-    sync();
-}
+    window.addEventListener('online', syncOnline);
+    window.addEventListener('offline', syncOnline);
+    syncOnline();
 
-function registerServiceWorker() {
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js').catch(() => {});
-    }
-}
-
-function init() {
-    document.querySelector('.virtual-keyboard').addEventListener('click', handleKeyboardEvent);
-    setupInputFields();
-    setupCopyButton();
-    setupResetButton();
-    setupPWA();
-    setupOfflineDetection();
-    window.addEventListener('beforeunload', saveDataToStorage);
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) loadDataFromStorage(); });
-    document.querySelector('.keyboard-btn[data-percent="25"]').classList.add('active');
+    loadData();
     updateNumberButtons();
-    loadDataFromStorage();
-    registerServiceWorker();
-    document.querySelectorAll('.input-numbers').forEach(updateInputStatus);
-}
-
-document.addEventListener('DOMContentLoaded', init);
-</script>
+    renderGrid();
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+  </script>
 </body>
 </html>

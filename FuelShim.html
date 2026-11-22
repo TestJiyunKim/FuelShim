@@ -4,366 +4,227 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#007bff">
+  <meta name="theme-color" content="#0f172a">
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
   <title>FUEL SHIM 계산</title>
   <style>
+    * { box-sizing: border-box; touch-action: manipulation; }
     body {
-      font-family: Arial, sans-serif;
-      padding: 10px;
-      background-color: #f4f4f9;
-      color: #333;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
       margin: 0;
-      padding-bottom: 125px;
+      padding: 10px 10px calc(76px + env(safe-area-inset-bottom));
+      background: #0f172a;
+      color: #f1f5f9;
     }
+    .app { max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
     .top-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 4px;
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
     }
     .home-link {
-      text-decoration: none;
-      color: #007bff;
-      font-weight: bold;
+      text-decoration: none; color: #38bdf8; font-weight: 800; font-size: 14px;
+      padding: 8px 10px; background: #1e293b; border-radius: 8px; border: 1px solid #334155;
+    }
+    .title-wrap { text-align: center; flex: 1; }
+    .title-wrap h1 { margin: 0; font-size: 17px; font-weight: 900; color: #f8fafc; }
+    .title-wrap span { font-size: 11px; color: #94a3b8; }
+    .top-actions { display: flex; gap: 6px; }
+    .icon-btn {
+      min-height: 38px; padding: 6px 10px; border-radius: 8px; border: 1px solid #475569;
+      background: #1e293b; color: #e2e8f0; font-size: 12px; font-weight: 800; cursor: pointer;
+    }
+    .icon-btn.danger { background: #7f1d1d; border-color: #ef4444; color: #fecaca; }
+
+    .ctrl-card {
+      background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 10px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .ctrl-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+    select, input[type="number"] {
+      font-size: 16px; font-weight: 800; border-radius: 8px; border: 1px solid #475569;
+      background: #0f172a; color: #f8fafc; padding: 8px 10px; min-height: 44px;
+    }
+    select { width: 100%; }
+    .target-box { display: flex; align-items: center; gap: 4px; }
+    .step-btn {
+      width: 44px; height: 44px; border-radius: 8px; border: none;
+      background: #2563eb; color: #fff; font-size: 20px; font-weight: 900; cursor: pointer;
+    }
+    #targetNumber { width: 68px; text-align: center; padding: 6px 4px; }
+
+    .meta-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
       font-size: 13px;
     }
-    h2 {
-      color: #444;
-      margin: 4px 0 8px;
-      text-align: center;
+    #averageDisplay { color: #38bdf8; font-weight: 900; font-family: monospace; font-size: 14px; }
+    .chk-label { display: flex; align-items: center; gap: 6px; font-weight: 700; color: #cbd5e1; cursor: pointer; }
+    .chk-label input { width: 20px; height: 20px; accent-color: #38bdf8; }
+
+    .env-box {
+      border-top: 1px solid #334155; padding-top: 8px; display: flex; flex-direction: column; gap: 8px;
     }
-    .type-selector {
-      text-align: center;
-      margin: 8px 0;
+    .env-head { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 13px; }
+    #envDeltaSummary { font-weight: 800; color: #34d399; font-family: monospace; }
+    .env-grid { display: none; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .env-grid.open { display: grid; }
+    .env-field label { display: block; font-size: 11px; color: #94a3b8; font-weight: 700; margin-bottom: 2px; }
+    .env-field input { width: 100%; text-align: center; padding: 6px 4px; }
+
+    /* 베드 선택 탭 (모바일 한 화면 집중) */
+    .bed-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .bed-tab {
+      min-height: 46px; border-radius: 10px; border: 1px solid #334155;
+      background: #1e293b; color: #94a3b8; font-weight: 800; font-size: 13px;
+      cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      line-height: 1.2;
     }
-    #typeSelect {
-      padding: 8px 12px;
-      border-radius: 20px;
-      border: 2px solid #007bff;
-      font-size: 14px;
-      background-color: white;
-      max-width: 280px;
-      width: 90%;
+    .bed-tab span.cnt { font-size: 11px; font-weight: 700; opacity: 0.85; }
+    .bed-tab.active { background: #1d4ed8; border-color: #60a5fa; color: #fff; }
+
+    /* 9기통 카드 리스트 */
+    .cyl-card {
+      background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 8px 10px;
+      display: flex; flex-direction: column; gap: 6px;
     }
-    .number-control {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      margin-bottom: 8px;
-      padding: 0 6px;
-      justify-content: center;
-      flex-wrap: wrap;
+    .cyl-head {
+      display: grid; grid-template-columns: 44px 1fr 96px; gap: 8px; padding: 0 4px 4px;
+      border-bottom: 1px solid #334155; font-size: 11px; color: #94a3b8; font-weight: 800; text-align: center;
     }
-    .number-control input[type="number"] {
-      width: 44px;
-      height: 28px;
-      text-align: center;
-      padding: 2px;
-      border: 2px solid #007bff;
-      border-radius: 4px;
-      font-size: 14px;
-      -webkit-appearance: none;
-      -moz-appearance: textfield;
-      flex-shrink: 0;
+    .cyl-row {
+      display: grid; grid-template-columns: 44px 1fr 96px; gap: 8px; align-items: center;
     }
-    .number-control button {
-      width: 30px;
-      height: 30px;
-      font-size: 18px;
-      padding: 0;
-      border: 2px solid #007bff;
-      border-radius: 4px;
-      background-color: #007bff;
-      color: white;
-      cursor: pointer;
-      flex-shrink: 0;
+    .cyl-no {
+      height: 46px; border-radius: 8px; background: #0f172a; border: 1px solid #334155;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 16px; color: #94a3b8; font-family: monospace;
     }
-    #averageDisplay {
-      margin: 0 6px;
-      color: #007bff;
-      font-weight: bold;
-      font-size: 13px;
-      white-space: nowrap;
+    .cyl-input-wrap { display: flex; align-items: center; gap: 4px; }
+    .cyl-input {
+      width: 100%; height: 46px; text-align: center; font-size: 22px !important;
+      font-family: monospace; letter-spacing: 0.04em; padding: 4px 6px !important;
     }
-    .ignore-checkbox {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 13px;
-      color: #555;
-      white-space: nowrap;
+    .cyl-clr {
+      width: 34px; height: 46px; border-radius: 8px; border: 1px solid #334155;
+      background: #0f172a; color: #94a3b8; font-weight: 900; font-size: 14px; cursor: pointer; flex-shrink: 0;
     }
-    .ignore-checkbox input {
-      width: 18px;
-      height: 18px;
-      margin: 0;
-      accent-color: #007bff;
+    .cyl-res {
+      height: 46px; border-radius: 8px; background: #0f172a; border: 1px solid #334155;
+      display: flex; align-items: center; justify-content: center;
+      font-family: monospace; font-size: 20px; font-weight: 900; color: #38bdf8;
     }
-    .env-card {
-      max-width: 680px;
-      margin: 0 auto 10px;
-      background: #fff;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      padding: 8px 10px;
-      font-size: 12px;
-    }
-    .env-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .env-toggle {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-weight: bold;
-      color: #0f172a;
-      cursor: pointer;
-    }
-    .env-toggle input {
-      width: 16px;
-      height: 16px;
-      accent-color: #059669;
-    }
-    .env-summary {
-      font-weight: bold;
-      color: #0369a1;
-    }
-    .env-grid {
-      display: none;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
-      margin-top: 8px;
-      padding-top: 8px;
-      border-top: 1px solid #e2e8f0;
-    }
-    .env-grid.open {
-      display: grid;
-    }
-    .env-field {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    .env-field label {
-      font-size: 11px;
-      color: #475569;
-      font-weight: bold;
-    }
-    .env-field input {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 5px;
-      border: 1px solid #94a3b8;
-      border-radius: 4px;
-      font-size: 13px;
-      text-align: center;
-    }
-    .groups-container {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .group-wrapper {
-      display: flex;
-      gap: 2px;
-      width: 100%;
-      align-items: flex-start;
-    }
-    .input-group {
-      display: flex;
-      gap: 2px;
-      padding: 7px 3px 8px;
-      border: 2px solid #007bff;
-      border-radius: 6px;
-      background-color: white;
-      position: relative;
-      height: 438px;
-      box-sizing: border-box;
-      flex: 1;
-    }
-    .bed-label {
-      position: absolute;
-      top: -11px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: white;
-      padding: 0 6px;
-      font-weight: bold;
-      color: #007bff;
-      font-size: 13px;
-    }
-    .numbering {
-      margin-top: 11px;
-      width: 29px;
-      height: 416px;
-      padding: 3px;
-      border: 1px solid #ccc;
-      border-radius: 3px;
-      background-color: #f0f0f0;
-      font-size: 30px;
-      line-height: 42px;
-      text-align: right;
-      overflow-y: hidden;
-    }
-    .input-numbers,
-    .results {
-      height: 416px;
-      padding: 3px;
-      border: 1px solid #ccc;
-      border-radius: 3px;
-      font-size: 30px;
-      line-height: 42px;
-      flex-shrink: 0;
-      box-sizing: border-box;
-      min-width: 44px;
-      touch-action: manipulation;
-    }
-    .input-numbers {
-      width: 144px;
-      resize: none;
-      background-color: white;
-      margin-top: 2px;
-    }
-    .results {
-      width: 144px;
-      background-color: #f0f0f0;
-      overflow-y: hidden;
-    }
-    .negative { color: red !important; }
-    .invalid { color: red !important; font-weight: bold; }
-    .results div:empty { height: 42px; visibility: hidden; }
-    #revisionDisplay { color: #666; font-size: 12px; }
-    .button-dock {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(244, 244, 249, 0.96);
-      border-top: 1px solid #cbd5e1;
+    .cyl-res.neg { color: #f87171; border-color: #7f1d1d; }
+    .cyl-res.pos { color: #34d399; border-color: #065f46; }
+    .cyl-res.err { color: #fbbf24; font-size: 14px; }
+
+    /* 하단 고정 액션 바 */
+    .dock {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 100;
+      background: rgba(15, 23, 42, 0.96); border-top: 1px solid #334155;
       padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 6px;
-      z-index: 100;
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
     }
-    .button-dock .sub-row {
-      grid-column: 1 / -1;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
+    .dock button {
+      min-height: 46px; border: none; border-radius: 10px; font-size: 13px; font-weight: 800; cursor: pointer;
     }
-    .button-dock button {
-      padding: 10px 8px;
-      border: none;
-      border-radius: 22px;
-      font-size: 12.5px;
-      font-weight: bold;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    #resetButton { background-color: #dc3545; color: white; }
-    #copyReportButton { background-color: #007bff; color: white; }
-    #shareButton { background-color: #28a745; color: white; }
-    #saveButton { background-color: #ffc107; color: black; }
-    #loadButton { background-color: #17a2b8; color: white; }
-    #loadButton.disabled {
-      background-color: #999 !important;
-      cursor: not-allowed;
-      opacity: 0.7;
-    }
-    @media (orientation: landscape) {
-      body { padding-bottom: 70px; }
-      .groups-container { flex-direction: row; gap: 4px; margin: 0 6px; }
-      .group-wrapper { flex: 1; }
-      .group-wrapper:not(:first-child) .numbering { display: none; }
-      .input-numbers, .results { width: 82px; }
-      .button-dock {
-        grid-template-columns: repeat(5, 1fr);
-      }
-      .button-dock .sub-row {
-        display: contents;
-      }
-    }
+    #copyReportButton { background: #0284c7; color: #fff; }
+    #shareButton { background: #059669; color: #fff; }
+    #saveButton { background: #d97706; color: #fff; }
+    #loadButton { background: #475569; color: #fff; }
+    #loadButton.ready { background: #0e7490; }
+    #loadButton.disabled { opacity: 0.45; cursor: not-allowed; }
   </style>
 </head>
 <body>
-  <div class="top-bar">
-    <a class="home-link" href="./index.html">← 메뉴</a>
-    <div id="revisionDisplay"></div>
-  </div>
-  <h2 id="mainTitle">FUEL SHIM 계산</h2>
-
-  <div class="type-selector">
-    <select id="typeSelect" aria-label="엔진 기종 선택">
-      <option value="2.5" data-key="22CDF">22CDF (/2.5)</option>
-      <option value="1.5" data-key="27DF">27DF (/1.5)</option>
-      <option value="0.8" data-key="35DF">35DF (/0.8)</option>
-      <option value="2" data-key="21/32_25/33">21/32 & 25/33 (/2)</option>
-      <option value="1.3" data-key="32/40">32/40 (/1.3)</option>
-    </select>
-  </div>
-
-  <div class="number-control">
-    <button id="decrementTarget" type="button" aria-label="목표값 감소">-</button>
-    <input type="number" id="targetNumber" value="144" pattern="[0-9]*" inputmode="numeric" aria-label="목표 Pmax">
-    <button id="incrementTarget" type="button" aria-label="목표값 증가">+</button>
-    <span id="averageDisplay">평균:0.0(0개)</span>
-    <label class="ignore-checkbox">
-      <input type="checkbox" id="ignoreCheckbox" aria-label="0.1 이하 값 무시">
-      ±0.1 이하 무시
-    </label>
-  </div>
-
-  <div class="env-card">
-    <div class="env-header">
-      <label class="env-toggle">
-        <input type="checkbox" id="envEnable">
-        FAT 기상 환경 예측 보정 (ΔT·ΔRH·ΔP)
-      </label>
-      <span id="envDeltaSummary" class="env-summary">미적용 (ΔP 0.00 bar)</span>
-    </div>
-    <div id="envGrid" class="env-grid">
-      <div class="env-field">
-        <label for="deltaTemp">기온차 ΔT (°C)</label>
-        <input id="deltaTemp" type="number" step="0.5" value="0">
+  <div class="app">
+    <div class="top-bar">
+      <a class="home-link" href="./index.html">← 메뉴</a>
+      <div class="title-wrap">
+        <h1 id="mainTitle">FUEL SHIM 계산</h1>
+        <span id="revisionDisplay">Rev 28-Mobile</span>
       </div>
-      <div class="env-field">
-        <label for="deltaRh">습도차 ΔRH (%p)</label>
-        <input id="deltaRh" type="number" step="1" value="0">
-      </div>
-      <div class="env-field">
-        <label for="deltaBaro">대기압차 ΔP (hPa)</label>
-        <input id="deltaBaro" type="number" step="1" value="0">
+      <div class="top-actions">
+        <button id="resetButton" class="icon-btn danger" type="button">초기화</button>
       </div>
     </div>
+
+    <div class="ctrl-card">
+      <div class="ctrl-row">
+        <select id="typeSelect" aria-label="엔진 기종 선택">
+          <option value="2.5" data-key="22CDF">22CDF (/2.5)</option>
+          <option value="1.5" data-key="27DF">27DF (/1.5)</option>
+          <option value="0.8" data-key="35DF">35DF (/0.8)</option>
+          <option value="2" data-key="21/32_25/33">21/32 & 25/33 (/2)</option>
+          <option value="1.3" data-key="32/40">32/40 (/1.3)</option>
+        </select>
+        <div class="target-box">
+          <button id="decrementTarget" class="step-btn" type="button" aria-label="목표값 감소">-</button>
+          <input id="targetNumber" type="number" value="144" inputmode="numeric" aria-label="목표 Pmax">
+          <button id="incrementTarget" class="step-btn" type="button" aria-label="목표값 증가">+</button>
+        </div>
+      </div>
+
+      <div class="meta-row">
+        <span id="averageDisplay">평균: 0.0 (0개)</span>
+        <label class="chk-label">
+          <input id="ignoreCheckbox" type="checkbox">
+          ±0.1 이하 무시
+        </label>
+      </div>
+
+      <div class="env-box">
+        <div class="env-head">
+          <label class="chk-label">
+            <input id="envEnable" type="checkbox">
+            FAT 기상 보정 (ΔT·ΔRH·ΔP)
+          </label>
+          <span id="envDeltaSummary">미적용 (0.00 bar)</span>
+        </div>
+        <div id="envGrid" class="env-grid">
+          <div class="env-field">
+            <label for="deltaTemp">ΔT (°C)</label>
+            <input id="deltaTemp" type="number" step="0.5" value="0">
+          </div>
+          <div class="env-field">
+            <label for="deltaRh">ΔRH (%p)</label>
+            <input id="deltaRh" type="number" step="1" value="0">
+          </div>
+          <div class="env-field">
+            <label for="deltaBaro">ΔP (hPa)</label>
+            <input id="deltaBaro" type="number" step="1" value="0">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bed-tabs" id="bedTabs">
+      <button class="bed-tab active" data-bed="0" type="button">1번 베드<span class="cnt">0/9</span></button>
+      <button class="bed-tab" data-bed="1" type="button">2번 베드<span class="cnt">0/9</span></button>
+      <button class="bed-tab" data-bed="2" type="button">3번 베드<span class="cnt">0/9</span></button>
+      <button class="bed-tab" data-bed="3" type="button">4번 베드<span class="cnt">0/9</span></button>
+    </div>
+
+    <div class="cyl-card">
+      <div class="cyl-head">
+        <span>CYL</span>
+        <span>실측 Pmax (3자리)</span>
+        <span>SHIM (mm)</span>
+      </div>
+      <div id="cylRows" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
   </div>
 
-  <div class="groups-container" id="bedContainer"></div>
-
-  <div class="button-dock">
-    <button id="resetButton" type="button">초기화</button>
-    <button id="copyReportButton" type="button">보고서 생성</button>
-    <div class="sub-row">
-      <button id="shareButton" type="button">데이터 공유</button>
-      <button id="saveButton" type="button">데이터 저장</button>
-      <button id="loadButton" type="button" class="disabled">데이터 불러오기</button>
-    </div>
+  <div class="dock">
+    <button id="copyReportButton" type="button">📋 복사</button>
+    <button id="shareButton" type="button">🔗 공유</button>
+    <button id="saveButton" type="button">💾 저장</button>
+    <button id="loadButton" type="button" class="disabled">📂 불러오기</button>
   </div>
 
   <script>
     (() => {
-      const revision = '27-PWA';
-      let initialPrefix = '14';
-      const MAX_LINES = 9;
       const STORAGE_KEY = 'fuelShimData';
-      const bedCount = 4;
-
+      const MAX_LINES = 9;
+      const BED_COUNT = 4;
       const ENV_PROFILES = {
         '22CDF': { tempCoeff: -0.28, vaporCoeff: 0.04, baroCoeff: 0.04 },
         '27DF': { tempCoeff: -0.35, vaporCoeff: 0.05, baroCoeff: 0.05 },
@@ -372,19 +233,11 @@
         '32/40': { tempCoeff: -0.4, vaporCoeff: 0.055, baroCoeff: 0.055 },
       };
 
-      const revisionDisplay = document.getElementById('revisionDisplay');
-      const targetInput = document.getElementById('targetNumber');
-      const averageDisplay = document.getElementById('averageDisplay');
-      const bedContainer = document.getElementById('bedContainer');
-      const decrementTargetBtn = document.getElementById('decrementTarget');
-      const incrementTargetBtn = document.getElementById('incrementTarget');
-      const resetButton = document.getElementById('resetButton');
-      const copyReportButton = document.getElementById('copyReportButton');
-      const shareButton = document.getElementById('shareButton');
-      const saveButton = document.getElementById('saveButton');
-      const loadButton = document.getElementById('loadButton');
+      const bedsData = Array.from({ length: BED_COUNT }, () => Array(MAX_LINES).fill(''));
+      let activeBed = 0;
+
       const typeSelect = document.getElementById('typeSelect');
-      const mainTitle = document.getElementById('mainTitle');
+      const targetInput = document.getElementById('targetNumber');
       const ignoreCheckbox = document.getElementById('ignoreCheckbox');
       const envEnable = document.getElementById('envEnable');
       const envGrid = document.getElementById('envGrid');
@@ -392,289 +245,239 @@
       const deltaTempInput = document.getElementById('deltaTemp');
       const deltaRhInput = document.getElementById('deltaRh');
       const deltaBaroInput = document.getElementById('deltaBaro');
+      const averageDisplay = document.getElementById('averageDisplay');
+      const mainTitle = document.getElementById('mainTitle');
+      const cylRows = document.getElementById('cylRows');
+      const loadButton = document.getElementById('loadButton');
 
-      let debounceTimeout;
+      const satVapor = (t) => 6.1078 * Math.pow(10, (7.5 * t) / (t + 237.3));
 
-      const saturationVaporPressureHpa = (tempC) => 6.1078 * Math.pow(10, (7.5 * tempC) / (tempC + 237.3));
-
-      const computeEnvTotalDeltaP = () => {
+      const computeEnvDeltaP = () => {
         if (!envEnable.checked) return 0;
         const opt = typeSelect.options[typeSelect.selectedIndex];
-        const key = opt?.dataset?.key || '32/40';
-        const prof = ENV_PROFILES[key] || ENV_PROFILES['32/40'];
-        const dtRaw = parseFloat(deltaTempInput.value);
-        const drhRaw = parseFloat(deltaRhInput.value);
-        const dpRaw = parseFloat(deltaBaroInput.value);
-        const safeDt = Number.isFinite(dtRaw) ? Math.max(-50, Math.min(50, dtRaw)) : 0;
-        const safeDrh = Number.isFinite(drhRaw) ? Math.max(-100, Math.min(100, drhRaw)) : 0;
-        const safeDp = Number.isFinite(dpRaw) ? Math.max(-150, Math.min(150, dpRaw)) : 0;
-        const baseSat = saturationVaporPressureHpa(25 + safeDt);
-        const deltaVaporHpa = (safeDrh / 100) * baseSat;
-        const deltaPT = Number((prof.tempCoeff * safeDt).toFixed(2));
-        const deltaPRh = Number((-prof.vaporCoeff * deltaVaporHpa).toFixed(2));
-        const deltaPBaro = Number((prof.baroCoeff * safeDp).toFixed(2));
-        return Number((deltaPT + deltaPRh + deltaPBaro).toFixed(2));
+        const prof = ENV_PROFILES[opt?.dataset?.key || '32/40'] || ENV_PROFILES['32/40'];
+        const dt = Math.max(-50, Math.min(50, parseFloat(deltaTempInput.value) || 0));
+        const drh = Math.max(-100, Math.min(100, parseFloat(deltaRhInput.value) || 0));
+        const dp = Math.max(-150, Math.min(150, parseFloat(deltaBaroInput.value) || 0));
+        const deltaVapor = (drh / 100) * satVapor(25 + dt);
+        const dT = Number((prof.tempCoeff * dt).toFixed(2));
+        const dRh = Number((-prof.vaporCoeff * deltaVapor).toFixed(2));
+        const dBaro = Number((prof.baroCoeff * dp).toFixed(2));
+        return Number((dT + dRh + dBaro).toFixed(2));
       };
 
-      const calculateShimValue = (diff, divisor) => {
-        const rawValue = diff / divisor;
-        const integerPart = Math.trunc(rawValue);
-        const decimalPart = Math.abs(rawValue - integerPart);
-        let adjustedScaled = integerPart;
-        if (decimalPart >= 0.7) {
-          adjustedScaled += rawValue > 0 ? 1 : -1;
-        }
-        return adjustedScaled / 10;
+      const calcShim = (diff, divisor) => {
+        const raw = diff / divisor;
+        const intPart = Math.trunc(raw);
+        const decPart = Math.abs(raw - intPart);
+        let adj = intPart;
+        if (decPart >= 0.7) adj += raw > 0 ? 1 : -1;
+        return adj / 10;
       };
 
-      const updateEnvUi = () => {
-        envGrid.classList.toggle('open', envEnable.checked);
-        const dp = computeEnvTotalDeltaP();
-        if (!envEnable.checked) {
-          envDeltaSummary.textContent = '미적용 (ΔP 0.00 bar)';
-        } else {
-          envDeltaSummary.textContent = `예측 보정: ${dp > 0 ? '+' : ''}${dp.toFixed(2)} bar`;
-        }
+      const formatShimResult = (rawStr, target, divisor, envDp, ignoreSmall) => {
+        const s = (rawStr || '').trim();
+        if (!s) return { text: '', cls: '' };
+        if (!/^\d{3}$/.test(s)) return { text: s.length < 3 ? '입력중' : '오류', cls: 'err' };
+        const n = parseInt(s, 10);
+        const val = calcShim(target - (n + envDp), divisor);
+        if (ignoreSmall && Math.abs(val) <= 0.1) return { text: '무시', cls: '' };
+        if (Math.abs(val) < 0.1) return { text: '0.0', cls: '' };
+        const str = (val > 0 ? '+' : '') + val.toFixed(1).replace(/\.0$/, '');
+        return { text: str, cls: val < 0 ? 'neg' : 'pos' };
       };
 
-      const updateAverage = () => {
-        const ignoreSmall = ignoreCheckbox.checked;
+      const getInitialPrefix = () => {
+        const t = (targetInput.value || '144').toString();
+        return t.slice(0, 2);
+      };
+
+      const updateSummaryAndTabs = () => {
         const divisor = parseFloat(typeSelect.value);
         const target = parseInt(targetInput.value, 10) || 144;
-        const envDeltaP = computeEnvTotalDeltaP();
-        let total = 0;
-        let validCount = 0;
-        let filteredCount = 0;
+        const ignoreSmall = ignoreCheckbox.checked;
+        const envDp = computeEnvDeltaP();
+        const typeName = typeSelect.options[typeSelect.selectedIndex].text.split(' ')[0];
+        mainTitle.textContent = `${typeName} FUEL SHIM`;
 
-        document.querySelectorAll('.input-numbers').forEach(input => {
-          const numbers = input.value.split('\n')
-            .map(line => line.trim())
-            .filter(line => line.length === 3 && !isNaN(parseInt(line, 10)))
-            .map(line => parseInt(line, 10));
+        envGrid.classList.toggle('open', envEnable.checked);
+        envDeltaSummary.textContent = envEnable.checked
+          ? `보정 ${envDp > 0 ? '+' : ''}${envDp.toFixed(2)} bar`
+          : '미적용 (0.00 bar)';
 
-          numbers.forEach(num => {
-            const pmaxCorrected = num + envDeltaP;
-            const result = calculateShimValue(target - pmaxCorrected, divisor);
-            validCount++;
-            total += num;
-            if (!(ignoreSmall && Math.abs(result) <= 0.1)) {
-              filteredCount++;
+        let sum = 0;
+        let validCnt = 0;
+        let filteredCnt = 0;
+
+        document.querySelectorAll('.bed-tab').forEach((tab, idx) => {
+          const filled = bedsData[idx].filter(v => /^\d{3}$/.test(v)).length;
+          tab.querySelector('.cnt').textContent = `${filled}/9`;
+          tab.classList.toggle('active', idx === activeBed);
+          bedsData[idx].forEach(v => {
+            if (/^\d{3}$/.test(v)) {
+              const n = parseInt(v, 10);
+              validCnt++;
+              sum += n;
+              const sh = calcShim(target - (n + envDp), divisor);
+              if (!(ignoreSmall && Math.abs(sh) <= 0.1)) filteredCnt++;
             }
           });
         });
 
-        const average = validCount > 0 ? (total / validCount).toFixed(1) : '0.0';
-        averageDisplay.textContent = `평균:${average}(${filteredCount}개)`;
+        const avg = validCnt > 0 ? (sum / validCnt).toFixed(1) : '0.0';
+        averageDisplay.textContent = `평균: ${avg} (${filteredCnt}개)`;
       };
 
-      const calculateResults = (inputElement) => {
-        const wrapper = inputElement.closest('.group-wrapper');
-        const target = parseInt(targetInput.value, 10);
-        const numbers = inputElement.value.split('\n');
+      const updateActiveRowsResult = () => {
         const divisor = parseFloat(typeSelect.value);
-        const typeName = typeSelect.options[typeSelect.selectedIndex].text.split(' ')[0];
+        const target = parseInt(targetInput.value, 10) || 144;
         const ignoreSmall = ignoreCheckbox.checked;
-        const envDeltaP = computeEnvTotalDeltaP();
+        const envDp = computeEnvDeltaP();
 
-        const results = numbers.map((num, index) => {
-          const isLastLine = index === numbers.length - 1;
-          if (!isLastLine && num.length > 0 && num.length < 3 && /^\d+$/.test(num)) {
-            return { value: '오류!', style: 'invalid', isNegative: false };
-          }
-          if (num.length !== 3) return { value: num.length > 0 ? '⚠' : '', isNegative: false };
-          const n = parseInt(num, 10);
-          const pmaxCorrected = n + envDeltaP;
-          const result = calculateShimValue(target - pmaxCorrected, divisor);
+        for (let i = 0; i < MAX_LINES; i++) {
+          const resEl = document.getElementById(`res_${i}`);
+          if (!resEl) continue;
+          const r = formatShimResult(bedsData[activeBed][i], target, divisor, envDp, ignoreSmall);
+          resEl.textContent = r.text;
+          resEl.className = `cyl-res ${r.cls}`;
+        }
+        updateSummaryAndTabs();
+      };
 
-          let displayValue = Math.abs(result) >= 0.1 ? result.toFixed(1).replace(/\.0$/, '') : '';
-          if (ignoreSmall && Math.abs(result) <= 0.1) {
-            displayValue = '';
-          }
-          return {
-            value: displayValue,
-            isNegative: result < 0
-          };
+      const renderBedRows = () => {
+        cylRows.innerHTML = '';
+        for (let i = 0; i < MAX_LINES; i++) {
+          const row = document.createElement('div');
+          row.className = 'cyl-row';
+          row.innerHTML = `
+            <div class="cyl-no">${i + 1}</div>
+            <div class="cyl-input-wrap">
+              <input class="cyl-input" type="text" inputmode="numeric" maxlength="3" data-idx="${i}" value="${bedsData[activeBed][i]}" placeholder="${getInitialPrefix()}_">
+              <button class="cyl-clr" type="button" data-clr="${i}" aria-label="${i + 1}번 지우기">✕</button>
+            </div>
+            <div id="res_${i}" class="cyl-res"></div>
+          `;
+          cylRows.appendChild(row);
+        }
+
+        const inputs = Array.from(cylRows.querySelectorAll('.cyl-input'));
+        inputs.forEach((inp, idx) => {
+          inp.addEventListener('focus', () => {
+            if (inp.value === '') {
+              const prevVal = idx > 0 && /^\d{3}$/.test(bedsData[activeBed][idx - 1])
+                ? bedsData[activeBed][idx - 1].slice(0, 2)
+                : getInitialPrefix();
+              inp.value = prevVal;
+              bedsData[activeBed][idx] = prevVal;
+              requestAnimationFrame(() => inp.setSelectionRange(prevVal.length, prevVal.length));
+            }
+          });
+          inp.addEventListener('blur', () => {
+            if (inp.value.length > 0 && inp.value.length < 3) {
+              // 접두사만 남기고 비웠으면 정리
+              const prefix = idx > 0 && /^\d{3}$/.test(bedsData[activeBed][idx - 1])
+                ? bedsData[activeBed][idx - 1].slice(0, 2)
+                : getInitialPrefix();
+              if (inp.value === prefix) {
+                inp.value = '';
+                bedsData[activeBed][idx] = '';
+              }
+            }
+            updateActiveRowsResult();
+          });
+          inp.addEventListener('input', () => {
+            const cleaned = inp.value.replace(/\D/g, '').slice(0, 3);
+            if (cleaned !== inp.value) inp.value = cleaned;
+            bedsData[activeBed][idx] = cleaned;
+            updateActiveRowsResult();
+            if (cleaned.length === 3 && idx < MAX_LINES - 1) {
+              inputs[idx + 1].focus();
+            }
+          });
         });
 
-        const resultsContainer = wrapper.querySelector('.results');
-        resultsContainer.innerHTML = results.map(r => {
-          if (!r.value) return '<div></div>';
-          const classes = [];
-          if (r.style) classes.push(r.style);
-          if (r.isNegative) classes.push('negative');
-          return `<div class="${classes.join(' ')}">${r.value}</div>`;
-        }).join('');
+        cylRows.querySelectorAll('.cyl-clr').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const idx = Number(btn.dataset.clr);
+            bedsData[activeBed][idx] = '';
+            inputs[idx].value = '';
+            updateActiveRowsResult();
+            inputs[idx].focus();
+          });
+        });
 
-        mainTitle.textContent = `${typeName} FUEL SHIM 계산`;
+        updateActiveRowsResult();
       };
 
-      const recalculateAll = () => {
-        updateEnvUi();
-        document.querySelectorAll('.input-numbers').forEach(calculateResults);
-        updateAverage();
-      };
+      document.getElementById('bedTabs').addEventListener('click', (e) => {
+        const tab = e.target.closest('.bed-tab');
+        if (!tab) return;
+        activeBed = Number(tab.dataset.bed);
+        renderBedRows();
+      });
 
-      const handleFirstFocus = (event) => {
-        const input = event.target;
-        if (input.value === '') {
-          input.value = initialPrefix;
-          input.setSelectionRange(initialPrefix.length, initialPrefix.length);
-        }
-      };
+      document.getElementById('decrementTarget').addEventListener('click', () => {
+        targetInput.value = String(Math.max(1, (parseInt(targetInput.value, 10) || 144) - 1));
+        updateActiveRowsResult();
+      });
+      document.getElementById('incrementTarget').addEventListener('click', () => {
+        targetInput.value = String((parseInt(targetInput.value, 10) || 144) + 1);
+        updateActiveRowsResult();
+      });
+      [typeSelect, targetInput, ignoreCheckbox, envEnable, deltaTempInput, deltaRhInput, deltaBaroInput].forEach(el => {
+        el.addEventListener('input', updateActiveRowsResult);
+        el.addEventListener('change', updateActiveRowsResult);
+      });
 
-      const handleBlur = (event) => {
-        const input = event.target;
-        const lines = input.value.split('\n');
-        if (lines[lines.length - 1] === initialPrefix) {
-          lines.pop();
-          input.value = lines.join('\n');
-          calculateResults(input);
-          updateAverage();
-        }
-      };
-
-      const initializeInput = (inputElement) => {
-        inputElement.value = '';
-        inputElement.addEventListener('focus', handleFirstFocus);
-        inputElement.addEventListener('click', handleFirstFocus);
-        inputElement.addEventListener('blur', handleBlur);
-        inputElement.setAttribute('inputmode', 'numeric');
-      };
-
-      const adjustTargetNumber = (delta) => {
-        const currentValue = parseInt(targetInput.value, 10) || 144;
-        const newValue = Math.max(1, currentValue + delta);
-        targetInput.value = newValue;
-        initialPrefix = newValue.toString().slice(0, 2);
-        recalculateAll();
-      };
-
-      const handleInput = (event) => {
-        clearTimeout(debounceTimeout);
-        debounceTimeout = setTimeout(() => {
-          const input = event.target;
-          const val = input.value;
-          const isBackspace = event.inputType?.startsWith('delete') || event.key === 'Backspace';
-          const cursorPos = input.selectionStart;
-          const prevLines = val.split('\n');
-          let currentLine = 0;
-          let posInLine = cursorPos;
-          let accumulatedLength = 0;
-          for (; currentLine < prevLines.length; currentLine++) {
-            const lineLength = prevLines[currentLine].length + 1;
-            if (cursorPos <= accumulatedLength + lineLength) {
-              posInLine -= accumulatedLength;
-              break;
-            }
-            accumulatedLength += lineLength;
-          }
-
-          const values = val.replace(/[^\d\n]/g, '').split('\n')
-            .map(line => line.slice(0, 3))
-            .filter((line, index, arr) => index === arr.length - 1 || line.trim() !== '')
-            .slice(0, MAX_LINES);
-
-          let dynamicPrefix = initialPrefix;
-          if (values.length > 0 && values[values.length - 1].length === 3) {
-            dynamicPrefix = values[values.length - 1].slice(0, 2);
-          }
-
-          let newLineAdded = false;
-          if (!isBackspace && values.length < MAX_LINES && values[values.length - 1].length === 3 && values[values.length - 1] !== dynamicPrefix) {
-            values.push(dynamicPrefix);
-            newLineAdded = true;
-          }
-
-          const newValue = values.join('\n');
-          if (newValue !== val) {
-            input.value = newValue;
-            calculateResults(input);
-            let newCursorPos;
-            if (newLineAdded) {
-              newCursorPos = newValue.length;
-            } else {
-              const newLines = newValue.split('\n');
-              newCursorPos = 0;
-              for (let i = 0; i < currentLine; i++) {
-                newCursorPos += (newLines[i]?.length || 0) + 1;
-              }
-              newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
-            }
-            requestAnimationFrame(() => input.setSelectionRange(newCursorPos, newCursorPos));
-          } else {
-            calculateResults(input);
-          }
-          updateAverage();
-        }, 150);
-      };
-
-      const resetAll = () => {
+      document.getElementById('resetButton').addEventListener('click', () => {
+        if (!confirm('모든 베드 입력값을 초기화할까요?')) return;
         typeSelect.value = '2.5';
-        mainTitle.textContent = 'FUEL SHIM 계산';
+        targetInput.value = '144';
         ignoreCheckbox.checked = false;
         envEnable.checked = false;
         deltaTempInput.value = '0';
         deltaRhInput.value = '0';
         deltaBaroInput.value = '0';
-        document.querySelectorAll('.input-numbers').forEach(input => {
-          input.value = '';
-        });
+        for (let b = 0; b < BED_COUNT; b++) bedsData[b].fill('');
         window.history.replaceState({}, document.title, window.location.pathname);
-        recalculateAll();
-        alert('초기화 완료');
-      };
+        renderBedRows();
+      });
 
-      const generateReport = () => {
-        const target = targetInput.value;
-        const kstTime = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
-        const ignoreSmall = ignoreCheckbox.checked;
-        const envDp = computeEnvTotalDeltaP();
-        const envText = envEnable.checked
-          ? `적용 (ΔT ${deltaTempInput.value}°C, ΔRH ${deltaRhInput.value}%p, ΔP ${deltaBaroInput.value}hPa → ${envDp > 0 ? '+' : ''}${envDp.toFixed(2)} bar)`
-          : '미적용';
-        let report = `[${typeSelect.options[typeSelect.selectedIndex].text}] FUEL SHIM 보고서\n\n목표값: ${target}\n환경보정: ${envText}\n필터: ${ignoreSmall ? '±0.1 이하 무시' : '모든 결과 표시'}\n생성일: ${kstTime}\n\n`;
-
-        document.querySelectorAll('.input-group').forEach((group, idx) => {
-          const input = group.querySelector('.input-numbers');
-          const lines = input.value.split('\n')
-            .map(line => line.padEnd(3, ' ').slice(0, 3))
-            .filter(line => line.trim() !== '');
-          if (lines.length === 0) return;
-
-          const results = Array.from(group.querySelectorAll('.results div'))
-            .map(div => div.textContent.trim())
-            .slice(0, lines.length);
-
-          report += `${idx + 1}번 베드\n순번  입력값  결과\n------------------------\n`;
-          lines.forEach((v, i) => {
-            const result = results[i] === '⚠' ? '오류!' : results[i];
-            if (ignoreSmall && Math.abs(parseFloat(result)) <= 0.1) return;
-            report += `${(i + 1).toString().padStart(2, ' ')}    ${v.padStart(3, '0')}    ${result}\n`;
-          });
-          report += '\n';
-        });
-        return report;
-      };
-
-      const generateShareURL = () => {
-        const params = new URLSearchParams();
-        params.set('ver', 6);
-        params.set('type', typeSelect.value);
-        params.set('target', targetInput.value);
-        params.set('ignore', ignoreCheckbox.checked ? '1' : '0');
-        if (envEnable.checked) {
-          params.set('env', '1');
-          params.set('dt', deltaTempInput.value);
-          params.set('drh', deltaRhInput.value);
-          params.set('dp', deltaBaroInput.value);
+      const serializeBeds = () => bedsData.map(arr => {
+        let lastNonEmpty = -1;
+        for (let i = arr.length - 1; i >= 0; i--) {
+          if (arr[i] !== '') { lastNonEmpty = i; break; }
         }
-        document.querySelectorAll('.input-numbers').forEach((input, idx) => {
-          params.set(`bed${idx + 1}`, input.value.split('\n').join(',') || '');
-        });
-        return `${window.location.href.split('?')[0]}?${params.toString()}`;
+        return lastNonEmpty >= 0 ? arr.slice(0, lastNonEmpty + 1).join('\n') : '';
+      });
+
+      const hydrateBeds = (strArr) => {
+        for (let b = 0; b < BED_COUNT; b++) {
+          const lines = (strArr?.[b] || '').split('\n');
+          for (let i = 0; i < MAX_LINES; i++) {
+            bedsData[b][i] = (lines[i] || '').replace(/\D/g, '').slice(0, 3);
+          }
+        }
       };
 
-      const saveData = () => {
+      const updateLoadBtn = () => {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          try {
+            const d = JSON.parse(raw);
+            const dt = new Date(d.date);
+            loadButton.textContent = `📂 ${dt.getMonth() + 1}/${dt.getDate()}`;
+            loadButton.classList.remove('disabled');
+            loadButton.classList.add('ready');
+            return;
+          } catch {}
+        }
+        loadButton.textContent = '📂 불러오기';
+        loadButton.classList.add('disabled');
+        loadButton.classList.remove('ready');
+      };
+
+      document.getElementById('saveButton').addEventListener('click', () => {
         const data = {
           version: 6,
           date: Date.now(),
@@ -687,151 +490,110 @@
             drh: deltaRhInput.value,
             dp: deltaBaroInput.value,
           },
-          beds: Array.from(document.querySelectorAll('.input-numbers')).map(input => input.value)
+          beds: serializeBeds(),
         };
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-          alert('데이터 저장 완료');
-          updateLoadButton();
-        } catch (error) {
-          alert('데이터 저장 중 오류가 발생했습니다.');
-          console.error(error);
-        }
-      };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        updateLoadBtn();
+        alert('데이터가 저장되었습니다.');
+      });
 
-      const loadData = () => {
-        const savedData = localStorage.getItem(STORAGE_KEY);
-        if (!savedData) {
-          alert('저장된 데이터가 없습니다.');
-          return;
-        }
+      loadButton.addEventListener('click', () => {
+        if (loadButton.classList.contains('disabled')) return;
         try {
-          const data = JSON.parse(savedData);
+          const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
           if (data.version < 4) {
-            const typeMap = { '0.4': '2.5', '0.666': '1.5', '1.25': '0.8', '0.5': '2', '0.769': '1.3' };
-            data.type = typeMap[data.type] || '2.5';
+            const map = { '0.4': '2.5', '0.666': '1.5', '1.25': '0.8', '0.5': '2', '0.769': '1.3' };
+            data.type = map[data.type] || '2.5';
           }
           typeSelect.value = data.type || '2.5';
           targetInput.value = data.target || '144';
-          initialPrefix = targetInput.value.toString().slice(0, 2);
           ignoreCheckbox.checked = Boolean(data.ignoreSmall);
           envEnable.checked = Boolean(data.env?.enabled);
           deltaTempInput.value = data.env?.dt ?? '0';
           deltaRhInput.value = data.env?.drh ?? '0';
           deltaBaroInput.value = data.env?.dp ?? '0';
-          document.querySelectorAll('.input-numbers').forEach((input, index) => {
-            input.value = data.beds?.[index] || '';
-          });
-          recalculateAll();
-          alert('데이터 불러오기 완료');
-        } catch (error) {
-          alert('저장된 데이터를 불러오는 중 오류가 발생했습니다.');
-          console.error(error);
+          hydrateBeds(data.beds);
+          renderBedRows();
+          alert('저장된 데이터를 불러왔습니다.');
+        } catch {
+          alert('불러오기 오류');
         }
-      };
+      });
 
-      const loadDataFromURL = () => {
-        const params = new URLSearchParams(window.location.search);
+      document.getElementById('copyReportButton').addEventListener('click', async () => {
+        const divisor = parseFloat(typeSelect.value);
+        const target = parseInt(targetInput.value, 10) || 144;
+        const ignoreSmall = ignoreCheckbox.checked;
+        const envDp = computeEnvDeltaP();
+        const envText = envEnable.checked
+          ? `적용 (ΔT ${deltaTempInput.value}°C, ΔRH ${deltaRhInput.value}%p, ΔP ${deltaBaroInput.value}hPa → ${envDp > 0 ? '+' : ''}${envDp.toFixed(2)} bar)`
+          : '미적용';
+        let report = `[${typeSelect.options[typeSelect.selectedIndex].text}] FUEL SHIM 보고서\n목표값: ${target}\n환경보정: ${envText}\n생성일: ${new Date().toLocaleString('ko-KR')}\n\n`;
+        let any = false;
+        bedsData.forEach((arr, bIdx) => {
+          const validRows = [];
+          arr.forEach((v, i) => {
+            if (!/^\d{3}$/.test(v)) return;
+            const r = formatShimResult(v, target, divisor, envDp, false);
+            if (ignoreSmall && (r.text === '0.0' || Math.abs(parseFloat(r.text)) <= 0.1)) return;
+            validRows.push(`${String(i + 1).padStart(2, ' ')}    ${v}    ${r.text}`);
+          });
+          if (validRows.length > 0) {
+            any = true;
+            report += `${bIdx + 1}번 베드\n순번  입력값  결과\n------------------------\n${validRows.join('\n')}\n\n`;
+          }
+        });
+        if (!any) return alert('복사할 유효 데이터가 없습니다.');
+        try {
+          await navigator.clipboard.writeText(report);
+          alert('보고서가 클립보드에 복사되었습니다.');
+        } catch {
+          alert('복사 실패');
+        }
+      });
+
+      document.getElementById('shareButton').addEventListener('click', async () => {
+        const params = new URLSearchParams();
+        params.set('ver', 6);
+        params.set('type', typeSelect.value);
+        params.set('target', targetInput.value);
+        params.set('ignore', ignoreCheckbox.checked ? '1' : '0');
+        if (envEnable.checked) {
+          params.set('env', '1');
+          params.set('dt', deltaTempInput.value);
+          params.set('drh', deltaRhInput.value);
+          params.set('dp', deltaBaroInput.value);
+        }
+        serializeBeds().forEach((s, idx) => params.set(`bed${idx + 1}`, s.split('\n').join(',')));
+        const url = `${window.location.href.split('?')[0]}?${params.toString()}`;
+        try {
+          await navigator.clipboard.writeText(url);
+          alert('공유 URL이 복사되었습니다.');
+        } catch {
+          alert('URL 복사 실패');
+        }
+      });
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.toString()) {
         if (params.get('type')) {
-          const typeMap = { '0.4': '2.5', '0.666': '1.5', '1.25': '0.8', '0.5': '2', '0.769': '1.3' };
-          typeSelect.value = typeMap[params.get('type')] || params.get('type');
+          const map = { '0.4': '2.5', '0.666': '1.5', '1.25': '0.8', '0.5': '2', '0.769': '1.3' };
+          typeSelect.value = map[params.get('type')] || params.get('type');
         }
-        const target = params.get('target');
-        if (target) {
-          targetInput.value = target;
-          initialPrefix = target.slice(0, 2);
-        }
+        if (params.get('target')) targetInput.value = params.get('target');
         ignoreCheckbox.checked = params.get('ignore') === '1';
         envEnable.checked = params.get('env') === '1';
         deltaTempInput.value = params.get('dt') || '0';
         deltaRhInput.value = params.get('drh') || '0';
         deltaBaroInput.value = params.get('dp') || '0';
-        document.querySelectorAll('.input-numbers').forEach((input, index) => {
-          const bedData = params.get(`bed${index + 1}`);
-          input.value = bedData ? bedData.split(',').join('\n') : '';
-        });
-        recalculateAll();
-      };
+        hydrateBeds([1, 2, 3, 4].map(n => (params.get(`bed${n}`) || '').split(',').join('\n')));
+      }
 
-      const updateLoadButton = () => {
-        const savedData = localStorage.getItem(STORAGE_KEY);
-        if (savedData) {
-          try {
-            const data = JSON.parse(savedData);
-            const saveDate = new Date(data.date);
-            loadButton.textContent = `${saveDate.getMonth() + 1}/${saveDate.getDate()} 불러오기`;
-            loadButton.classList.remove('disabled');
-          } catch {
-            loadButton.textContent = '데이터 불러오기';
-            loadButton.classList.add('disabled');
-          }
-        } else {
-          loadButton.textContent = '데이터 불러오기';
-          loadButton.classList.add('disabled');
-        }
-      };
-
-      const initBeds = () => {
-        let bedHTML = '';
-        for (let i = 1; i <= bedCount; i++) {
-          bedHTML += `
-            <div class="group-wrapper">
-              <div class="numbering">${Array.from({ length: MAX_LINES }, (_, j) => `${j + 1}.`).join('\n')}</div>
-              <div class="input-group">
-                <div class="bed-label">${i}번 베드</div>
-                <textarea class="input-numbers"></textarea>
-                <div class="results"></div>
-              </div>
-            </div>
-          `;
-        }
-        bedContainer.innerHTML = bedHTML;
-        document.querySelectorAll('.input-numbers').forEach(input => {
-          initializeInput(input);
-          input.addEventListener('input', handleInput);
-          input.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
-        });
-      };
-
-      const init = () => {
-        revisionDisplay.textContent = `Rev: ${revision}`;
-        initBeds();
-        decrementTargetBtn.addEventListener('click', () => adjustTargetNumber(-1));
-        incrementTargetBtn.addEventListener('click', () => adjustTargetNumber(1));
-        targetInput.addEventListener('input', () => {
-          initialPrefix = (targetInput.value || '14').toString().slice(0, 2);
-          recalculateAll();
-        });
-        resetButton.addEventListener('click', resetAll);
-        copyReportButton.addEventListener('click', () => {
-          navigator.clipboard.writeText(generateReport())
-            .then(() => alert('보고서가 클립보드에 복사되었습니다.'))
-            .catch(() => alert('보고서 복사 중 오류가 발생했습니다.'));
-        });
-        shareButton.addEventListener('click', () => {
-          navigator.clipboard.writeText(generateShareURL())
-            .then(() => alert('공유 URL이 클립보드에 복사되었습니다.'))
-            .catch(() => alert('URL 복사 중 오류가 발생했습니다.'));
-        });
-        saveButton.addEventListener('click', saveData);
-        loadButton.addEventListener('click', () => {
-          if (!loadButton.classList.contains('disabled')) loadData();
-        });
-        ignoreCheckbox.addEventListener('change', recalculateAll);
-        typeSelect.addEventListener('change', recalculateAll);
-        [envEnable, deltaTempInput, deltaRhInput, deltaBaroInput].forEach(el =>
-          el.addEventListener('input', recalculateAll)
-        );
-        envEnable.addEventListener('change', recalculateAll);
-        if (window.location.search) loadDataFromURL();
-        updateLoadButton();
-        recalculateAll();
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register('./sw.js').catch(() => {});
-        }
-      };
-
-      document.addEventListener('DOMContentLoaded', init);
+      updateLoadBtn();
+      renderBedRows();
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      }
     })();
   </script>
 </body>

@@ -2,82 +2,87 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0f172a">
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
   <title>T/C 부하 역산 & 알람·조치 가이드</title>
   <style>
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; touch-action: manipulation; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
       margin: 0;
-      padding: 12px 12px 32px;
+      padding: 10px 10px 32px;
       background: #0f172a;
-      color: #e2e8f0;
+      color: #f1f5f9;
     }
-    .wrap { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
-    .top-bar { display: flex; align-items: center; justify-content: space-between; }
-    .home-link { text-decoration: none; color: #38bdf8; font-weight: 800; font-size: 13px; }
-    h2 { margin: 0; font-size: 17px; color: #f8fafc; }
+    .wrap { max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+    .top-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .home-link {
+      text-decoration: none; color: #38bdf8; font-weight: 800; font-size: 14px;
+      padding: 8px 10px; background: #1e293b; border-radius: 8px; border: 1px solid #334155;
+    }
+    h1 { margin: 0; font-size: 17px; font-weight: 900; color: #f8fafc; }
+
     .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
     .tab-btn {
-      padding: 9px 6px;
-      border-radius: 8px;
-      border: 1px solid #334155;
-      background: #1e293b;
-      color: #94a3b8;
-      font-weight: 800;
-      font-size: 12px;
-      cursor: pointer;
+      min-height: 44px; border-radius: 10px; border: 1px solid #334155;
+      background: #1e293b; color: #94a3b8; font-weight: 800; font-size: 13px; cursor: pointer;
     }
     .tab-btn.active { background: #0284c7; border-color: #38bdf8; color: #fff; }
+
     .card {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 10px;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 12px;
+      display: flex; flex-direction: column; gap: 10px;
     }
     .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    label { display: block; font-size: 11px; color: #94a3b8; font-weight: 700; margin-bottom: 3px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    label { display: block; font-size: 11px; color: #94a3b8; font-weight: 800; margin-bottom: 3px; }
     select, input {
-      width: 100%;
-      padding: 8px;
-      border-radius: 6px;
-      border: 1px solid #475569;
-      background: #0f172a;
-      color: #f8fafc;
-      font-size: 13px;
-      font-weight: 700;
+      width: 100%; min-height: 44px; padding: 8px 10px; border-radius: 8px;
+      border: 1px solid #475569; background: #0f172a; color: #f8fafc;
+      font-size: 16px; font-weight: 800;
     }
+
+    .quick-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .q-btn {
+      min-height: 40px; border-radius: 8px; border: 1px solid #475569;
+      background: #0f172a; color: #cbd5e1; font-size: 13px; font-weight: 800; cursor: pointer;
+    }
+    .q-btn:active { background: #1d4ed8; color: #fff; }
+
     .kpi-box {
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      padding: 12px;
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
-      text-align: center;
+      background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 12px;
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; text-align: center;
     }
-    .kpi-val { font-size: 22px; font-weight: 900; color: #38bdf8; font-family: monospace; }
-    .kpi-lbl { font-size: 11px; color: #94a3b8; }
-    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th, td { padding: 7px 6px; border-bottom: 1px solid #334155; text-align: left; }
+    .kpi-val { font-size: 26px; font-weight: 900; color: #38bdf8; font-family: monospace; }
+    .kpi-lbl { font-size: 11px; color: #94a3b8; font-weight: 700; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 8px 6px; border-bottom: 1px solid #334155; text-align: center; }
     th { color: #94a3b8; font-size: 11px; }
-    .alarm-val { font-family: monospace; font-weight: 800; color: #fbbf24; }
-    .guide-item {
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      padding: 10px;
+
+    /* 알람 카드형 레이아웃 (모바일 한눈에 보기) */
+    .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .chip {
+      min-height: 36px; padding: 6px 12px; border-radius: 999px; border: 1px solid #334155;
+      background: #0f172a; color: #94a3b8; font-size: 12px; font-weight: 800; cursor: pointer;
     }
-    .guide-title { font-weight: 900; color: #f87171; font-size: 13.5px; margin-bottom: 6px; }
-    .guide-sub { font-size: 11.5px; color: #94a3b8; font-weight: 700; margin: 4px 0 2px; }
-    ul { margin: 2px 0 0 16px; padding: 0; font-size: 12px; line-height: 1.5; }
+    .chip.active { background: #0284c7; border-color: #38bdf8; color: #fff; }
+
+    .alm-item {
+      background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 10px 12px;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .alm-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .alm-name { font-size: 14px; font-weight: 800; color: #f8fafc; }
+    .alm-limit { font-family: monospace; font-size: 13px; font-weight: 900; color: #fbbf24; text-align: right; }
+    .alm-norm { font-size: 12px; color: #94a3b8; }
+
+    .guide-item { background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 12px; }
+    .guide-title { font-weight: 900; color: #f87171; font-size: 14.5px; margin-bottom: 6px; }
+    .guide-sub { font-size: 12px; color: #38bdf8; font-weight: 800; margin: 6px 0 2px; }
+    ul { margin: 2px 0 0 18px; padding: 0; font-size: 13px; line-height: 1.55; color: #e2e8f0; }
     .hidden { display: none; }
   </style>
 </head>
@@ -85,14 +90,14 @@
   <div class="wrap">
     <div class="top-bar">
       <a class="home-link" href="./index.html">← 메뉴</a>
-      <h2>T/C 역산 · 알람 · 조치 가이드</h2>
-      <span style="width:36px;"></span>
+      <h1>T/C · 알람 · 트립 가이드</h1>
+      <span style="width:52px;"></span>
     </div>
 
     <div class="tabs">
-      <button class="tab-btn active" data-tab="tc">T/C 부하 역산</button>
-      <button class="tab-btn" data-tab="alarm">알람 포인트</button>
-      <button class="tab-btn" data-tab="trouble">트립 조치</button>
+      <button class="tab-btn active" data-tab="tc" type="button">T/C 역산</button>
+      <button class="tab-btn" data-tab="alarm" type="button">알람 기준</button>
+      <button class="tab-btn" data-tab="trouble" type="button">트립 조치</button>
     </div>
 
     <!-- Tab 1: T/C 부하 역산 -->
@@ -101,17 +106,24 @@
         <div>
           <label for="tcModel">T/C 모델</label>
           <select id="tcModel">
-            <option value="ST-6">ST-6 (nMax 34,500)</option>
-            <option value="ST-7">ST-7 (nMax 27,600)</option>
-            <option value="A145">A145 (nMax 34,500)</option>
-            <option value="A150" selected>A150 (nMax 28,500)</option>
-            <option value="A150-1">A150-1 (nMax 32,700)</option>
+            <option value="ST-6">ST-6 (34,500)</option>
+            <option value="ST-7">ST-7 (27,600)</option>
+            <option value="A145">A145 (34,500)</option>
+            <option value="A150" selected>A150 (28,500)</option>
+            <option value="A150-1">A150-1 (32,700)</option>
           </select>
         </div>
         <div>
-          <label for="tcRpmInput">T/C RPM (×10 자동보정)</label>
-          <input id="tcRpmInput" type="number" placeholder="예: 1826 또는 18260" value="18260">
+          <label for="tcRpmInput">T/C RPM (×10 자동)</label>
+          <input id="tcRpmInput" type="number" inputmode="numeric" value="1826">
         </div>
+      </div>
+
+      <div class="quick-row">
+        <button class="q-btn" data-delta="-500" type="button">-500</button>
+        <button class="q-btn" data-delta="-100" type="button">-100</button>
+        <button class="q-btn" data-delta="100" type="button">+100</button>
+        <button class="q-btn" data-delta="500" type="button">+500</button>
       </div>
 
       <div class="kpi-box">
@@ -126,14 +138,14 @@
       </div>
 
       <table>
-        <thead><tr><th>부하 구간</th><th>기준 T/C RPM</th><th>모니터 ×10</th><th>nMax%</th></tr></thead>
+        <thead><tr><th>부하</th><th>실제 RPM</th><th>모니터 ×10</th><th>nMax%</th></tr></thead>
         <tbody id="tcCurveBody"></tbody>
       </table>
     </div>
 
     <!-- Tab 2: 알람 포인트 -->
     <div id="tab_alarm" class="card hidden">
-      <div class="grid-2">
+      <div class="grid-3">
         <div>
           <label for="almEngType">엔진 기종</label>
           <select id="almEngType">
@@ -145,7 +157,7 @@
           </select>
         </div>
         <div>
-          <label for="almTcType">T/C 사양 (PI 63)</label>
+          <label for="almTcType">T/C 사양</label>
           <select id="almTcType">
             <option value="ST-6">ST-6</option>
             <option value="ST-7">ST-7</option>
@@ -154,26 +166,31 @@
             <option value="A150-1">A150-1</option>
           </select>
         </div>
+        <div>
+          <label for="almCyl">기통 수</label>
+          <select id="almCyl">
+            <option value="5">5H</option>
+            <option value="6">6H</option>
+            <option value="7">7H</option>
+            <option value="8">8H</option>
+            <option value="9" selected>9H</option>
+          </select>
+        </div>
       </div>
-      <div>
-        <label for="almCyl">기통 수 (PI 41 시동공기 기준)</label>
-        <select id="almCyl">
-          <option value="5">5H</option>
-          <option value="6">6H</option>
-          <option value="7">7H</option>
-          <option value="8">8H</option>
-          <option value="9" selected>9H</option>
-        </select>
+
+      <div class="filter-chips" id="almCatChips">
+        <button class="chip active" data-cat="all" type="button">전체</button>
+        <button class="chip" data-cat="press" type="button">압력</button>
+        <button class="chip" data-cat="temp" type="button">온도</button>
+        <button class="chip" data-cat="cyl" type="button">실린더·MB</button>
       </div>
-      <table>
-        <thead><tr><th>센서</th><th>정상(Full Load)</th><th>규정 알람</th></tr></thead>
-        <tbody id="alarmTableBody"></tbody>
-      </table>
+
+      <div id="alarmCardList" style="display:flex;flex-direction:column;gap:8px;"></div>
     </div>
 
     <!-- Tab 3: 트립 조치 가이드 -->
     <div id="tab_trouble" class="card hidden">
-      <input id="troubleSearch" type="search" placeholder="트립명/키워드 검색 (예: L.O, Tacho, OMD, Start)">
+      <input id="troubleSearch" type="search" placeholder="검색: L.O, Tacho, OMD, Start...">
       <div id="troubleList" style="display:flex;flex-direction:column;gap:8px;"></div>
     </div>
   </div>
@@ -197,7 +214,7 @@
         },
         {
           title: '윤활유 저압 트립 (L.O LOW PRESS. TRIP)',
-          causes: ['PI 62 압력 < 3.0 bar (정지/트립 한계)', '저온 환경 윤활유 고점도·스위치 오동작'],
+          causes: ['PI 62 압력 < 3.0 bar (트립 한계)', '저온 환경 윤활유 고점도·스위치 오동작'],
           actions: ['현장 아날로그 압력 게이지 실압 확인', '대기 중 프라이밍 펌프 릴리프 밸브 압력(≤3.0 bar) 및 결선 점검']
         },
         {
@@ -232,7 +249,8 @@
         }
       ];
 
-      // 탭 전환
+      let activeAlmCat = 'all';
+
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -243,7 +261,6 @@
         });
       });
 
-      // T/C 부하 역산
       const updateTcView = () => {
         const model = document.getElementById('tcModel').value;
         const pts = TC_CURVES[model];
@@ -273,16 +290,27 @@
           <tr>
             <td><strong>${l}%</strong></td>
             <td style="font-family:monospace;">${r.toLocaleString()}</td>
-            <td style="font-family:monospace;color:#38bdf8;">${Math.round(r / 10)}</td>
+            <td style="font-family:monospace;color:#38bdf8;font-weight:900;">${Math.round(r / 10)}</td>
             <td style="font-family:monospace;">${((r / nMax) * 100).toFixed(1)}%</td>
           </tr>
         `).join('');
       };
+
+      document.querySelectorAll('.q-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const inp = document.getElementById('tcRpmInput');
+          const cur = parseFloat(inp.value) || 0;
+          const delta = Number(btn.dataset.delta);
+          const scaledDelta = cur > 0 && cur <= 4500 ? Math.round(delta / 10) : delta;
+          inp.value = String(Math.max(0, cur + scaledDelta));
+          updateTcView();
+        });
+      });
+
       document.getElementById('tcModel').addEventListener('change', updateTcView);
       document.getElementById('tcRpmInput').addEventListener('input', updateTcView);
       updateTcView();
 
-      // 알람 포인트 테이블
       const updateAlarmView = () => {
         const eng = document.getElementById('almEngType').value;
         const tc = document.getElementById('almTcType').value;
@@ -294,31 +322,45 @@
         const mbHigh = (eng === 'H21/32' || eng === 'H25/33') ? 95.0 : 81.5;
 
         const rows = [
-          ['PI 63 T/C L.O 입구압', 'T/C 사양별', `Low < ${pi63Low.toFixed(1)} bar`],
-          ['PI 62 엔진 L.O 입구압', '4.0 ~ 5.0 bar', 'Low < 3.5 / High > 6.5 (Trip 3.0)'],
-          ['PI 61 L.O 필터 입구압', '4.1 ~ 6.0 bar', 'Low < 4.0 / 차압 ≥ 0.8 bar'],
-          ['PI 41 시동 공기압', '30 bar (감압 5~10)', `Low < ${pi41Low.toFixed(1)} bar`],
-          ['PI 51 F.O 입구압', '4.0 ~ 8.5 bar', 'Low < 1.0 / High > 11.0 bar'],
-          ['TI 81 T/C 입구 배기', '420 ~ 580 °C', 'High > 620 °C'],
-          ['TI 82 T/C 출구 배기', '230 ~ 410 °C', 'High > 450 °C'],
-          ['TI 62 L.O 입구 온도', '60 ~ 70 °C', 'High > 80 °C'],
-          ['TI 64 T/C L.O 출구', '75 ~ 96 °C', 'High > 105 °C'],
-          ['TI 76 HT 냉각수 출구', '75 ~ 85 °C', 'High > 90 °C (Trip > 95 °C)'],
-          ['TI 71 LT 냉각수 입구', '30 ~ 40 °C', 'High > 45 °C'],
-          ['PI 75 / PI 71 냉각수압', '2.0~4.5 / 1.0~4.5', `HT < 2.0 / LT < ${ltLow.toFixed(1)} bar`],
-          ['CYL 배기온도 / 편차', '300 ~ 450 °C', '150~620 °C / 편차 ±70 °C (주의 ±20)'],
-          ['MB 메인 베어링 온도', '65 ~ 85 °C', `High > ${mbHigh.toFixed(1)} °C`],
+          ['press', 'PI 63 T/C L.O 입구압', 'T/C 사양별', `Low < ${pi63Low.toFixed(1)} bar`],
+          ['press', 'PI 62 엔진 L.O 입구압', '4.0 ~ 5.0 bar', 'Low < 3.5 / High > 6.5 (Trip 3.0)'],
+          ['press', 'PI 61 L.O 필터 입구압', '4.1 ~ 6.0 bar', 'Low < 4.0 / 차압 ≥ 0.8 bar'],
+          ['press', 'PI 41 시동 공기압', '30 bar (감압 5~10)', `Low < ${pi41Low.toFixed(1)} bar`],
+          ['press', 'PI 51 F.O 입구압', '4.0 ~ 8.5 bar', 'Low < 1.0 / High > 11.0 bar'],
+          ['press', 'PI 75 / PI 71 냉각수압', 'HT 2.0~4.5 / LT 1.0~4.5', `HT < 2.0 / LT < ${ltLow.toFixed(1)} bar`],
+          ['temp', 'TI 81 T/C 입구 배기', '420 ~ 580 °C', 'High > 620 °C'],
+          ['temp', 'TI 82 T/C 출구 배기', '230 ~ 410 °C', 'High > 450 °C'],
+          ['temp', 'TI 62 L.O 입구 온도', '60 ~ 70 °C', 'High > 80 °C'],
+          ['temp', 'TI 64 T/C L.O 출구', '75 ~ 96 °C', 'High > 105 °C'],
+          ['temp', 'TI 76 HT 냉각수 출구', '75 ~ 85 °C', 'High > 90 °C (Trip > 95 °C)'],
+          ['temp', 'TI 71 LT 냉각수 입구', '30 ~ 40 °C', 'High > 45 °C'],
+          ['cyl', 'CYL 배기온도 / 편차', '300 ~ 450 °C', '150~620 °C / 편차 ±70 °C (주의 ±20)'],
+          ['cyl', 'MB 메인 베어링 온도', '65 ~ 85 °C', `High > ${mbHigh.toFixed(1)} °C`],
         ];
-        document.getElementById('alarmTableBody').innerHTML = rows.map(([s, norm, alm]) => `
-          <tr><td><strong>${s}</strong></td><td>${norm}</td><td class="alarm-val">${alm}</td></tr>
+        const filtered = rows.filter(([cat]) => activeAlmCat === 'all' || cat === activeAlmCat);
+        document.getElementById('alarmCardList').innerHTML = filtered.map(([, name, norm, alm]) => `
+          <div class="alm-item">
+            <div class="alm-top">
+              <span class="alm-name">${name}</span>
+              <span class="alm-limit">${alm}</span>
+            </div>
+            <div class="alm-norm">정상(Full Load): ${norm}</div>
+          </div>
         `).join('');
       };
+
+      document.getElementById('almCatChips').addEventListener('click', (e) => {
+        const chip = e.target.closest('.chip');
+        if (!chip) return;
+        activeAlmCat = chip.dataset.cat;
+        document.querySelectorAll('#almCatChips .chip').forEach(c => c.classList.toggle('active', c === chip));
+        updateAlarmView();
+      });
       ['almEngType', 'almTcType', 'almCyl'].forEach(id =>
         document.getElementById(id).addEventListener('change', updateAlarmView)
       );
       updateAlarmView();
 
-      // 트립 가이드
       const renderGuides = (kw = '') => {
         const q = kw.trim().toLowerCase();
         const filtered = GUIDES.filter(g =>

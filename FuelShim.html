@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#007bff">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
   <title>FUEL SHIM 계산</title>
   <style>
     body {
@@ -12,52 +15,159 @@
       background-color: #f4f4f9;
       color: #333;
       margin: 0;
-      padding-bottom: 120px;
+      padding-bottom: 125px;
+    }
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .home-link {
+      text-decoration: none;
+      color: #007bff;
+      font-weight: bold;
+      font-size: 13px;
     }
     h2 {
       color: #444;
-      margin-bottom: 8px;
+      margin: 4px 0 8px;
       text-align: center;
+    }
+    .type-selector {
+      text-align: center;
+      margin: 8px 0;
+    }
+    #typeSelect {
+      padding: 8px 12px;
+      border-radius: 20px;
+      border: 2px solid #007bff;
+      font-size: 14px;
+      background-color: white;
+      max-width: 280px;
+      width: 90%;
     }
     .number-control {
       display: flex;
       align-items: center;
       gap: 4px;
-      margin-bottom: 12px;
-      padding: 0 10px;
+      margin-bottom: 8px;
+      padding: 0 6px;
       justify-content: center;
-      flex-wrap: nowrap;
-      overflow-x: auto;
+      flex-wrap: wrap;
     }
-    .number-control input {
-      width: 35px;
-      height: 18px;
+    .number-control input[type="number"] {
+      width: 44px;
+      height: 28px;
       text-align: center;
-      padding: 3px;
+      padding: 2px;
       border: 2px solid #007bff;
       border-radius: 4px;
-      font-size: 13px;
+      font-size: 14px;
       -webkit-appearance: none;
       -moz-appearance: textfield;
       flex-shrink: 0;
     }
     .number-control button {
-      width: 30px !important;
-      height: 30px !important;
-      font-size: 18px !important;
-      padding: 0 !important;
+      width: 30px;
+      height: 30px;
+      font-size: 18px;
+      padding: 0;
       border: 2px solid #007bff;
       border-radius: 4px;
       background-color: #007bff;
       color: white;
       cursor: pointer;
       flex-shrink: 0;
-      min-width: 30px;
+    }
+    #averageDisplay {
+      margin: 0 6px;
+      color: #007bff;
+      font-weight: bold;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .ignore-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      color: #555;
+      white-space: nowrap;
+    }
+    .ignore-checkbox input {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      accent-color: #007bff;
+    }
+    .env-card {
+      max-width: 680px;
+      margin: 0 auto 10px;
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+    .env-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .env-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: bold;
+      color: #0f172a;
+      cursor: pointer;
+    }
+    .env-toggle input {
+      width: 16px;
+      height: 16px;
+      accent-color: #059669;
+    }
+    .env-summary {
+      font-weight: bold;
+      color: #0369a1;
+    }
+    .env-grid {
+      display: none;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #e2e8f0;
+    }
+    .env-grid.open {
+      display: grid;
+    }
+    .env-field {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .env-field label {
+      font-size: 11px;
+      color: #475569;
+      font-weight: bold;
+    }
+    .env-field input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 5px;
+      border: 1px solid #94a3b8;
+      border-radius: 4px;
+      font-size: 13px;
+      text-align: center;
     }
     .groups-container {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 6px;
     }
     .group-wrapper {
       display: flex;
@@ -89,8 +199,8 @@
       font-size: 13px;
     }
     .numbering {
-      margin-top: 11px !important;
-      width: 29px !important;
+      margin-top: 11px;
+      width: 29px;
       height: 416px;
       padding: 3px;
       border: 1px solid #ccc;
@@ -112,249 +222,226 @@
       flex-shrink: 0;
       box-sizing: border-box;
       min-width: 44px;
-      min-height: 44px;
       touch-action: manipulation;
     }
     .input-numbers {
-      width: 144px !important;
+      width: 144px;
       resize: none;
       background-color: white;
       margin-top: 2px;
     }
     .results {
-      width: 144px !important;
+      width: 144px;
       background-color: #f0f0f0;
+      overflow-y: hidden;
     }
-    .negative {
-      color: red !important;
-    }
-    .invalid {
-      color: red !important;
-      font-weight: bold;
-    }
-    .results div:empty {
-      height: 42px;
-      visibility: hidden;
-    }
-    #averageDisplay {
-      margin-left: 8px;
-      margin-right: 8px;
-      color: #007bff;
-      font-weight: bold;
-      font-size: 13px;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    #revisionDisplay {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      color: #666;
-      font-size: 12px;
-    }
-    .button-row {
+    .negative { color: red !important; }
+    .invalid { color: red !important; font-weight: bold; }
+    .results div:empty { height: 42px; visibility: hidden; }
+    #revisionDisplay { color: #666; font-size: 12px; }
+    .button-dock {
       position: fixed;
-      left: 10px;
-      right: 10px;
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      padding: 0 10px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(244, 244, 249, 0.96);
+      border-top: 1px solid #cbd5e1;
+      padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      z-index: 100;
     }
-    #buttonRow1 {
-      bottom: 60px;
+    .button-dock .sub-row {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
     }
-    #buttonRow2 {
-      bottom: 10px;
-    }
-    .button-row button {
-      flex: 1;
-      min-width: 90px;
-      max-width: 150px;
-      padding: 10px 12px;
+    .button-dock button {
+      padding: 10px 8px;
       border: none;
-      border-radius: 25px;
-      font-size: 13px;
+      border-radius: 22px;
+      font-size: 12.5px;
+      font-weight: bold;
       cursor: pointer;
-      transition: transform 0.2s;
       white-space: nowrap;
-    }
-    .button-row button:hover {
-      transform: translateY(-2px);
     }
     #resetButton { background-color: #dc3545; color: white; }
     #copyReportButton { background-color: #007bff; color: white; }
     #shareButton { background-color: #28a745; color: white; }
     #saveButton { background-color: #ffc107; color: black; }
     #loadButton { background-color: #17a2b8; color: white; }
-    #resetButtonLandscape { background-color: #dc3545; color: white; }
-    #copyReportButtonLandscape { background-color: #007bff; color: white; }
-    #shareButtonLandscape { background-color: #28a745; color: white; }
-    #saveButtonLandscape { background-color: #ffc107; color: black; }
-    #loadButtonLandscape { background-color: #17a2b8; color: white; }
-    #loadButton.disabled, #loadButtonLandscape.disabled {
+    #loadButton.disabled {
       background-color: #999 !important;
       cursor: not-allowed;
       opacity: 0.7;
     }
-    .ignore-checkbox {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 13px;
-      color: #666;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    .ignore-checkbox input {
-      width: 18px;
-      height: 18px;
-      margin: 0;
-      accent-color: #007bff;
-    }
-    .ignore-checkbox input:checked {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23007bff'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: center;
-      background-size: 14px;
-    }
     @media (orientation: landscape) {
-      .groups-container {
-        flex-direction: row !important;
-        gap: 2px !important;
-        margin: 0 10px;
+      body { padding-bottom: 70px; }
+      .groups-container { flex-direction: row; gap: 4px; margin: 0 6px; }
+      .group-wrapper { flex: 1; }
+      .group-wrapper:not(:first-child) .numbering { display: none; }
+      .input-numbers, .results { width: 82px; }
+      .button-dock {
+        grid-template-columns: repeat(5, 1fr);
       }
-      .group-wrapper {
-        width: auto !important;
-        flex: 1;
-        margin-right: 2px !important;
+      .button-dock .sub-row {
+        display: contents;
       }
-      .group-wrapper:not(:first-child) .numbering {
-        display: none !important;
-      }
-      .input-group {
-        margin-right: 0 !important;
-      }
-      .input-numbers,
-      .results {
-        width: 82px !important;
-      }
-      .button-row {
-        bottom: 5px !important;
-        flex-wrap: nowrap !important;
-        gap: 4px !important;
-        padding: 0 10px;
-      }
-      #buttonRow1, #buttonRow2 {
-        display: none !important;
-      }
-      #landscapeButtons {
-        display: flex !important;
-        width: calc(100% - 20px);
-      }
-    }
-    @media (orientation: portrait) {
-      #buttonRow1 button {
-        padding: 8px 10px !important;
-        font-size: 12px !important;
-      }
-    }
-    @media (max-width: 480px) {
-      .ignore-checkbox {
-        font-size: 12px;
-      }
-    }
-    #landscapeButtons {
-      display: none;
-    }
-    .type-selector {
-      text-align: center;
-      margin: 10px 0;
-    }
-    #typeSelect {
-      padding: 8px 12px;
-      border-radius: 20px;
-      border: 2px solid #007bff;
-      font-size: 14px;
-      background-color: white;
-      max-width: 280px;
-      width: 90%;
     }
   </style>
 </head>
 <body>
-  <div id="revisionDisplay"></div>
+  <div class="top-bar">
+    <a class="home-link" href="./index.html">← 메뉴</a>
+    <div id="revisionDisplay"></div>
+  </div>
   <h2 id="mainTitle">FUEL SHIM 계산</h2>
-  
+
   <div class="type-selector">
-    <select id="typeSelect">
-      <option value="2.5">22CDF (/2.5)</option>
-      <option value="1.5">27DF (/1.5)</option>
-      <option value="0.8">35DF (/0.8)</option>
-      <option value="2">21/32 & 25/33 (/2)</option>
-      <option value="1.3">32/40 (/1.3)</option>
+    <select id="typeSelect" aria-label="엔진 기종 선택">
+      <option value="2.5" data-key="22CDF">22CDF (/2.5)</option>
+      <option value="1.5" data-key="27DF">27DF (/1.5)</option>
+      <option value="0.8" data-key="35DF">35DF (/0.8)</option>
+      <option value="2" data-key="21/32_25/33">21/32 & 25/33 (/2)</option>
+      <option value="1.3" data-key="32/40">32/40 (/1.3)</option>
     </select>
   </div>
-  
+
   <div class="number-control">
-    <button id="decrementTarget" aria-label="목표값 감소">-</button>
-    <input type="number" id="targetNumber" value="144" pattern="[0-9]*" inputmode="numeric">
-    <button id="incrementTarget" aria-label="목표값 증가">+</button>
+    <button id="decrementTarget" type="button" aria-label="목표값 감소">-</button>
+    <input type="number" id="targetNumber" value="144" pattern="[0-9]*" inputmode="numeric" aria-label="목표 Pmax">
+    <button id="incrementTarget" type="button" aria-label="목표값 증가">+</button>
     <span id="averageDisplay">평균:0.0(0개)</span>
     <label class="ignore-checkbox">
       <input type="checkbox" id="ignoreCheckbox" aria-label="0.1 이하 값 무시">
       ±0.1 이하 무시
     </label>
   </div>
-  
+
+  <div class="env-card">
+    <div class="env-header">
+      <label class="env-toggle">
+        <input type="checkbox" id="envEnable">
+        FAT 기상 환경 예측 보정 (ΔT·ΔRH·ΔP)
+      </label>
+      <span id="envDeltaSummary" class="env-summary">미적용 (ΔP 0.00 bar)</span>
+    </div>
+    <div id="envGrid" class="env-grid">
+      <div class="env-field">
+        <label for="deltaTemp">기온차 ΔT (°C)</label>
+        <input id="deltaTemp" type="number" step="0.5" value="0">
+      </div>
+      <div class="env-field">
+        <label for="deltaRh">습도차 ΔRH (%p)</label>
+        <input id="deltaRh" type="number" step="1" value="0">
+      </div>
+      <div class="env-field">
+        <label for="deltaBaro">대기압차 ΔP (hPa)</label>
+        <input id="deltaBaro" type="number" step="1" value="0">
+      </div>
+    </div>
+  </div>
+
   <div class="groups-container" id="bedContainer"></div>
-  
-  <div class="button-row" id="buttonRow1">
-    <button id="resetButton">초기화</button>
-    <button id="copyReportButton">보고서 생성</button>
+
+  <div class="button-dock">
+    <button id="resetButton" type="button">초기화</button>
+    <button id="copyReportButton" type="button">보고서 생성</button>
+    <div class="sub-row">
+      <button id="shareButton" type="button">데이터 공유</button>
+      <button id="saveButton" type="button">데이터 저장</button>
+      <button id="loadButton" type="button" class="disabled">데이터 불러오기</button>
+    </div>
   </div>
-  <div class="button-row" id="buttonRow2">
-    <button id="shareButton">데이터 공유</button>
-    <button id="saveButton">데이터 저장</button>
-    <button id="loadButton" class="disabled">데이터 불러오기</button>
-  </div>
-  
-  <div class="button-row" id="landscapeButtons">
-    <button id="resetButtonLandscape">초기화</button>
-    <button id="copyReportButtonLandscape">보고서 생성</button>
-    <button id="shareButtonLandscape">데이터 공유</button>
-    <button id="saveButtonLandscape">데이터 저장</button>
-    <button id="loadButtonLandscape" class="disabled">데이터 불러오기</button>
-  </div>
-  
+
   <script>
     (() => {
-      const revision = '26k';
+      const revision = '27-PWA';
       let initialPrefix = '14';
       const MAX_LINES = 9;
       const STORAGE_KEY = 'fuelShimData';
       const bedCount = 4;
-      
+
+      const ENV_PROFILES = {
+        '22CDF': { tempCoeff: -0.28, vaporCoeff: 0.04, baroCoeff: 0.04 },
+        '27DF': { tempCoeff: -0.35, vaporCoeff: 0.05, baroCoeff: 0.05 },
+        '35DF': { tempCoeff: -0.42, vaporCoeff: 0.06, baroCoeff: 0.06 },
+        '21/32_25/33': { tempCoeff: -0.32, vaporCoeff: 0.045, baroCoeff: 0.045 },
+        '32/40': { tempCoeff: -0.4, vaporCoeff: 0.055, baroCoeff: 0.055 },
+      };
+
       const revisionDisplay = document.getElementById('revisionDisplay');
       const targetInput = document.getElementById('targetNumber');
       const averageDisplay = document.getElementById('averageDisplay');
       const bedContainer = document.getElementById('bedContainer');
       const decrementTargetBtn = document.getElementById('decrementTarget');
       const incrementTargetBtn = document.getElementById('incrementTarget');
-      const resetButtons = [document.getElementById('resetButton'), document.getElementById('resetButtonLandscape')];
-      const copyReportButtons = [document.getElementById('copyReportButton'), document.getElementById('copyReportButtonLandscape')];
-      const shareButtons = [document.getElementById('shareButton'), document.getElementById('shareButtonLandscape')];
-      const saveButtons = [document.getElementById('saveButton'), document.getElementById('saveButtonLandscape')];
-      const loadButtons = [document.getElementById('loadButton'), document.getElementById('loadButtonLandscape')];
+      const resetButton = document.getElementById('resetButton');
+      const copyReportButton = document.getElementById('copyReportButton');
+      const shareButton = document.getElementById('shareButton');
+      const saveButton = document.getElementById('saveButton');
+      const loadButton = document.getElementById('loadButton');
       const typeSelect = document.getElementById('typeSelect');
       const mainTitle = document.getElementById('mainTitle');
       const ignoreCheckbox = document.getElementById('ignoreCheckbox');
+      const envEnable = document.getElementById('envEnable');
+      const envGrid = document.getElementById('envGrid');
+      const envDeltaSummary = document.getElementById('envDeltaSummary');
+      const deltaTempInput = document.getElementById('deltaTemp');
+      const deltaRhInput = document.getElementById('deltaRh');
+      const deltaBaroInput = document.getElementById('deltaBaro');
 
       let debounceTimeout;
 
+      const saturationVaporPressureHpa = (tempC) => 6.1078 * Math.pow(10, (7.5 * tempC) / (tempC + 237.3));
+
+      const computeEnvTotalDeltaP = () => {
+        if (!envEnable.checked) return 0;
+        const opt = typeSelect.options[typeSelect.selectedIndex];
+        const key = opt?.dataset?.key || '32/40';
+        const prof = ENV_PROFILES[key] || ENV_PROFILES['32/40'];
+        const dtRaw = parseFloat(deltaTempInput.value);
+        const drhRaw = parseFloat(deltaRhInput.value);
+        const dpRaw = parseFloat(deltaBaroInput.value);
+        const safeDt = Number.isFinite(dtRaw) ? Math.max(-50, Math.min(50, dtRaw)) : 0;
+        const safeDrh = Number.isFinite(drhRaw) ? Math.max(-100, Math.min(100, drhRaw)) : 0;
+        const safeDp = Number.isFinite(dpRaw) ? Math.max(-150, Math.min(150, dpRaw)) : 0;
+        const baseSat = saturationVaporPressureHpa(25 + safeDt);
+        const deltaVaporHpa = (safeDrh / 100) * baseSat;
+        const deltaPT = Number((prof.tempCoeff * safeDt).toFixed(2));
+        const deltaPRh = Number((-prof.vaporCoeff * deltaVaporHpa).toFixed(2));
+        const deltaPBaro = Number((prof.baroCoeff * safeDp).toFixed(2));
+        return Number((deltaPT + deltaPRh + deltaPBaro).toFixed(2));
+      };
+
+      const calculateShimValue = (diff, divisor) => {
+        const rawValue = diff / divisor;
+        const integerPart = Math.trunc(rawValue);
+        const decimalPart = Math.abs(rawValue - integerPart);
+        let adjustedScaled = integerPart;
+        if (decimalPart >= 0.7) {
+          adjustedScaled += rawValue > 0 ? 1 : -1;
+        }
+        return adjustedScaled / 10;
+      };
+
+      const updateEnvUi = () => {
+        envGrid.classList.toggle('open', envEnable.checked);
+        const dp = computeEnvTotalDeltaP();
+        if (!envEnable.checked) {
+          envDeltaSummary.textContent = '미적용 (ΔP 0.00 bar)';
+        } else {
+          envDeltaSummary.textContent = `예측 보정: ${dp > 0 ? '+' : ''}${dp.toFixed(2)} bar`;
+        }
+      };
+
       const updateAverage = () => {
         const ignoreSmall = ignoreCheckbox.checked;
-        const selectedValue = parseFloat(typeSelect.value);
+        const divisor = parseFloat(typeSelect.value);
+        const target = parseInt(targetInput.value, 10) || 144;
+        const envDeltaP = computeEnvTotalDeltaP();
         let total = 0;
         let validCount = 0;
         let filteredCount = 0;
@@ -362,16 +449,14 @@
         document.querySelectorAll('.input-numbers').forEach(input => {
           const numbers = input.value.split('\n')
             .map(line => line.trim())
-            .filter(line => line.length === 3 && !isNaN(parseInt(line)))
-            .map(line => parseInt(line));
-          
+            .filter(line => line.length === 3 && !isNaN(parseInt(line, 10)))
+            .map(line => parseInt(line, 10));
+
           numbers.forEach(num => {
-            const diff = parseInt(targetInput.value) - num;
-            const result = Math.trunc((diff / selectedValue)) / 10;
-            
+            const pmaxCorrected = num + envDeltaP;
+            const result = calculateShimValue(target - pmaxCorrected, divisor);
             validCount++;
             total += num;
-            
             if (!(ignoreSmall && Math.abs(result) <= 0.1)) {
               filteredCount++;
             }
@@ -384,11 +469,12 @@
 
       const calculateResults = (inputElement) => {
         const wrapper = inputElement.closest('.group-wrapper');
-        const target = parseInt(targetInput.value);
+        const target = parseInt(targetInput.value, 10);
         const numbers = inputElement.value.split('\n');
-        const selectedValue = parseFloat(typeSelect.value);
+        const divisor = parseFloat(typeSelect.value);
         const typeName = typeSelect.options[typeSelect.selectedIndex].text.split(' ')[0];
         const ignoreSmall = ignoreCheckbox.checked;
+        const envDeltaP = computeEnvTotalDeltaP();
 
         const results = numbers.map((num, index) => {
           const isLastLine = index === numbers.length - 1;
@@ -396,27 +482,14 @@
             return { value: '오류!', style: 'invalid', isNegative: false };
           }
           if (num.length !== 3) return { value: num.length > 0 ? '⚠' : '', isNegative: false };
-          const n = parseInt(num);
-          const diff = target - n;
-          
-          // Modified calculation logic starts here
-          const rawValue = diff / selectedValue;
-          const scaledValue = rawValue ;
-          const integerPart = Math.trunc(scaledValue);
-          const decimalPart = Math.abs(scaledValue - integerPart);
-
-          let adjustedScaled = integerPart;
-          if (decimalPart >= 0.7) {
-            adjustedScaled += scaledValue > 0 ? 1 : -1;
-          }
-          const result = adjustedScaled / 10;
-          // Modified calculation logic ends here
+          const n = parseInt(num, 10);
+          const pmaxCorrected = n + envDeltaP;
+          const result = calculateShimValue(target - pmaxCorrected, divisor);
 
           let displayValue = Math.abs(result) >= 0.1 ? result.toFixed(1).replace(/\.0$/, '') : '';
-          if(ignoreSmall && Math.abs(result) <= 0.1) {
+          if (ignoreSmall && Math.abs(result) <= 0.1) {
             displayValue = '';
           }
-          
           return {
             value: displayValue,
             isNegative: result < 0
@@ -435,12 +508,10 @@
         mainTitle.textContent = `${typeName} FUEL SHIM 계산`;
       };
 
-      const initializeInput = (inputElement) => {
-        inputElement.value = '';
-        inputElement.addEventListener('focus', handleFirstFocus);
-        inputElement.addEventListener('click', handleFirstFocus);
-        inputElement.addEventListener('blur', handleBlur);
-        inputElement.setAttribute('inputmode', 'numeric');
+      const recalculateAll = () => {
+        updateEnvUi();
+        document.querySelectorAll('.input-numbers').forEach(calculateResults);
+        updateAverage();
       };
 
       const handleFirstFocus = (event) => {
@@ -458,16 +529,24 @@
           lines.pop();
           input.value = lines.join('\n');
           calculateResults(input);
+          updateAverage();
         }
       };
 
+      const initializeInput = (inputElement) => {
+        inputElement.value = '';
+        inputElement.addEventListener('focus', handleFirstFocus);
+        inputElement.addEventListener('click', handleFirstFocus);
+        inputElement.addEventListener('blur', handleBlur);
+        inputElement.setAttribute('inputmode', 'numeric');
+      };
+
       const adjustTargetNumber = (delta) => {
-        let currentValue = parseInt(targetInput.value) || 144;
+        const currentValue = parseInt(targetInput.value, 10) || 144;
         const newValue = Math.max(1, currentValue + delta);
         targetInput.value = newValue;
         initialPrefix = newValue.toString().slice(0, 2);
-        document.querySelectorAll('.input-numbers').forEach(input => calculateResults(input));
-        updateAverage();
+        recalculateAll();
       };
 
       const handleInput = (event) => {
@@ -489,23 +568,23 @@
             }
             accumulatedLength += lineLength;
           }
-          
-          let values = val.replace(/[^\d\n]/g, '').split('\n')
+
+          const values = val.replace(/[^\d\n]/g, '').split('\n')
             .map(line => line.slice(0, 3))
             .filter((line, index, arr) => index === arr.length - 1 || line.trim() !== '')
             .slice(0, MAX_LINES);
-            
+
           let dynamicPrefix = initialPrefix;
           if (values.length > 0 && values[values.length - 1].length === 3) {
             dynamicPrefix = values[values.length - 1].slice(0, 2);
           }
-          
+
           let newLineAdded = false;
           if (!isBackspace && values.length < MAX_LINES && values[values.length - 1].length === 3 && values[values.length - 1] !== dynamicPrefix) {
             values.push(dynamicPrefix);
             newLineAdded = true;
           }
-          
+
           const newValue = values.join('\n');
           if (newValue !== val) {
             input.value = newValue;
@@ -521,9 +600,7 @@
               }
               newCursorPos += Math.min(posInLine, newLines[currentLine]?.length || 0);
             }
-            requestAnimationFrame(() => {
-              input.setSelectionRange(newCursorPos, newCursorPos);
-            });
+            requestAnimationFrame(() => input.setSelectionRange(newCursorPos, newCursorPos));
           } else {
             calculateResults(input);
           }
@@ -535,37 +612,43 @@
         typeSelect.value = '2.5';
         mainTitle.textContent = 'FUEL SHIM 계산';
         ignoreCheckbox.checked = false;
+        envEnable.checked = false;
+        deltaTempInput.value = '0';
+        deltaRhInput.value = '0';
+        deltaBaroInput.value = '0';
         document.querySelectorAll('.input-numbers').forEach(input => {
           input.value = '';
-          calculateResults(input);
         });
         window.history.replaceState({}, document.title, window.location.pathname);
-        updateAverage();
+        recalculateAll();
         alert('초기화 완료');
       };
 
       const generateReport = () => {
         const target = targetInput.value;
-        const now = new Date();
-        const kstTime = now.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+        const kstTime = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
         const ignoreSmall = ignoreCheckbox.checked;
-        let report = `[${typeSelect.options[typeSelect.selectedIndex].text}] FUEL SHIM 보고서\n\n목표값: ${target}\n필터: ${ignoreSmall ? '±0.1 이하 무시' : '모든 결과 표시'}\n생성일: ${kstTime}\n\n`;
-        
+        const envDp = computeEnvTotalDeltaP();
+        const envText = envEnable.checked
+          ? `적용 (ΔT ${deltaTempInput.value}°C, ΔRH ${deltaRhInput.value}%p, ΔP ${deltaBaroInput.value}hPa → ${envDp > 0 ? '+' : ''}${envDp.toFixed(2)} bar)`
+          : '미적용';
+        let report = `[${typeSelect.options[typeSelect.selectedIndex].text}] FUEL SHIM 보고서\n\n목표값: ${target}\n환경보정: ${envText}\n필터: ${ignoreSmall ? '±0.1 이하 무시' : '모든 결과 표시'}\n생성일: ${kstTime}\n\n`;
+
         document.querySelectorAll('.input-group').forEach((group, idx) => {
           const input = group.querySelector('.input-numbers');
           const lines = input.value.split('\n')
             .map(line => line.padEnd(3, ' ').slice(0, 3))
             .filter(line => line.trim() !== '');
           if (lines.length === 0) return;
-          
+
           const results = Array.from(group.querySelectorAll('.results div'))
             .map(div => div.textContent.trim())
             .slice(0, lines.length);
-          
+
           report += `${idx + 1}번 베드\n순번  입력값  결과\n------------------------\n`;
           lines.forEach((v, i) => {
             const result = results[i] === '⚠' ? '오류!' : results[i];
-            if(ignoreSmall && Math.abs(parseFloat(result)) <= 0.1) return;
+            if (ignoreSmall && Math.abs(parseFloat(result)) <= 0.1) return;
             report += `${(i + 1).toString().padStart(2, ' ')}    ${v.padStart(3, '0')}    ${result}\n`;
           });
           report += '\n';
@@ -575,24 +658,35 @@
 
       const generateShareURL = () => {
         const params = new URLSearchParams();
-        params.set('ver', 5);
+        params.set('ver', 6);
         params.set('type', typeSelect.value);
         params.set('target', targetInput.value);
         params.set('ignore', ignoreCheckbox.checked ? '1' : '0');
+        if (envEnable.checked) {
+          params.set('env', '1');
+          params.set('dt', deltaTempInput.value);
+          params.set('drh', deltaRhInput.value);
+          params.set('dp', deltaBaroInput.value);
+        }
         document.querySelectorAll('.input-numbers').forEach((input, idx) => {
-          const value = input.value.split('\n').join(',');
-          params.set(`bed${idx + 1}`, value || '');
+          params.set(`bed${idx + 1}`, input.value.split('\n').join(',') || '');
         });
         return `${window.location.href.split('?')[0]}?${params.toString()}`;
       };
 
       const saveData = () => {
         const data = {
-          version: 5,
-          date: new Date().getTime(),
+          version: 6,
+          date: Date.now(),
           target: targetInput.value,
           type: typeSelect.value,
           ignoreSmall: ignoreCheckbox.checked,
+          env: {
+            enabled: envEnable.checked,
+            dt: deltaTempInput.value,
+            drh: deltaRhInput.value,
+            dp: deltaBaroInput.value,
+          },
           beds: Array.from(document.querySelectorAll('.input-numbers')).map(input => input.value)
         };
         try {
@@ -607,46 +701,40 @@
 
       const loadData = () => {
         const savedData = localStorage.getItem(STORAGE_KEY);
-        if (savedData) {
-          try {
-            const data = JSON.parse(savedData);
-            if(data.version < 4) {
-              const typeMap = {
-                '0.4': '2.5', '0.666': '1.5', 
-                '1.25': '0.8', '0.5': '2', '0.769': '1.3'
-              };
-              data.type = typeMap[data.type] || '2.5';
-            }
-            typeSelect.value = data.type || '2.5';
-            mainTitle.textContent = `${typeSelect.options[typeSelect.selectedIndex].text.split(' ')[0]} FUEL SHIM 계산`;
-            targetInput.value = data.target;
-            initialPrefix = data.target.toString().slice(0, 2);
-            ignoreCheckbox.checked = data.ignoreSmall || false;
-            document.querySelectorAll('.input-numbers').forEach((input, index) => {
-              input.value = data.beds[index] || '';
-              calculateResults(input);
-            });
-            updateAverage();
-            alert('데이터 불러오기 완료');
-          } catch (error) {
-            alert('저장된 데이터를 불러오는 중 오류가 발생했습니다.');
-            console.error(error);
-          }
-        } else {
+        if (!savedData) {
           alert('저장된 데이터가 없습니다.');
+          return;
+        }
+        try {
+          const data = JSON.parse(savedData);
+          if (data.version < 4) {
+            const typeMap = { '0.4': '2.5', '0.666': '1.5', '1.25': '0.8', '0.5': '2', '0.769': '1.3' };
+            data.type = typeMap[data.type] || '2.5';
+          }
+          typeSelect.value = data.type || '2.5';
+          targetInput.value = data.target || '144';
+          initialPrefix = targetInput.value.toString().slice(0, 2);
+          ignoreCheckbox.checked = Boolean(data.ignoreSmall);
+          envEnable.checked = Boolean(data.env?.enabled);
+          deltaTempInput.value = data.env?.dt ?? '0';
+          deltaRhInput.value = data.env?.drh ?? '0';
+          deltaBaroInput.value = data.env?.dp ?? '0';
+          document.querySelectorAll('.input-numbers').forEach((input, index) => {
+            input.value = data.beds?.[index] || '';
+          });
+          recalculateAll();
+          alert('데이터 불러오기 완료');
+        } catch (error) {
+          alert('저장된 데이터를 불러오는 중 오류가 발생했습니다.');
+          console.error(error);
         }
       };
 
       const loadDataFromURL = () => {
         const params = new URLSearchParams(window.location.search);
-        if(params.get('type')) {
-          const urlType = params.get('type');
-          const typeMap = {
-            '0.4': '2.5', '0.666': '1.5', 
-            '1.25': '0.8', '0.5': '2', '0.769': '1.3'
-          };
-          typeSelect.value = typeMap[urlType] || urlType;
-          mainTitle.textContent = `${typeSelect.options[typeSelect.selectedIndex].text.split(' ')[0]} FUEL SHIM 계산`;
+        if (params.get('type')) {
+          const typeMap = { '0.4': '2.5', '0.666': '1.5', '1.25': '0.8', '0.5': '2', '0.769': '1.3' };
+          typeSelect.value = typeMap[params.get('type')] || params.get('type');
         }
         const target = params.get('target');
         if (target) {
@@ -654,37 +742,33 @@
           initialPrefix = target.slice(0, 2);
         }
         ignoreCheckbox.checked = params.get('ignore') === '1';
+        envEnable.checked = params.get('env') === '1';
+        deltaTempInput.value = params.get('dt') || '0';
+        deltaRhInput.value = params.get('drh') || '0';
+        deltaBaroInput.value = params.get('dp') || '0';
         document.querySelectorAll('.input-numbers').forEach((input, index) => {
           const bedData = params.get(`bed${index + 1}`);
-          if (bedData) {
-            input.value = bedData.split(',').join('\n');
-            calculateResults(input);
-          } else {
-            input.value = '';
-            calculateResults(input);
-          }
+          input.value = bedData ? bedData.split(',').join('\n') : '';
         });
-        updateAverage();
+        recalculateAll();
       };
 
       const updateLoadButton = () => {
         const savedData = localStorage.getItem(STORAGE_KEY);
-        loadButtons.forEach(loadBtn => {
-          if (savedData) {
-            try {
-              const data = JSON.parse(savedData);
-              const saveDate = new Date(data.date);
-              loadBtn.textContent = `${saveDate.getMonth() + 1}/${saveDate.getDate()} 불러오기`;
-              loadBtn.classList.remove('disabled');
-            } catch (error) {
-              loadBtn.textContent = '데이터 불러오기';
-              loadBtn.classList.add('disabled');
-            }
-          } else {
-            loadBtn.textContent = '데이터 불러오기';
-            loadBtn.classList.add('disabled');
+        if (savedData) {
+          try {
+            const data = JSON.parse(savedData);
+            const saveDate = new Date(data.date);
+            loadButton.textContent = `${saveDate.getMonth() + 1}/${saveDate.getDate()} 불러오기`;
+            loadButton.classList.remove('disabled');
+          } catch {
+            loadButton.textContent = '데이터 불러오기';
+            loadButton.classList.add('disabled');
           }
-        });
+        } else {
+          loadButton.textContent = '데이터 불러오기';
+          loadButton.classList.add('disabled');
+        }
       };
 
       const initBeds = () => {
@@ -705,56 +789,46 @@
         document.querySelectorAll('.input-numbers').forEach(input => {
           initializeInput(input);
           input.addEventListener('input', handleInput);
-          input.addEventListener('keydown', e => { if(e.key === 'Enter') e.preventDefault(); });
+          input.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
         });
       };
 
       const init = () => {
         revisionDisplay.textContent = `Rev: ${revision}`;
-        targetInput.value = 144;
-        initialPrefix = '14';
         initBeds();
         decrementTargetBtn.addEventListener('click', () => adjustTargetNumber(-1));
         incrementTargetBtn.addEventListener('click', () => adjustTargetNumber(1));
-        resetButtons.forEach(btn => btn.addEventListener('click', resetAll));
-        copyReportButtons.forEach(btn => btn.addEventListener('click', () => {
+        targetInput.addEventListener('input', () => {
+          initialPrefix = (targetInput.value || '14').toString().slice(0, 2);
+          recalculateAll();
+        });
+        resetButton.addEventListener('click', resetAll);
+        copyReportButton.addEventListener('click', () => {
           navigator.clipboard.writeText(generateReport())
             .then(() => alert('보고서가 클립보드에 복사되었습니다.'))
-            .catch(err => {
-              alert('보고서 복사 중 오류가 발생했습니다.');
-              console.error(err);
-            });
-        }));
-        shareButtons.forEach(btn => btn.addEventListener('click', () => {
+            .catch(() => alert('보고서 복사 중 오류가 발생했습니다.'));
+        });
+        shareButton.addEventListener('click', () => {
           navigator.clipboard.writeText(generateShareURL())
             .then(() => alert('공유 URL이 클립보드에 복사되었습니다.'))
-            .catch(err => {
-              alert('URL 복사 중 오류가 발생했습니다.');
-              console.error(err);
-            });
-        }));
-        saveButtons.forEach(btn => btn.addEventListener('click', saveData));
-        loadButtons.forEach(btn => btn.addEventListener('click', function() {
-          if (!this.classList.contains('disabled')) loadData();
-        }));
-        ignoreCheckbox.addEventListener('change', () => {
-          document.querySelectorAll('.input-numbers').forEach(input => {
-            calculateResults(input);
-            updateAverage();
-          });
+            .catch(() => alert('URL 복사 중 오류가 발생했습니다.'));
         });
-        typeSelect.addEventListener('change', () => {
-          document.querySelectorAll('.input-numbers').forEach(input => {
-            calculateResults(input);
-            updateAverage();
-          });
-          mainTitle.textContent = `${typeSelect.options[typeSelect.selectedIndex].text.split(' ')[0]} FUEL SHIM 계산`;
+        saveButton.addEventListener('click', saveData);
+        loadButton.addEventListener('click', () => {
+          if (!loadButton.classList.contains('disabled')) loadData();
         });
-        if (window.location.search) {
-          loadDataFromURL();
-        }
+        ignoreCheckbox.addEventListener('change', recalculateAll);
+        typeSelect.addEventListener('change', recalculateAll);
+        [envEnable, deltaTempInput, deltaRhInput, deltaBaroInput].forEach(el =>
+          el.addEventListener('input', recalculateAll)
+        );
+        envEnable.addEventListener('change', recalculateAll);
+        if (window.location.search) loadDataFromURL();
         updateLoadButton();
-        updateAverage();
+        recalculateAll();
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('./sw.js').catch(() => {});
+        }
       };
 
       document.addEventListener('DOMContentLoaded', init);

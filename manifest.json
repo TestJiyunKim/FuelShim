@@ -1,21 +1,19 @@
 {
-  "name": "FUEL RACK 입력",
-  "short_name": "FuelRack",
-  "start_url": "/",
+  "name": "HiMSEN 현장 시운전 PWA",
+  "short_name": "FuelShim",
+  "description": "HiMSEN 엔진 Fuel Shim · Fuel Rack · 병렬 부하 · T/C 알람 가이드 (오프라인 PWA)",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#f4f4f9",
   "theme_color": "#007bff",
-  "orientation": "portrait",
+  "lang": "ko",
   "icons": [
     {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
   ]
 }

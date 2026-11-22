@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <title>병렬 부하 분담 계산기</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      margin: 0;
+      padding: 12px 12px 90px;
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+    .wrap { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+    .top-bar { display: flex; align-items: center; justify-content: space-between; }
+    .home-link { text-decoration: none; color: #38bdf8; font-weight: 800; font-size: 13px; }
+    h2 { margin: 0; font-size: 18px; color: #f8fafc; }
+    .panel {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .ctrl-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .field label { display: block; font-size: 11px; color: #94a3b8; font-weight: 700; margin-bottom: 3px; }
+    select, input {
+      width: 100%;
+      padding: 7px 8px;
+      border-radius: 6px;
+      border: 1px solid #475569;
+      background: #0f172a;
+      color: #f8fafc;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .summary-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      text-align: center;
+    }
+    .sum-box {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 6px;
+    }
+    .sum-lbl { font-size: 10px; color: #94a3b8; font-weight: 700; }
+    .sum-val { font-size: 14px; font-weight: 900; margin-top: 2px; font-family: monospace; }
+    .ok { color: #34d399; }
+    .warn { color: #fbbf24; }
+    .bad { color: #f87171; }
+    .eng-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .eng-card.needs-adj { border-color: #f59e0b; }
+    .eng-head { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+    .eng-title { font-weight: 900; font-size: 14px; color: #38bdf8; }
+    .pill {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+    .pill-ok { background: #064e3b; color: #6ee7b7; }
+    .pill-adj { background: #78350f; color: #fcd34d; }
+    .pill-ref { background: #1e3a8a; color: #93c5fd; }
+    .eng-inputs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+    .eng-res {
+      background: #0f172a;
+      border-radius: 8px;
+      padding: 8px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      font-size: 12px;
+    }
+    .eng-res strong { font-family: monospace; font-size: 14px; }
+    .bottom-bar {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      background: #0f172a;
+      border-top: 1px solid #334155;
+      padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .btn {
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      color: #fff;
+    }
+    .btn-copy { background: #0284c7; }
+    .btn-save { background: #059669; }
+    .btn-reset { background: #dc2626; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top-bar">
+      <a class="home-link" href="./index.html">← 메뉴</a>
+      <h2>병렬 부하 분담 계산기</h2>
+      <span style="font-size:11px;color:#64748b;">v3</span>
+    </div>
+
+    <div class="panel">
+      <div class="ctrl-grid">
+        <div class="field">
+          <label for="engineCount">운전 대수</label>
+          <select id="engineCount">
+            <option value="2">2대 병렬</option>
+            <option value="3">3대 병렬</option>
+            <option value="4" selected>4대 병렬</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="loadStep">시험 부하 구간</label>
+          <select id="loadStep">
+            <option value="20" selected>20%</option>
+            <option value="40">40%</option>
+            <option value="60">60%</option>
+            <option value="75">75%</option>
+            <option value="80">80%</option>
+            <option value="100">100%</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="calcMode">계산 모드</label>
+          <select id="calcMode">
+            <option value="auto_calc" selected>자동계산 (구간 K_i)</option>
+            <option value="reference">기준 추종</option>
+            <option value="target_base">기준 고정</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="tolRule">허용 편차 기준</label>
+          <select id="tolRule">
+            <option value="load_10" selected>로드 ±10% (사내)</option>
+            <option value="rated_10">정격 ±10% (DNV)</option>
+            <option value="bv_rated_15">정격 ±15% (BV)</option>
+          </select>
+        </div>
+        <div class="field" id="fixedKBox" style="display:none;">
+          <label for="fixedK">고정 상수 K</label>
+          <input id="fixedK" type="number" step="0.1" value="28">
+        </div>
+        <div class="field">
+          <label for="tcUnit">T/C 표기</label>
+          <select id="tcUnit">
+            <option value="monitor_x10" selected>모니터 (×10)</option>
+            <option value="real_rpm">실제 RPM</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="summary-bar">
+        <div class="sum-box">
+          <div class="sum-lbl">총 실측 부하</div>
+          <div id="sumLoad" class="sum-val">0.0 W</div>
+        </div>
+        <div class="sum-box">
+          <div class="sum-lbl">부하율 / 편차폭</div>
+          <div id="sumSpread" class="sum-val">0% / 0%</div>
+        </div>
+        <div class="sum-box">
+          <div class="sum-lbl">판정 상태</div>
+          <div id="sumStatus" class="sum-val ok">균형</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="engineList" style="display:flex;flex-direction:column;gap:8px;"></div>
+  </div>
+
+  <div class="bottom-bar">
+    <button id="btnReset" class="btn btn-reset" type="button">초기화</button>
+    <button id="btnSave" class="btn btn-save" type="button">저장</button>
+    <button id="btnCopy" class="btn btn-copy" type="button">보고서 복사</button>
+  </div>
+
+  <script>
+    (() => {
+      const STORAGE_KEY = 'himsen_mobile_load_sharing_v1';
+      const LOAD_DEADBAND_W = 0.05;
+      const AUTO_CONSTANT_BASE_FACTOR = 2600;
+      const TC_X10_THRESHOLD = 4500;
+      const SLOPE_BY_STEP = { 20: 1.0, 40: 0.68, 60: 0.5, 75: 0.43, 80: 0.35, 100: 0.35 };
+
+      const defaultEngines = [
+        { id: 1, name: '1호기', baseLoad: '93.3', actualLoad: '', tcRpm: '' },
+        { id: 2, name: '2호기', baseLoad: '93.3', actualLoad: '', tcRpm: '' },
+        { id: 3, name: '3호기', baseLoad: '80', actualLoad: '', tcRpm: '' },
+        { id: 4, name: '4호기', baseLoad: '80', actualLoad: '', tcRpm: '' },
+      ];
+
+      let state = {
+        engineCount: 4,
+        loadStep: 20,
+        calcMode: 'auto_calc',
+        tolRule: 'load_10',
+        fixedK: 28,
+        tcUnit: 'monitor_x10',
+        engines: JSON.parse(JSON.stringify(defaultEngines)),
+      };
+
+      const elCount = document.getElementById('engineCount');
+      const elStep = document.getElementById('loadStep');
+      const elMode = document.getElementById('calcMode');
+      const elRule = document.getElementById('tolRule');
+      const elFixedK = document.getElementById('fixedK');
+      const elFixedKBox = document.getElementById('fixedKBox');
+      const elTcUnit = document.getElementById('tcUnit');
+      const elList = document.getElementById('engineList');
+
+      const normalizeTc = (raw) => {
+        const v = parseFloat(raw);
+        if (!Number.isFinite(v) || v <= 0) return null;
+        return v <= TC_X10_THRESHOLD ? Math.round(v * 10) : Math.round(v);
+      };
+
+      const computeTolW = (rule, base, maxRated, stepPct) => {
+        const rated = stepPct > 0 ? base * (100 / stepPct) : base;
+        if (rule === 'bv_rated_15') return Math.max(0, Math.min(maxRated * 0.15, rated * 0.25));
+        if (rule === 'rated_10') return Math.max(0, Math.min(maxRated * 0.1, rated * 0.25));
+        return base * 0.1;
+      };
+
+      const computeAutoK = (base, stepPct) => {
+        const slope = SLOPE_BY_STEP[stepPct] ?? 1.0;
+        const eq20 = base * (20 / stepPct);
+        if (eq20 <= 0) return 0;
+        return Number(((AUTO_CONSTANT_BASE_FACTOR / eq20) * slope).toFixed(1));
+      };
+
+      const calculateAll = () => {
+        const active = state.engines.slice(0, state.engineCount);
+        const stepPct = state.loadStep;
+        const maxRated = Math.max(...active.map(e => (parseFloat(e.baseLoad) || 0) * (100 / stepPct)), 1);
+
+        let refEngine = active[0];
+        if (state.calcMode === 'reference') {
+          let bestScore = Infinity;
+          for (const cand of active) {
+            const cb = parseFloat(cand.baseLoad) || 1;
+            const cl = parseFloat(cand.actualLoad) || 0;
+            let adjCnt = 0;
+            let totalDiff = 0;
+            for (const e of active) {
+              const eb = parseFloat(e.baseLoad) || 0;
+              const el = parseFloat(e.actualLoad) || 0;
+              const tgt = cl * (eb / cb);
+              totalDiff += Math.abs(tgt - el);
+              const tol = computeTolW(state.tolRule, eb, maxRated, stepPct);
+              if (e.id !== cand.id && Math.abs(tgt - el) > tol + 1e-9) adjCnt++;
+            }
+            const score = adjCnt * 1e6 + totalDiff;
+            if (score < bestScore) { bestScore = score; refEngine = cand; }
+          }
+        }
+
+        const refBase = parseFloat(refEngine.baseLoad) || 1;
+        const refLoad = parseFloat(refEngine.actualLoad) || 0;
+
+        let totalBase = 0;
+        let totalLoad = 0;
+        const ratios = [];
+        const results = active.map(eng => {
+          const base = parseFloat(eng.baseLoad) || 0;
+          const cur = parseFloat(eng.actualLoad) || 0;
+          totalBase += base;
+          totalLoad += cur;
+          if (base > 0) ratios.push((cur / base) * 100);
+
+          const isRef = state.calcMode === 'reference' && eng.id === refEngine.id;
+          const target = state.calcMode === 'reference'
+            ? (refBase > 0 ? refLoad * (base / refBase) : 0)
+            : base;
+          const tolW = computeTolW(state.tolRule, base, maxRated, stepPct);
+          const error = target - cur;
+          const absErr = Math.abs(error);
+          const devPct = base > 0 ? ((cur - base) / base) * 100 : 0;
+          const withinTol = base > 0 && absErr <= tolW + 1e-9;
+          const needsAdj = !isRef && !withinTol && absErr > LOAD_DEADBAND_W;
+          const k = state.calcMode === 'auto_calc' ? computeAutoK(base, stepPct) : (parseFloat(state.fixedK) || 0);
+          const tcAdj = Math.round(absErr * k);
+          const signedCmd = !needsAdj ? 0 : (error > 0 ? tcAdj : -tcAdj);
+          const liveTc = normalizeTc(eng.tcRpm);
+          const targetTc = liveTc !== null ? Math.max(0, liveTc + signedCmd) : null;
+          return {
+            eng, base, cur, target, error, devPct, withinTol, needsAdj, isRef, k,
+            tcAdj, signedCmd, liveTc, targetTc
+          };
+        });
+
+        const loadPct = totalBase > 0 ? (totalLoad / totalBase) * 100 : 0;
+        const spread = ratios.length >= 2 ? (Math.max(...ratios) - Math.min(...ratios)) : 0;
+        const adjCount = results.filter(r => r.needsAdj).length;
+
+        document.getElementById('sumLoad').textContent = `${totalLoad.toFixed(1)} W`;
+        document.getElementById('sumSpread').textContent = `${loadPct.toFixed(1)}% / ${spread.toFixed(1)}%p`;
+        const sumSt = document.getElementById('sumStatus');
+        sumSt.textContent = adjCount === 0 ? '모두 허용 내' : `${adjCount}대 조정 필요`;
+        sumSt.className = `sum-val ${adjCount === 0 ? 'ok' : 'warn'}`;
+
+        results.forEach((r, idx) => {
+          const box = document.getElementById(`res_${idx}`);
+          const card = document.getElementById(`card_${idx}`);
+          const pill = document.getElementById(`pill_${idx}`);
+          if (!box || !card || !pill) return;
+
+          card.classList.toggle('needs-adj', r.needsAdj);
+          if (r.isRef) {
+            pill.textContent = '기준 호기';
+            pill.className = 'pill pill-ref';
+          } else if (r.withinTol) {
+            pill.textContent = '허용 내';
+            pill.className = 'pill pill-ok';
+          } else {
+            pill.textContent = '조정 필요';
+            pill.className = 'pill pill-adj';
+          }
+
+          const dirText = r.signedCmd === 0 ? '유지 (0)' : (r.signedCmd > 0 ? `상승 (+)` : `하강 (-)`);
+          const dispAdj = state.tcUnit === 'monitor_x10'
+            ? `${Math.round(r.tcAdj / 10)} (×10)`
+            : `${r.tcAdj} RPM`;
+          const dispTarget = r.targetTc === null
+            ? '-'
+            : (state.tcUnit === 'monitor_x10' ? `${Math.round(r.targetTc / 10)} (×10)` : `${r.targetTc} RPM`);
+
+          box.innerHTML = `
+            <div>목표 / 오차: <strong>${r.target.toFixed(1)}W</strong> (${r.error >= 0 ? '+' : ''}${r.error.toFixed(1)})</div>
+            <div>편차 / 상수K: <strong>${r.devPct >= 0 ? '+' : ''}${r.devPct.toFixed(1)}%</strong> / K=${r.k}</div>
+            <div>지시 / 조정량: <strong class="${r.needsAdj ? 'warn' : 'ok'}">${dirText} ${dispAdj}</strong></div>
+            <div>목표 T/C: <strong>${dispTarget}</strong></div>
+          `;
+        });
+        return results;
+      };
+
+      const renderCards = () => {
+        elFixedKBox.style.display = state.calcMode === 'auto_calc' ? 'none' : 'block';
+        elList.innerHTML = '';
+        for (let i = 0; i < state.engineCount; i++) {
+          const eng = state.engines[i];
+          const card = document.createElement('div');
+          card.className = 'eng-card';
+          card.id = `card_${i}`;
+          card.innerHTML = `
+            <div class="eng-head">
+              <span class="eng-title">${eng.name}</span>
+              <span id="pill_${i}" class="pill pill-ok">대기</span>
+            </div>
+            <div class="eng-inputs">
+              <div class="field">
+                <label>기준(W)</label>
+                <input type="number" step="0.1" value="${eng.baseLoad}" data-idx="${i}" data-field="baseLoad">
+              </div>
+              <div class="field">
+                <label>현재(W)</label>
+                <input type="number" step="0.1" value="${eng.actualLoad}" data-idx="${i}" data-field="actualLoad" placeholder="실측 W">
+              </div>
+              <div class="field">
+                <label>T/C RPM</label>
+                <input type="number" step="1" value="${eng.tcRpm}" data-idx="${i}" data-field="tcRpm" placeholder="×10 또는 RPM">
+              </div>
+            </div>
+            <div id="res_${i}" class="eng-res"></div>
+          `;
+          elList.appendChild(card);
+        }
+
+        elList.querySelectorAll('input').forEach(inp => {
+          inp.addEventListener('input', (e) => {
+            const idx = Number(e.target.dataset.idx);
+            const field = e.target.dataset.field;
+            state.engines[idx][field] = e.target.value;
+            calculateAll();
+          });
+        });
+        calculateAll();
+      };
+
+      const syncControlsToState = () => {
+        elCount.value = String(state.engineCount);
+        elStep.value = String(state.loadStep);
+        elMode.value = state.calcMode;
+        elRule.value = state.tolRule;
+        elFixedK.value = String(state.fixedK);
+        elTcUnit.value = state.tcUnit;
+      };
+
+      [elCount, elStep, elMode, elRule, elFixedK, elTcUnit].forEach(el => {
+        el.addEventListener('change', () => {
+          state.engineCount = Number(elCount.value);
+          state.loadStep = Number(elStep.value);
+          state.calcMode = elMode.value;
+          state.tolRule = elRule.value;
+          state.fixedK = parseFloat(elFixedK.value) || 28;
+          state.tcUnit = elTcUnit.value;
+          renderCards();
+        });
+      });
+
+      document.getElementById('btnSave').addEventListener('click', () => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        alert('현재 설정·입력값이 저장되었습니다.');
+      });
+
+      document.getElementById('btnReset').addEventListener('click', () => {
+        state.engines = JSON.parse(JSON.stringify(defaultEngines));
+        localStorage.removeItem(STORAGE_KEY);
+        renderCards();
+      });
+
+      document.getElementById('btnCopy').addEventListener('click', async () => {
+        const res = calculateAll();
+        const lines = [
+          `[병렬 부하 분담 계산] (${state.loadStep}% / ${state.calcMode} / ${state.tolRule})`,
+          `생성: ${new Date().toLocaleString('ko-KR')}`,
+          '',
+          ...res.map(r =>
+            `${r.eng.name}: 현재 ${r.cur.toFixed(1)}W / 목표 ${r.target.toFixed(1)}W (오차 ${r.error >= 0 ? '+' : ''}${r.error.toFixed(1)}W) → K=${r.k}, T/C ${r.signedCmd >= 0 ? '+' : ''}${r.signedCmd} RPM (모니터 ×10: ${Math.round(r.signedCmd / 10)})`
+          ),
+        ].join('\n');
+        try {
+          await navigator.clipboard.writeText(lines);
+          alert('보고서가 복사되었습니다.');
+        } catch {
+          alert('클립보드 복사에 실패했습니다.');
+        }
+      });
+
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) state = { ...state, ...JSON.parse(saved) };
+      } catch {}
+      syncControlsToState();
+      renderCards();
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      }
+    })();
+  </script>
+</body>
+</html>
